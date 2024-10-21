@@ -2,7 +2,12 @@ package com.example.myapplication.db;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MyDatabaseManager {
 
@@ -39,12 +44,13 @@ public class MyDatabaseManager {
     }
 
     // データをインサートするメソッド
-    public void raceResultInsertData(String kaisaibi,String raceNo,String tyaku,
+    public void raceResultInsertData(String kaisaibi, String kaisaijo, String raceNo, String tyaku,
                                      String waku, String horseNumber, String horseName, String age, String weight,
                                      String jockey, String popular, String winOdds, String time, String tyakusa,
                                      String tuukazyun, String nobori, String tyoukyousi, String horseWeight) {
         ContentValues values = new ContentValues();
         values.put("kaisaibi", kaisaibi);
+        values.put("kaisaijo", kaisaijo);
         values.put("raceNo", raceNo);
         values.put("tyaku", tyaku);
         values.put("waku", waku);
@@ -61,9 +67,56 @@ public class MyDatabaseManager {
         values.put("nobori", nobori);
         values.put("tyoukyousi", tyoukyousi);
         values.put("horseWeight", horseWeight);
-
-
         // テーブル名は"my_table"、nullColumnHackはnull
         database.insert("raceResult", null, values);
+    }
+
+    // レース結果を取得するメソッド
+    public List<String> getRaceResults(String kaisaibi, String raceNumber, String kaisaijo) {
+        // SQL SELECT文
+        String[] columns = {"kaisaibi", "kaisaijo", "RaceNo", "tyaku", "waku", "horseNumber", "horseName", "age", "winOdds", "time", "jockey", "popular"};
+
+        String selection;
+        String[] selectionArgs;
+        // WHERE句の条件を設定
+        if (!"".equals(kaisaibi)) {
+            selection = "kaisaibi = ? AND RaceNo =? AND kaisaijo=?";
+            selectionArgs = new String[]{kaisaibi, raceNumber, kaisaijo}; // ここで引数を渡します
+        } else {
+            selection = null;
+            selectionArgs =null;
+        }
+
+        Cursor cursor = database.query("raceResult", columns, selection, selectionArgs, null, null, null);
+        List<String> list = new ArrayList<String>();
+
+        // カーソルが空でないか確認
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                String tyaku = cursor.getString(cursor.getColumnIndexOrThrow("tyaku"));
+                String waku = cursor.getString(cursor.getColumnIndexOrThrow("waku"));
+                String horseName = cursor.getString(cursor.getColumnIndexOrThrow("horseName"));
+                String age = cursor.getString(cursor.getColumnIndexOrThrow("age"));
+                String jockey = cursor.getString(cursor.getColumnIndexOrThrow("jockey"));
+                String popular = cursor.getString(cursor.getColumnIndexOrThrow("popular"));
+                String winOdds = cursor.getString(cursor.getColumnIndexOrThrow("winOdds"));
+                String time = cursor.getString(cursor.getColumnIndexOrThrow("time"));
+                list.add(tyaku);
+                list.add(waku);
+                list.add(horseName);
+                list.add(age);
+                list.add(jockey);
+                list.add(popular);
+                list.add(winOdds);
+                list.add(time);
+
+            } while (cursor.moveToNext());
+        }
+        // カーソルを閉じる
+        if (cursor != null) {
+            cursor.close();
+        }
+
+        return list;
     }
 }

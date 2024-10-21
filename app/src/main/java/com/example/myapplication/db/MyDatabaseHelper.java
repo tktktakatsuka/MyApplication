@@ -1,6 +1,7 @@
 package com.example.myapplication.db;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -28,6 +29,7 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
     private static final String RACERESULTABLE_CREATE =
             "CREATE TABLE raceResult (" +
                     "kaisaibi TEXT ," +
+                    "kaisaijo TEXT ," +
                     "RaceNo TEXT ," +
                     "tyaku TEXT ," +
                     "waku TEXT ," +
@@ -43,7 +45,8 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
                     "tuukazyun TEXT," +
                     "nobori TEXT," +
                     "tyoukyousi TEXT," +
-                    "horseWeight TEXT);" ;
+                    "horseWeight TEXT"+ ")";
+//                    "PRIMARY KEY (kaisaibi, kaisaijo, RaceNo, horseName));" ;
 
     @Override
     public void onCreate(SQLiteDatabase db) {
@@ -59,4 +62,6 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS raceResult");
         onCreate(db);
     }
+
+
 }
