@@ -12,6 +12,7 @@ import androidx.navigation.ui.NavigationUI;
 
 
 import com.example.myapplication.databinding.ActivityMainBinding;
+import com.jakewharton.threetenabp.AndroidThreeTen;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,6 +21,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // ThreeTenABPの初期化
+        AndroidThreeTen.init(this);
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());

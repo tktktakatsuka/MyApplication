@@ -11,6 +11,7 @@ lifecycleLivedataKtx = "2.8.6"
 lifecycleViewmodelKtx = "2.8.6"
 navigationFragment = "2.8.2"
 navigationUi = "2.8.2"
+threetenabp = "1.4.4"
 
 [libraries]
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
@@ -24,6 +25,7 @@ lifecycle-livedata-ktx = { group = "androidx.lifecycle", name = "lifecycle-lived
 lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
 navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigationFragment" }
 navigation-ui = { group = "androidx.navigation", name = "navigation-ui", version.ref = "navigationUi" }
+threetenabp = { module = "com.jakewharton.threetenabp:threetenabp", version.ref = "threetenabp" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

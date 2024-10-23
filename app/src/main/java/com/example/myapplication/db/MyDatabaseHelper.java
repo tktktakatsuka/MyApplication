@@ -45,7 +45,8 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
                     "tuukazyun TEXT," +
                     "nobori TEXT," +
                     "tyoukyousi TEXT," +
-                    "horseWeight TEXT"+ ")";
+                    "horseWeight TEXT,"+
+                    "PRIMARY KEY (kaisaiBi, horseName))";
 
     @Override
     public void onCreate(SQLiteDatabase db) {

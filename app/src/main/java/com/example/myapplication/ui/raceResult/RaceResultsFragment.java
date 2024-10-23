@@ -52,18 +52,29 @@ public class RaceResultsFragment extends Fragment {
         final TableLayout tableLayout11 = binding.tableLayout11;
         final TableLayout tableLayout12 = binding.tableLayout12;
 
-        raceResultTableSet("20241020", "1", "東京", dbManager, tableLayout1);
-        raceResultTableSet("20241020", "2", "東京", dbManager, tableLayout2);
-        raceResultTableSet("20241020", "3", "東京", dbManager, tableLayout3);
-        raceResultTableSet("20241020", "4", "東京", dbManager, tableLayout4);
-        raceResultTableSet("20241020", "5", "東京", dbManager, tableLayout5);
-        raceResultTableSet("20241020", "6", "東京", dbManager, tableLayout6);
-        raceResultTableSet("20241020", "7", "東京", dbManager, tableLayout7);
-        raceResultTableSet("20241020", "8", "東京", dbManager, tableLayout8);
-        raceResultTableSet("20241020", "9", "東京", dbManager, tableLayout9);
-        raceResultTableSet("20241020", "10", "東京", dbManager, tableLayout10);
-        raceResultTableSet("20241020", "11", "東京", dbManager, tableLayout11);
-        raceResultTableSet("20241020", "12", "東京", dbManager, tableLayout12);
+        // 渡された値を取得する
+        Bundle args = getArguments();
+        String receivedValue = "";
+        String receivedJoValue = "";
+        if (args != null) {
+            // ここで "key" に対応する値を取得
+            receivedValue = args.getString("key");
+            receivedJoValue = args.getString("jo");
+
+        }
+
+        raceResultTableSet(receivedValue, "1", receivedJoValue, dbManager, tableLayout1);
+        raceResultTableSet(receivedValue, "2", receivedJoValue, dbManager, tableLayout2);
+        raceResultTableSet(receivedValue, "3", receivedJoValue, dbManager, tableLayout3);
+        raceResultTableSet(receivedValue, "4", receivedJoValue, dbManager, tableLayout4);
+        raceResultTableSet(receivedValue, "5", receivedJoValue, dbManager, tableLayout5);
+        raceResultTableSet(receivedValue, "6", receivedJoValue, dbManager, tableLayout6);
+        raceResultTableSet(receivedValue, "7", receivedJoValue, dbManager, tableLayout7);
+        raceResultTableSet(receivedValue, "8", receivedJoValue, dbManager, tableLayout8);
+        raceResultTableSet(receivedValue, "9", receivedJoValue, dbManager, tableLayout9);
+        raceResultTableSet(receivedValue, "10", receivedJoValue, dbManager, tableLayout10);
+        raceResultTableSet(receivedValue, "11", receivedJoValue, dbManager, tableLayout11);
+        raceResultTableSet(receivedValue, "12", receivedJoValue, dbManager, tableLayout12);
 
         return root;
     }
@@ -161,7 +172,7 @@ public class RaceResultsFragment extends Fragment {
             textView7.setPadding(16, 8, 16, 8);
 
             TextView textView8 = new TextView(getActivity());
-            textView8.setText(list.get(recordTani + 6));
+            textView8.setText(list.get(recordTani + 7));
             textView8.setPadding(16, 8, 16, 8);
 
             // Add TextViews to TableRow
