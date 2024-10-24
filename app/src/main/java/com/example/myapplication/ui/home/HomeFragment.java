@@ -122,6 +122,22 @@ public class HomeFragment extends Fragment {
                 Elements contentElements = doc.getElementsByClass("resulttable");
                 contentElements = doc.select("tbody");
                 contentElements = doc.select("td");
+                String raceTitle = doc.getElementsByClass("raceTitle").text();
+                String hassouTime = doc.getElementsByClass("classCourseSyokin").text();
+
+                // 元の文字列
+                String originalString = hassouTime;
+
+                // カットする基準となる文字列
+                String cutAfter = "発走";
+                String result ="";
+
+                // 指定の文字列が存在する場合にカットする
+                int index = originalString.indexOf(cutAfter);
+                if (index != -1) {
+                    // 指定の文字列以降の部分をカット
+                    result = originalString.substring(0, index + cutAfter.length());
+                }
 
                 int j = 0;
                 for (int i = 0; i < 5; i++) {
@@ -132,7 +148,7 @@ public class HomeFragment extends Fragment {
                                 contentElements.get(j + 4).text(), contentElements.get(j + 5).text(), contentElements.get(j + 6).text(),
                                 contentElements.get(j + 7).text(), contentElements.get(j + 8).text(), contentElements.get(j + 9).text(),
                                 contentElements.get(j + 10).text(), contentElements.get(j + 11).text(), contentElements.get(j + 12).text(),
-                                contentElements.get(j + 13).text(), contentElements.get(j + 14).text());
+                                contentElements.get(j + 13).text(), contentElements.get(j + 14).text(), raceTitle, originalString);
                     }
                     j = j + 15;
                     //会員登録分の情報をskip

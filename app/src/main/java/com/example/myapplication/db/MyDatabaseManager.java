@@ -47,7 +47,7 @@ public class MyDatabaseManager {
     public void raceResultInsertData(String kaisaibi, String kaisaijo, String raceNo, String tyaku,
                                      String waku, String horseNumber, String horseName, String age, String weight,
                                      String jockey, String popular, String winOdds, String time, String tyakusa,
-                                     String tuukazyun, String nobori, String tyoukyousi, String horseWeight) {
+                                     String tuukazyun, String nobori, String tyoukyousi, String horseWeight,String raceTitle, String hassouTime) {
         ContentValues values = new ContentValues();
         values.put("kaisaibi", kaisaibi);
         values.put("kaisaijo", kaisaijo);
@@ -67,6 +67,8 @@ public class MyDatabaseManager {
         values.put("nobori", nobori);
         values.put("tyoukyousi", tyoukyousi);
         values.put("horseWeight", horseWeight);
+        values.put("raceTitle", raceTitle);
+        values.put("hassouTime", hassouTime);
         // テーブル名は"my_table"、nullColumnHackはnull
         database.insert("raceResult", null, values);
     }
@@ -74,7 +76,7 @@ public class MyDatabaseManager {
     // レース結果を取得するメソッド
     public List<String> getRaceResults(String kaisaibi, String raceNumber, String kaisaijo) {
         // SQL SELECT文
-        String[] columns = {"kaisaibi", "kaisaijo", "RaceNo", "tyaku", "waku", "horseNumber", "horseName", "age", "winOdds", "time", "jockey", "popular"};
+        String[] columns = {"kaisaibi", "kaisaijo", "RaceNo", "tyaku", "waku", "horseNumber", "horseName", "age", "winOdds", "time", "jockey", "popular","raceTitle"};
 
         String selection;
         String[] selectionArgs;
@@ -87,7 +89,7 @@ public class MyDatabaseManager {
             selectionArgs =null;
         }
 
-        Cursor cursor = database.query("raceResult", columns, selection, selectionArgs, null, null, null);
+        Cursor cursor = database.query("raceResult", columns, selection, selectionArgs, null, null, "tyaku ASC");
         List<String> list = new ArrayList<String>();
 
         // カーソルが空でないか確認
@@ -101,6 +103,7 @@ public class MyDatabaseManager {
                 String popular = cursor.getString(cursor.getColumnIndexOrThrow("popular"));
                 String winOdds = cursor.getString(cursor.getColumnIndexOrThrow("winOdds"));
                 String time = cursor.getString(cursor.getColumnIndexOrThrow("time"));
+                String racetitle = cursor.getString(cursor.getColumnIndexOrThrow("raceTitle"));
                 list.add(tyaku);
                 list.add(waku);
                 list.add(horseName);
@@ -109,6 +112,7 @@ public class MyDatabaseManager {
                 list.add(popular);
                 list.add(winOdds);
                 list.add(time);
+                list.add(racetitle);
 
             } while (cursor.moveToNext());
         }

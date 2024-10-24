@@ -52,6 +52,20 @@ public class RaceResultsFragment extends Fragment {
         final TableLayout tableLayout11 = binding.tableLayout11;
         final TableLayout tableLayout12 = binding.tableLayout12;
 
+        final TextView raceText1 = binding.textDashboard1;
+        final TextView raceText2 = binding.textDashboard2;
+        final TextView raceText3 = binding.textDashboard3;
+        final TextView raceText4 = binding.textDashboard4;
+        final TextView raceText5 = binding.textDashboard5;
+        final TextView raceText6 = binding.textDashboard6;
+        final TextView raceText7 = binding.textDashboard7;
+        final TextView raceText8 = binding.textDashboard8;
+        final TextView raceText9 = binding.textDashboard9;
+        final TextView raceText10 = binding.textDashboard10;
+        final TextView raceText11 = binding.textDashboard11;
+        final TextView raceText12 = binding.textDashboard12;
+
+
         // 渡された値を取得する
         Bundle args = getArguments();
         String receivedValue = "";
@@ -63,18 +77,18 @@ public class RaceResultsFragment extends Fragment {
 
         }
 
-        raceResultTableSet(receivedValue, "1", receivedJoValue, dbManager, tableLayout1);
-        raceResultTableSet(receivedValue, "2", receivedJoValue, dbManager, tableLayout2);
-        raceResultTableSet(receivedValue, "3", receivedJoValue, dbManager, tableLayout3);
-        raceResultTableSet(receivedValue, "4", receivedJoValue, dbManager, tableLayout4);
-        raceResultTableSet(receivedValue, "5", receivedJoValue, dbManager, tableLayout5);
-        raceResultTableSet(receivedValue, "6", receivedJoValue, dbManager, tableLayout6);
-        raceResultTableSet(receivedValue, "7", receivedJoValue, dbManager, tableLayout7);
-        raceResultTableSet(receivedValue, "8", receivedJoValue, dbManager, tableLayout8);
-        raceResultTableSet(receivedValue, "9", receivedJoValue, dbManager, tableLayout9);
-        raceResultTableSet(receivedValue, "10", receivedJoValue, dbManager, tableLayout10);
-        raceResultTableSet(receivedValue, "11", receivedJoValue, dbManager, tableLayout11);
-        raceResultTableSet(receivedValue, "12", receivedJoValue, dbManager, tableLayout12);
+        raceResultTableSet(receivedValue, "1", receivedJoValue, dbManager, tableLayout1,raceText1);
+        raceResultTableSet(receivedValue, "2", receivedJoValue, dbManager, tableLayout2,raceText2);
+        raceResultTableSet(receivedValue, "3", receivedJoValue, dbManager, tableLayout3,raceText3);
+        raceResultTableSet(receivedValue, "4", receivedJoValue, dbManager, tableLayout4,raceText4);
+        raceResultTableSet(receivedValue, "5", receivedJoValue, dbManager, tableLayout5,raceText5);
+        raceResultTableSet(receivedValue, "6", receivedJoValue, dbManager, tableLayout6,raceText6);
+        raceResultTableSet(receivedValue, "7", receivedJoValue, dbManager, tableLayout7,raceText7);
+        raceResultTableSet(receivedValue, "8", receivedJoValue, dbManager, tableLayout8,raceText8);
+        raceResultTableSet(receivedValue, "9", receivedJoValue, dbManager, tableLayout9,raceText9);
+        raceResultTableSet(receivedValue, "10", receivedJoValue, dbManager, tableLayout10,raceText10);
+        raceResultTableSet(receivedValue, "11", receivedJoValue, dbManager, tableLayout11,raceText11);
+        raceResultTableSet(receivedValue, "12", receivedJoValue, dbManager, tableLayout12,raceText12);
 
         return root;
     }
@@ -85,10 +99,13 @@ public class RaceResultsFragment extends Fragment {
         binding = null;
     }
 
-    private void raceResultTableSet(String kaisaibi, String raceNo, String kaisaijo, MyDatabaseManager dbManager, TableLayout tableLayout) {
+    private void raceResultTableSet(String kaisaibi, String raceNo, String kaisaijo, MyDatabaseManager dbManager, TableLayout tableLayout, TextView raceTitle) {
 
         List<String> list = dbManager.getRaceResults(kaisaibi, raceNo, kaisaijo);
         int recordTani = 0;
+
+        raceTitle.setText(raceNo+"R"+"   "+list.get(8));
+        list.removeIf(item -> item.equals(list.get(8)));
 
         // table見出し設定
         TableRow tableRowRetu = new TableRow(getActivity());

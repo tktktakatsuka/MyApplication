@@ -46,6 +46,8 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
                     "nobori TEXT," +
                     "tyoukyousi TEXT," +
                     "horseWeight TEXT,"+
+                    "raceTitle TEXT,"+
+                    "hassouTime TEXT,"+
                     "PRIMARY KEY (kaisaiBi, horseName))";
 
     @Override
