@@ -1,8 +1,13 @@
 package com.example.myapplication.ui.dashboard;
 
 
-import android.graphics.Color;
 import android.os.Bundle;
+
+
+import org.threeten.bp.LocalDate;
+import org.threeten.bp.format.DateTimeFormatter;
+import org.threeten.bp.format.DateTimeParseException;
+import org.threeten.bp.DayOfWeek;
 
 
 import android.view.LayoutInflater;
@@ -10,15 +15,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.TableRow;
 import android.widget.TextView;
-import android.widget.TableLayout;
-import android.widget.Toast;
 
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
+
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
@@ -29,12 +31,6 @@ import com.example.myapplication.db.MyDatabaseManager;
 import com.example.myapplication.util.WeekendDays;
 
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
-
-
-import java.io.IOException;
 import java.util.List;
 
 public class DashboardFragment extends Fragment {
@@ -42,20 +38,8 @@ public class DashboardFragment extends Fragment {
 
     private FragmentDashboardBinding binding;
 
-    /**
-     * @param inflater           The LayoutInflater object that can be used to inflate
-     *                           any views in the fragment,
-     * @param container          If non-null, this is the parent view that the fragment's
-     *                           UI should be attached to.  The fragment should not add the view itself,
-     *                           but this can be used to generate the LayoutParams of the view.
-     * @param savedInstanceState If non-null, this fragment is being re-constructed
-     *                           from a previous saved state as given here.
-     * @return
-     */
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        DashboardViewModel dashboardViewModel =
-                new ViewModelProvider(this).get(DashboardViewModel.class);
 
         binding = FragmentDashboardBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
@@ -75,9 +59,9 @@ public class DashboardFragment extends Fragment {
 
         boolean textFlg = true;
         // 動的にボタンを生成して追加
-        for (String date: datelist) {
+        for (String date : datelist) {
 
-            if (dbManager.getRaceResults(date, "1", "東京").size() != 0) {
+            if (!dbManager.getRaceResults(date, "1", "東京").isEmpty()) {
 
                 if (textFlg) {
                     // ボタンをLinearLayoutに追加
@@ -91,7 +75,7 @@ public class DashboardFragment extends Fragment {
                 }
                 // 新しいボタンを作成
                 Button newButton = new Button(getActivity());
-                newButton.setText(date);
+                newButton.setText(date + getDayOfWeek(date));
                 // クリックリスナーを設定
                 newButton.setOnClickListener(v -> {
                     NavController navController = Navigation.findNavController(v);
@@ -106,8 +90,8 @@ public class DashboardFragment extends Fragment {
         }
 
         textFlg = true;
-        for (String date: datelist) {
-            if (dbManager.getRaceResults(date, "1", "京都").size() != 0) {
+        for (String date : datelist) {
+            if (!dbManager.getRaceResults(date, "1", "京都").isEmpty()) {
                 if (textFlg) {
                     // ボタンをLinearLayoutに追加
                     TextView newTextView = new TextView(getActivity());
@@ -121,7 +105,7 @@ public class DashboardFragment extends Fragment {
 
                 // 新しいボタンを作成
                 Button newButton = new Button(getActivity());
-                newButton.setText(date);
+                newButton.setText(date + getDayOfWeek(date));
                 // クリックリスナーを設定
                 newButton.setOnClickListener(v -> {
                     NavController navController = Navigation.findNavController(v);
@@ -136,8 +120,8 @@ public class DashboardFragment extends Fragment {
         }
 
         textFlg = true;
-        for (String date: datelist) {
-            if (dbManager.getRaceResults(date, "1", "新潟").size() != 0) {
+        for (String date : datelist) {
+            if (!dbManager.getRaceResults(date, "1", "新潟").isEmpty()) {
                 if (textFlg) {
                     // ボタンをLinearLayoutに追加
                     TextView newTextView = new TextView(getActivity());
@@ -150,7 +134,7 @@ public class DashboardFragment extends Fragment {
                 }
                 // 新しいボタンを作成
                 Button newButton = new Button(getActivity());
-                newButton.setText(date);
+                newButton.setText(date + getDayOfWeek(date));
                 // クリックリスナーを設定
                 newButton.setOnClickListener(v -> {
                     NavController navController = Navigation.findNavController(v);
@@ -179,24 +163,16 @@ public class DashboardFragment extends Fragment {
         buttonContainer.addView(newTextView2);
 
 
-
-
-
-
-
-
         return root;
     }
 
     private Bundle hoge(String date, String jo) {
 
         // 渡したい値を用意する
-        String valueToSend = date;
-        String valueToSend2 = jo;
         // Bundleを作成して値を詰める
         Bundle bundle = new Bundle();
-        bundle.putString("key", valueToSend);
-        bundle.putString("jo", valueToSend2);
+        bundle.putString("key", date);
+        bundle.putString("jo", jo);
         return bundle;
     }
 
@@ -207,4 +183,38 @@ public class DashboardFragment extends Fragment {
     }
 
 
+    public static String getDayOfWeek(String dateStr) {
+        try {
+            // 8桁の日付フォーマットを定義
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+            LocalDate date = LocalDate.parse(dateStr, formatter);
+
+            // 曜日を取得
+            DayOfWeek dayOfWeek = date.getDayOfWeek();
+
+            // 日本語の曜日名を返す
+            switch (dayOfWeek) {
+                case MONDAY:
+                    return " (月)";
+                case TUESDAY:
+                    return " (火)";
+                case WEDNESDAY:
+                    return " (水)";
+                case THURSDAY:
+                    return " (木)";
+                case FRIDAY:
+                    return " (金)";
+                case SATURDAY:
+                    return " (土)";
+                case SUNDAY:
+                    return " (日)";
+                default:
+                    return "";
+            }
+        } catch (DateTimeParseException e) {
+            return "日付の形式が正しくありません。";
+        }
+    }
 }
+
+

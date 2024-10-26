@@ -31,7 +31,7 @@ public class WeekendDays {
             // 土曜日か日曜日をチェック
             if (date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY) {
                 // 現在の日付より前かをチェック
-                if (date.isBefore(today)) {
+                if (date.isBefore(today) || date.isEqual(today) ) {
                     // フォーマットしてリストに追加
                     pastWeekends.add(date.format(formatter));
                 }

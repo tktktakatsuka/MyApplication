@@ -73,10 +73,18 @@ public class MyDatabaseManager {
         database.insert("raceResult", null, values);
     }
 
+    // データをインサートするメソッド
+    public void executerInsertData(String flg1) {
+        // テーブル名は"my_table"、nullColumnHackはnull
+        ContentValues values = new ContentValues();
+        values.put("flg1", flg1);
+        database.insert("EXECUTER", null, values);
+    }
+
     // レース結果を取得するメソッド
     public List<String> getRaceResults(String kaisaibi, String raceNumber, String kaisaijo) {
         // SQL SELECT文
-        String[] columns = {"kaisaibi", "kaisaijo", "RaceNo", "tyaku", "waku", "horseNumber", "horseName", "age", "winOdds", "time", "jockey", "popular","raceTitle"};
+        String[] columns = {"kaisaibi", "kaisaijo", "RaceNo", "tyaku", "waku", "horseNumber", "horseName", "age", "winOdds", "time", "jockey", "popular","raceTitle","hassouTime"};
 
         String selection;
         String[] selectionArgs;
@@ -104,6 +112,7 @@ public class MyDatabaseManager {
                 String winOdds = cursor.getString(cursor.getColumnIndexOrThrow("winOdds"));
                 String time = cursor.getString(cursor.getColumnIndexOrThrow("time"));
                 String racetitle = cursor.getString(cursor.getColumnIndexOrThrow("raceTitle"));
+                String hassouTime = cursor.getString(cursor.getColumnIndexOrThrow("hassouTime"));
                 list.add(tyaku);
                 list.add(waku);
                 list.add(horseName);
@@ -113,6 +122,7 @@ public class MyDatabaseManager {
                 list.add(winOdds);
                 list.add(time);
                 list.add(racetitle);
+                list.add(hassouTime);
 
             } while (cursor.moveToNext());
         }
@@ -122,5 +132,30 @@ public class MyDatabaseManager {
         }
 
         return list;
+    }
+
+
+
+    // レース結果を取得するメソッド
+    public String getExecuter() {
+        // SQL SELECT文
+        String[] columns = {"flg1"};
+
+        String selection;
+        String[] selectionArgs;
+        // WHERE句の条件を設定
+        Cursor cursor = database.query("EXECUTER", columns, null, null, null, null, null);
+        String flg1="";
+
+        // カーソルが空でないか確認
+        if (cursor != null && cursor.moveToFirst()) {
+                flg1 = cursor.getString(cursor.getColumnIndexOrThrow("flg1"));
+        }
+        // カーソルを閉じる
+        if (cursor != null) {
+            cursor.close();
+        }
+
+        return flg1;
     }
 }
