@@ -7,13 +7,13 @@
 
     <fragment
         android:id="@+id/navigation_home"
-        android:name="com.example.myapplication.ui.home.HomeFragment"
+        android:name="com.tktkcompany.kakoRaceKeiba.ui.home.HomeFragment"
         android:label="@string/title_home"
         tools:layout="@layout/fragment_home" />
 
     <fragment
         android:id="@+id/navigation_dashboard"
-        android:name="com.example.myapplication.ui.dashboard.DashboardFragment"
+        android:name="com.tktkcompany.kakoRaceKeiba.ui.dashboard.DashboardFragment"
         android:label="@string/title_dashboard"
         tools:layout="@layout/fragment_dashboard">
         <action
@@ -23,13 +23,13 @@
 
     <fragment
         android:id="@+id/navigation_notifications"
-        android:name="com.example.myapplication.ui.notifications.NotificationsFragment"
+        android:name="com.tktkcompany.kakoRaceKeiba.ui.notifications.NotificationsFragment"
         android:label="@string/title_notifications"
         tools:layout="@layout/fragment_notifications" />
 
     <fragment
         android:id="@+id/navigation_raceResults"
-        android:name="com.example.myapplication.ui.raceResult.RaceResultsFragment"
+        android:name="com.tktkcompany.kakoRaceKeiba.ui.raceResult.RaceResultsFragment"
         android:label="レース結果"
         tools:layout="@layout/fragment_raceresults" />
 </navigation>

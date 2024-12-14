@@ -1,16 +1,16 @@
-package com.example.myapplication.ui.notifications;
+package com.tktkcompany.kakoRaceKeiba.ui.home;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-public class NotificationsViewModel extends ViewModel {
+public class HomeViewModel extends ViewModel {
 
     private final MutableLiveData<String> mText;
 
-    public NotificationsViewModel() {
+    public HomeViewModel() {
         mText = new MutableLiveData<>();
-        mText.setValue("追加機能実装検討中");
+        mText.setValue("This is home fragment");
     }
 
     public LiveData<String> getText() {

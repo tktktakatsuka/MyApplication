@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.dashboard;
+package com.tktkcompany.kakoRaceKeiba.ui.dashboard;
 
 
 import android.os.Bundle;
@@ -24,11 +24,11 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
-import com.example.myapplication.R;
-import com.example.myapplication.databinding.FragmentDashboardBinding;
-import com.example.myapplication.db.MyDatabaseHelper;
-import com.example.myapplication.db.MyDatabaseManager;
-import com.example.myapplication.util.WeekendDays;
+import com.tktkcompany.kakoRaceKeiba.R;
+import com.tktkcompany.kakoRaceKeiba.databinding.FragmentDashboardBinding;
+import com.tktkcompany.kakoRaceKeiba.db.MyDatabaseHelper;
+import com.tktkcompany.kakoRaceKeiba.db.MyDatabaseManager;
+import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 
 import java.util.List;
@@ -148,6 +148,95 @@ public class DashboardFragment extends Fragment {
             }
         }
 
+
+        textFlg = true;
+        for (String date : datelist) {
+            if (!dbManager.getRaceResults(date, "1", "福島").isEmpty()) {
+                if (textFlg) {
+                    // ボタンをLinearLayoutに追加
+                    TextView newTextView = new TextView(getActivity());
+                    newTextView.setText("福島");
+                    newTextView.setTextSize(18);  // テキストサイズを設定
+                    newTextView.setPadding(10, 20, 10, 20);  // パディングを設定
+                    // TextView を LinearLayout に追加
+                    buttonContainer.addView(newTextView);
+                    textFlg = false;
+                }
+                // 新しいボタンを作成
+                Button newButton = new Button(getActivity());
+                newButton.setText(date + getDayOfWeek(date));
+                // クリックリスナーを設定
+                newButton.setOnClickListener(v -> {
+                    NavController navController = Navigation.findNavController(v);
+                    // 渡したい値を用意する
+                    Bundle bundle = hoge(date, "福島");
+                    // 値を使って何か処理
+                    navController.navigate(R.id.action_fragmentB_to_fragmentC, bundle);
+                });
+                // ボタンをLinearLayoutに追加
+                buttonContainer.addView(newButton);
+            }
+        }
+
+
+        textFlg = true;
+        for (String date : datelist) {
+            if (!dbManager.getRaceResults(date, "1", "中京").isEmpty()) {
+                if (textFlg) {
+                    // ボタンをLinearLayoutに追加
+                    TextView newTextView = new TextView(getActivity());
+                    newTextView.setText("中京");
+                    newTextView.setTextSize(18);  // テキストサイズを設定
+                    newTextView.setPadding(10, 20, 10, 20);  // パディングを設定
+                    // TextView を LinearLayout に追加
+                    buttonContainer.addView(newTextView);
+                    textFlg = false;
+                }
+                // 新しいボタンを作成
+                Button newButton = new Button(getActivity());
+                newButton.setText(date + getDayOfWeek(date));
+                // クリックリスナーを設定
+                newButton.setOnClickListener(v -> {
+                    NavController navController = Navigation.findNavController(v);
+                    // 渡したい値を用意する
+                    Bundle bundle = hoge(date, "中京");
+                    // 値を使って何か処理
+                    navController.navigate(R.id.action_fragmentB_to_fragmentC, bundle);
+                });
+                // ボタンをLinearLayoutに追加
+                buttonContainer.addView(newButton);
+            }
+        }
+
+        textFlg = true;
+        for (String date : datelist) {
+            if (!dbManager.getRaceResults(date, "1", "中山").isEmpty()) {
+                if (textFlg) {
+                    // ボタンをLinearLayoutに追加
+                    TextView newTextView = new TextView(getActivity());
+                    newTextView.setText("中山");
+                    newTextView.setTextSize(18);  // テキストサイズを設定
+                    newTextView.setPadding(10, 20, 10, 20);  // パディングを設定
+                    // TextView を LinearLayout に追加
+                    buttonContainer.addView(newTextView);
+                    textFlg = false;
+                }
+                // 新しいボタンを作成
+                Button newButton = new Button(getActivity());
+                newButton.setText(date + getDayOfWeek(date));
+                // クリックリスナーを設定
+                newButton.setOnClickListener(v -> {
+                    NavController navController = Navigation.findNavController(v);
+                    // 渡したい値を用意する
+                    Bundle bundle = hoge(date, "中山");
+                    // 値を使って何か処理
+                    navController.navigate(R.id.action_fragmentB_to_fragmentC, bundle);
+                });
+                // ボタンをLinearLayoutに追加
+                buttonContainer.addView(newButton);
+            }
+        }
+
         TextView newTextView = new TextView(getActivity());
         newTextView.setText("");
         newTextView.setTextSize(18);  // テキストサイズを設定
@@ -167,7 +256,6 @@ public class DashboardFragment extends Fragment {
     }
 
     private Bundle hoge(String date, String jo) {
-
         // 渡したい値を用意する
         // Bundleを作成して値を詰める
         Bundle bundle = new Bundle();
@@ -215,6 +303,11 @@ public class DashboardFragment extends Fragment {
             return "日付の形式が正しくありません。";
         }
     }
+
+
+
+
+
 }
 
 

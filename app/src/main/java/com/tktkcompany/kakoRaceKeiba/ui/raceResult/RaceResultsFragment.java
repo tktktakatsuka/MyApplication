@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.raceResult;
+package com.tktkcompany.kakoRaceKeiba.ui.raceResult;
 
 import android.graphics.Color;
 import android.os.Bundle;
@@ -11,16 +11,14 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 
-import com.example.myapplication.databinding.FragmentRaceresultsBinding;
-import com.example.myapplication.db.MyDatabaseHelper;
-import com.example.myapplication.db.MyDatabaseManager;
+import com.tktkcompany.kakoRaceKeiba.db.MyDatabaseManager;
+import com.tktkcompany.kakoRaceKeiba.databinding.FragmentRaceresultsBinding;
 
 import java.util.List;
 
 public class RaceResultsFragment extends Fragment {
-    private MyDatabaseHelper dbHelper;
+
 
     private FragmentRaceresultsBinding binding;
 
@@ -34,7 +32,7 @@ public class RaceResultsFragment extends Fragment {
         dbManager.open();
 
         // DatabaseHelperの初期化
-        dbHelper = new MyDatabaseHelper(getContext());
+
         // TableLayoutをレイアウトから取得
         final TableLayout tableLayout2 = binding.tableLayout2;
         final TableLayout tableLayout1 = binding.tableLayout1;

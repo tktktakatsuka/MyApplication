@@ -1,5 +1,7 @@
 [versions]
 agp = "8.6.0"
+annotation = "1.9.1"
+firebaseBom = "33.5.1"
 jsoup = "1.16.1"
 junit = "4.13.2"
 junitVersion = "1.2.1"
@@ -11,9 +13,19 @@ lifecycleLivedataKtx = "2.8.6"
 lifecycleViewmodelKtx = "2.8.6"
 navigationFragment = "2.8.2"
 navigationUi = "2.8.2"
+playServicesAds = "23.6.0"
+playServicesAdsVersion = "22.3.0"
+playServicesMeasurementApiVersion = "23.6.0"
+playServicesAdsLiteVersion = "23.6.0"
 threetenabp = "1.4.4"
+firebaseCrashlytics = "19.3.0"
 
 [libraries]
+annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+gms-play-services-ads-lite = { module = "com.google.android.gms:play-services-ads-lite", version.ref = "playServicesAdsLiteVersion" }
+gms-play-services-measurement-api = { module = "com.google.android.gms:play-services-measurement-api", version.ref = "playServicesMeasurementApiVersion" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -25,7 +37,10 @@ lifecycle-livedata-ktx = { group = "androidx.lifecycle", name = "lifecycle-lived
 lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
 navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigationFragment" }
 navigation-ui = { group = "androidx.navigation", name = "navigation-ui", version.ref = "navigationUi" }
+play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
+play-services-ads-v2230 = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAdsVersion" }
 threetenabp = { module = "com.jakewharton.threetenabp:threetenabp", version.ref = "threetenabp" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics", version.ref = "firebaseCrashlytics" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

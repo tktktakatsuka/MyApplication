@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "412289322815",
+    "project_id": "raceresult-c4af3",
+    "storage_bucket": "raceresult-c4af3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:412289322815:android:a6545e33ac963007284d8a",
+        "android_client_info": {
+          "package_name": "com.tktkCompany"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdhNTHxRuf_Jc1s-NEeADYGXJ1qYd18tY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:412289322815:android:4f103118f2c3bda3284d8a",
+        "android_client_info": {
+          "package_name": "com.tktkcompany.kakoRaceKeiba"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdhNTHxRuf_Jc1s-NEeADYGXJ1qYd18tY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

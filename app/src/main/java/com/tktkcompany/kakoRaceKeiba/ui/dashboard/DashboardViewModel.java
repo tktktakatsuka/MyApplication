@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.dashboard;
+package com.tktkcompany.kakoRaceKeiba.ui.dashboard;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;

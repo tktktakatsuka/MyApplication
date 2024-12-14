@@ -4,15 +4,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.home.HomeFragment">
+    tools:context="com.tktkcompany.kakoRaceKeiba.ui.home.HomeFragment">
 
 
-    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="16dp">
-
-
+        android:padding="16dp"
+        tools:layout_editor_absoluteX="201dp"
+        tools:layout_editor_absoluteY="0dp">
 
 
         <LinearLayout
@@ -20,23 +20,19 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <ProgressBar
-                android:id="@+id/progressBar"
-                style="?android:attr/progressBarStyleLarge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/latest_race_title1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:paddingBottom="10dp"
                 android:text="過去レース結果まとめアプリ"
                 android:textSize="20sp"
-                android:layout_gravity="center"
                 android:textStyle="bold" />
+
+            <!-- 最新のレース結果 -->
+
 
             <ImageView
                 android:id="@+id/myImageView"
@@ -46,85 +42,76 @@
                 android:layout_marginBottom="50dp"
                 android:src="@drawable/uma" />
 
-            <!-- 最新のレース結果 -->
-
+            <TextView
+                android:id="@+id/latest_race_title6"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="先月,今月分を表示します。"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/latest_race_title2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingBottom="10dp"
-                android:text="race_resultをタップして,"
                 android:layout_gravity="center"
+                android:text="race_resultをタップして,過去のレース結果を確認しよう。"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+
+            <TextView
+                android:id="@+id/latest_race_title4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:paddingBottom="10dp"
+                android:text="レースがうまく表示されないときはボタンを押してレース情報を更新してね。"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+
+            <Button
+                android:id="@+id/search_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="レース情報更新" />
+
+            <TextView
+                android:id="@+id/latest_race_title5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:paddingBottom="10dp"
+                android:text="※1日1回まで更新可"
+                android:textColor="@color/black"
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/latest_race_title3"
+                android:id="@+id/latest_race_title7"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingBottom="10dp"
-                android:text="過去のレース結果を確認"
                 android:layout_gravity="center"
+                android:paddingBottom="10dp"
+                android:text="最初の更新は2,3分程かかる場合があります。"
+                android:textColor="@color/black"
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
-<!--            <LinearLayout-->
-<!--                android:id="@+id/latest_race_result"-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:orientation="vertical">-->
-<!--                &lt;!&ndash; 動的にレース結果をここに追加 &ndash;&gt;-->
-<!--            </LinearLayout>-->
+            <!-- ここに AdMob のテンプレと広告ユニット ID を追加 -->
+            <com.google.android.gms.ads.AdView
+                android:id="@+id/adView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_gravity="center"
+                android:layout_marginBottom="-2dp"
+                app:adSize="BANNER"
+                app:adUnitId="ca-app-pub-4855274440005459/3128258657" />
+            <!-- サンプルのAd Unit ID ca-app-pub-3940256099942544/6300978111-->
 
-<!--            &lt;!&ndash; 次回のレース &ndash;&gt;-->
-<!--            <TextView-->
-<!--                android:id="@+id/next_race_title"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:paddingTop="20dp"-->
-<!--                android:paddingBottom="10dp"-->
-<!--                android:text="次回のレース"-->
-<!--                android:textSize="20sp"-->
-<!--                android:textStyle="bold" />-->
-
-<!--            <LinearLayout-->
-<!--                android:id="@+id/next_race_info"-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:orientation="vertical">-->
-<!--                &lt;!&ndash; 動的に次回のレース情報をここに追加 &ndash;&gt;-->
-<!--            </LinearLayout>-->
-
-<!--            &lt;!&ndash; 検索機能 &ndash;&gt;-->
-<!--            <TextView-->
-<!--                android:id="@+id/search_title"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:paddingTop="20dp"-->
-<!--                android:paddingBottom="10dp"-->
-<!--                android:text="検索機能"-->
-<!--                android:textSize="20sp"-->
-<!--                android:textStyle="bold" />-->
-
-<!--            <LinearLayout-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:orientation="horizontal">-->
-
-<!--                <EditText-->
-<!--                    android:id="@+id/search_input"-->
-<!--                    android:layout_width="0dp"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:layout_weight="1"-->
-<!--                    android:hint="馬名を入力" />-->
-
-<!--                <Button-->
-<!--                    android:id="@+id/search_button"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:text="検索" />-->
-<!--            </LinearLayout>-->
 
         </LinearLayout>
     </ScrollView>
