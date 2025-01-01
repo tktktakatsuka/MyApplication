@@ -9,8 +9,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
+import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
 import com.tktkcompany.kakoRaceKeiba.db.MyDatabaseManager;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 import com.tktkcompany.kakoRaceKeiba.databinding.DialogLayoutBinding;
@@ -53,99 +53,93 @@ public class HomeFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
-        // ボタンの参照を取得
-        myButton = root.findViewById(R.id.search_button);
+//        // ボタンの参照を取得
+//        myButton = root.findViewById(R.id.search_button);
+//
+//        //DB接続
+//        dbManager = new MyDatabaseManager(getContext());
+//        dbManager.open();
+//
+//        // SharedPreferencesを取得
+//        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+//        String lastClickDate = sharedPreferences.getString(KEY_LAST_CLICK_DATE, null);
+//        boolean isButtonEnabled;
 
-        //DB接続
-        dbManager = new MyDatabaseManager(getContext());
-        dbManager.open();
+//        // 現在の日付をフォーマット
+//        LocalDate today = LocalDate.now();
+//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-        // SharedPreferencesを取得
-        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        String lastClickDate = sharedPreferences.getString(KEY_LAST_CLICK_DATE, null);
-        boolean isButtonEnabled;
-
-        // 現在の日付をフォーマット
-        LocalDate today = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-        // ボタンの有効化チェック
-        if (lastClickDate != null && lastClickDate.equals(today.format(formatter))) {
-            isButtonEnabled = false; // 今日すでに押されている
-        } else {
-            isButtonEnabled = true; // ボタンを押せる
-        }
+//        // ボタンの有効化チェック
+//        if (lastClickDate != null && lastClickDate.equals(today.format(formatter))) {
+//            isButtonEnabled = true; // 今日すでに押されている
+//        } else {
+//            isButtonEnabled = true; // ボタンを押せる
+//        }
 
 
         // ボタンの状態を設定
-        myButton.setEnabled(isButtonEnabled);
-
+//        myButton.setEnabled(isButtonEnabled);
         // 固定スレッドプールを作成
-        ExecutorService executorService = Executors.newFixedThreadPool(3);
-        List<Future<String>> futures = new ArrayList<>();
+//        ExecutorService executorService = Executors.newFixedThreadPool(3);
+//        List<Future<String>> futures = new ArrayList<>();
 
-        // ボタンのクリックイベントを設定
-        myButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                // ボタンを無効化
-                myButton.setEnabled(false);
-                sharedPreferences.edit()
-                        .putString(KEY_LAST_CLICK_DATE, today.format(formatter))
-                        .putBoolean(KEY_IS_BUTTON_ENABLED, false) // ボタンを無効に設定
-                        .apply();
-
-                //モーダルの設定
-                dialogLayoutbinding = DialogLayoutBinding.inflate(inflater, container, false);
-                View dialogLayoutRoot = dialogLayoutbinding.getRoot();
-                MyDialogFragment dialogFragment = new MyDialogFragment();
-                progressBar = dialogLayoutRoot.findViewById(R.id.progressBar);
-                dialogFragment.setCancelable(false); // ダイアログ外のタッチで閉じない
-                progressBar.setVisibility(View.VISIBLE);
-                dialogFragment.show(requireActivity().getSupportFragmentManager(), "MyDialogFragment");
-
-                //スレッドでスクレイピングを実施
-                new Thread(() -> {
-                    // それぞれのタスクを実行し、完了を待機
-                    for (int i = 0; i < 6; i++) {
-                        Future<String> future;
-                        if (i == 0) {
-                            future = executorService.submit(new Task("東京"));
-                        } else if (i == 1) {
-                            future = executorService.submit(new Task("京都"));
-                        } else if (i == 2) {
-                            future = executorService.submit(new Task("新潟"));
-                        } else if (i == 3) {
-                            future = executorService.submit(new Task("中京"));
-                        }  else if (i == 4) {
-                            future = executorService.submit(new Task("中山"));
-                        }else {
-                            future = executorService.submit(new Task("福島"));
-                        }
-
-
-                        try {
-                            // タスクが完了するまで待機し、結果を取得
-                            String result = future.get();
-                        } catch (InterruptedException | ExecutionException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    // すべてのタスクが完了したUIを設定
-                    progressBar.setVisibility(View.GONE);
-                    // 読み込み完了メッセージをToastで表示
-                    dialogFragment.dismiss();
-
-                }).
-
-                        start();
-            }
-        });
-
-        // 24:00の時刻チェック（毎回のアプリ起動時にチェック）
-        checkResetButton(sharedPreferences);
+//        // ボタンのクリックイベントを設定
+//        myButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//
+//                // ボタンを無効化
+//                myButton.setEnabled(false);
+//                sharedPreferences.edit()
+//                        .putString(KEY_LAST_CLICK_DATE, today.format(formatter))
+//                        .putBoolean(KEY_IS_BUTTON_ENABLED, false) // ボタンを無効に設定
+//                        .apply();
+//
+//                //モーダルの設定
+//                dialogLayoutbinding = DialogLayoutBinding.inflate(inflater, container, false);
+//                View dialogLayoutRoot = dialogLayoutbinding.getRoot();
+//                MyDialogFragment dialogFragment = new MyDialogFragment();
+//                progressBar = dialogLayoutRoot.findViewById(R.id.progressBar);
+//                dialogFragment.setCancelable(false); // ダイアログ外のタッチで閉じない
+//                progressBar.setVisibility(View.VISIBLE);
+//                dialogFragment.show(requireActivity().getSupportFragmentManager(), "MyDialogFragment");
+//
+//                //スレッドでスクレイピングを実施
+//                new Thread(() -> {
+//                    // それぞれのタスクを実行し、完了を待機
+//                    for (int i = 0; i < 6; i++) {
+//                        Future<String> future;
+//                        if (i == 0) {
+//                            future = executorService.submit(new Task("東京"));
+//                        } else if (i == 1) {
+//                            future = executorService.submit(new Task("京都"));
+//                        } else if (i == 2) {
+//                            future = executorService.submit(new Task("新潟"));
+//                        } else if (i == 3) {
+//                            future = executorService.submit(new Task("中京"));
+//                        } else if (i == 4) {
+//                            future = executorService.submit(new Task("中山"));
+//                        } else {
+//                            future = executorService.submit(new Task("福島"));
+//                        }
+//
+//                        try {
+//                            // タスクが完了するまで待機し、結果を取得
+//                            String result = future.get();
+//                        } catch (InterruptedException | ExecutionException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//
+//                    // すべてのタスクが完了したUIを設定
+//                    progressBar.setVisibility(View.GONE);
+//                }).start();
+//            }
+//        });
+//
+//        // 24:00の時刻チェック（毎回のアプリ起動時にチェック）
+//        checkResetButton(sharedPreferences);
+//
 
         return root;
     }
@@ -196,14 +190,11 @@ public class HomeFragment extends Fragment {
                 String raceTitle = doc.getElementsByClass("raceTitle").text();
                 String hassouTime = doc.getElementsByClass("classCourseSyokin").text();
 
-                // カットする基準となる文字列
-                String cutAfter = "発走";
-
                 int j = 0;
                 for (int i = 0; i < 5; i++) {
                     if (!contentElements.isEmpty()) {
                         // DB処理　データをインサート
-                        dbManager.raceResultInsertData(date, kaisaijo, String.valueOf(raceSuu), contentElements.get(j).text(), contentElements.get(j + 1).text(), contentElements.get(j + 2).text(), contentElements.get(j + 3).text(), contentElements.get(j + 4).text(), contentElements.get(j + 5).text(), contentElements.get(j + 6).text(), contentElements.get(j + 7).text(), contentElements.get(j + 8).text(), contentElements.get(j + 9).text(), contentElements.get(j + 10).text(), contentElements.get(j + 11).text(), contentElements.get(j + 12).text(), contentElements.get(j + 13).text(), contentElements.get(j + 14).text(), raceTitle, hassouTime);
+                        FirebaseManager.raceResultInsertDatatoFirebase(date, kaisaijo, String.valueOf(raceSuu), contentElements.get(j).text(), contentElements.get(j + 1).text(), contentElements.get(j + 2).text(), contentElements.get(j + 3).text(), contentElements.get(j + 4).text(), contentElements.get(j + 5).text(), contentElements.get(j + 6).text(), contentElements.get(j + 7).text(), contentElements.get(j + 8).text(), contentElements.get(j + 9).text(), contentElements.get(j + 10).text(), contentElements.get(j + 11).text(), contentElements.get(j + 12).text(), contentElements.get(j + 13).text(), contentElements.get(j + 14).text(), raceTitle, hassouTime);
                     }
                     j = j + 15;
                     //会員登録分の情報をskip
@@ -236,9 +227,7 @@ public class HomeFragment extends Fragment {
             HomeFragment homeFragment = new HomeFragment();
 
             for (String date : dateList) {
-                if (dbManager.getRaceResults(date, "12", location).isEmpty()) {
-                    homeFragment.scrapingAndInsert(dbManager, date, location);
-                }
+                homeFragment.scrapingAndInsert(dbManager, date, location);
             }
             return "Task completed by: " + Thread.currentThread().getName();
         }

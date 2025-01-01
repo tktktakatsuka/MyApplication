@@ -24,10 +24,17 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.TaskCompletionSource;
+import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentDashboardBinding;
+import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
 import com.tktkcompany.kakoRaceKeiba.db.MyDatabaseHelper;
-import com.tktkcompany.kakoRaceKeiba.db.MyDatabaseManager;
+
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 
@@ -38,219 +45,29 @@ public class DashboardFragment extends Fragment {
 
     private FragmentDashboardBinding binding;
 
+    private final String TOKYO = "東京";
+    private final String NAKAYAMA = "中山";
+    private final String HUKUSIMA = "福島";
+    private final String TYUKYO = "中京";
+    private final String NIIGATA = "新潟";
+    private LinearLayout buttonContainer;
+
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-
         binding = FragmentDashboardBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-
-        //DB接続
-        MyDatabaseManager dbManager = new MyDatabaseManager(getContext());
-        dbManager.open();
-
-        // DatabaseHelperの初期化
-        dbHelper = new MyDatabaseHelper(getContext());
-
         // ボタンを追加するLinearLayoutの参照を取得
-        LinearLayout buttonContainer = root.findViewById(R.id.button_container);
+        buttonContainer = root.findViewById(R.id.button_container);
 
+        // 各競馬場のリストを作成
+        List<String> joNames = List.of(TOKYO, NAKAYAMA, HUKUSIMA, TYUKYO, NIIGATA);
+
+        // 日付のリストを取得
         List<String> datelist = WeekendDays.getPastWeekendsInCurrentMonth();
 
-        boolean textFlg = true;
-        // 動的にボタンを生成して追加
-        for (String date : datelist) {
-
-            if (!dbManager.getRaceResults(date, "1", "東京").isEmpty()) {
-
-                if (textFlg) {
-                    // ボタンをLinearLayoutに追加
-                    TextView newTextView = new TextView(getActivity());
-                    newTextView.setText("東京");
-                    newTextView.setTextSize(18);  // テキストサイズを設定
-                    newTextView.setPadding(10, 20, 10, 20);  // パディングを設定
-                    // TextView を LinearLayout に追加
-                    buttonContainer.addView(newTextView);
-                    textFlg = false;
-                }
-                // 新しいボタンを作成
-                Button newButton = new Button(getActivity());
-                newButton.setText(date + getDayOfWeek(date));
-                // クリックリスナーを設定
-                newButton.setOnClickListener(v -> {
-                    NavController navController = Navigation.findNavController(v);
-                    // 渡したい値を用意する
-                    Bundle bundle = hoge(date, "東京");
-                    // 値を使って何か処理
-                    navController.navigate(R.id.action_fragmentB_to_fragmentC, bundle);
-                });
-                // ボタンをLinearLayoutに追加
-                buttonContainer.addView(newButton);
-            }
-        }
-
-        textFlg = true;
-        for (String date : datelist) {
-            if (!dbManager.getRaceResults(date, "1", "京都").isEmpty()) {
-                if (textFlg) {
-                    // ボタンをLinearLayoutに追加
-                    TextView newTextView = new TextView(getActivity());
-                    newTextView.setText("京都");
-                    newTextView.setTextSize(18);  // テキストサイズを設定
-                    newTextView.setPadding(10, 20, 10, 20);  // パディングを設定
-                    // TextView を LinearLayout に追加
-                    buttonContainer.addView(newTextView);
-                    textFlg = false;
-                }
-
-                // 新しいボタンを作成
-                Button newButton = new Button(getActivity());
-                newButton.setText(date + getDayOfWeek(date));
-                // クリックリスナーを設定
-                newButton.setOnClickListener(v -> {
-                    NavController navController = Navigation.findNavController(v);
-                    // 渡したい値を用意する
-                    Bundle bundle = hoge(date, "京都");
-                    // 値を使って何か処理
-                    navController.navigate(R.id.action_fragmentB_to_fragmentC, bundle);
-                });
-                // ボタンをLinearLayoutに追加
-                buttonContainer.addView(newButton);
-            }
-        }
-
-        textFlg = true;
-        for (String date : datelist) {
-            if (!dbManager.getRaceResults(date, "1", "新潟").isEmpty()) {
-                if (textFlg) {
-                    // ボタンをLinearLayoutに追加
-                    TextView newTextView = new TextView(getActivity());
-                    newTextView.setText("新潟");
-                    newTextView.setTextSize(18);  // テキストサイズを設定
-                    newTextView.setPadding(10, 20, 10, 20);  // パディングを設定
-                    // TextView を LinearLayout に追加
-                    buttonContainer.addView(newTextView);
-                    textFlg = false;
-                }
-                // 新しいボタンを作成
-                Button newButton = new Button(getActivity());
-                newButton.setText(date + getDayOfWeek(date));
-                // クリックリスナーを設定
-                newButton.setOnClickListener(v -> {
-                    NavController navController = Navigation.findNavController(v);
-                    // 渡したい値を用意する
-                    Bundle bundle = hoge(date, "新潟");
-                    // 値を使って何か処理
-                    navController.navigate(R.id.action_fragmentB_to_fragmentC, bundle);
-                });
-                // ボタンをLinearLayoutに追加
-                buttonContainer.addView(newButton);
-            }
-        }
-
-
-        textFlg = true;
-        for (String date : datelist) {
-            if (!dbManager.getRaceResults(date, "1", "福島").isEmpty()) {
-                if (textFlg) {
-                    // ボタンをLinearLayoutに追加
-                    TextView newTextView = new TextView(getActivity());
-                    newTextView.setText("福島");
-                    newTextView.setTextSize(18);  // テキストサイズを設定
-                    newTextView.setPadding(10, 20, 10, 20);  // パディングを設定
-                    // TextView を LinearLayout に追加
-                    buttonContainer.addView(newTextView);
-                    textFlg = false;
-                }
-                // 新しいボタンを作成
-                Button newButton = new Button(getActivity());
-                newButton.setText(date + getDayOfWeek(date));
-                // クリックリスナーを設定
-                newButton.setOnClickListener(v -> {
-                    NavController navController = Navigation.findNavController(v);
-                    // 渡したい値を用意する
-                    Bundle bundle = hoge(date, "福島");
-                    // 値を使って何か処理
-                    navController.navigate(R.id.action_fragmentB_to_fragmentC, bundle);
-                });
-                // ボタンをLinearLayoutに追加
-                buttonContainer.addView(newButton);
-            }
-        }
-
-
-        textFlg = true;
-        for (String date : datelist) {
-            if (!dbManager.getRaceResults(date, "1", "中京").isEmpty()) {
-                if (textFlg) {
-                    // ボタンをLinearLayoutに追加
-                    TextView newTextView = new TextView(getActivity());
-                    newTextView.setText("中京");
-                    newTextView.setTextSize(18);  // テキストサイズを設定
-                    newTextView.setPadding(10, 20, 10, 20);  // パディングを設定
-                    // TextView を LinearLayout に追加
-                    buttonContainer.addView(newTextView);
-                    textFlg = false;
-                }
-                // 新しいボタンを作成
-                Button newButton = new Button(getActivity());
-                newButton.setText(date + getDayOfWeek(date));
-                // クリックリスナーを設定
-                newButton.setOnClickListener(v -> {
-                    NavController navController = Navigation.findNavController(v);
-                    // 渡したい値を用意する
-                    Bundle bundle = hoge(date, "中京");
-                    // 値を使って何か処理
-                    navController.navigate(R.id.action_fragmentB_to_fragmentC, bundle);
-                });
-                // ボタンをLinearLayoutに追加
-                buttonContainer.addView(newButton);
-            }
-        }
-
-        textFlg = true;
-        for (String date : datelist) {
-            if (!dbManager.getRaceResults(date, "1", "中山").isEmpty()) {
-                if (textFlg) {
-                    // ボタンをLinearLayoutに追加
-                    TextView newTextView = new TextView(getActivity());
-                    newTextView.setText("中山");
-                    newTextView.setTextSize(18);  // テキストサイズを設定
-                    newTextView.setPadding(10, 20, 10, 20);  // パディングを設定
-                    // TextView を LinearLayout に追加
-                    buttonContainer.addView(newTextView);
-                    textFlg = false;
-                }
-                // 新しいボタンを作成
-                Button newButton = new Button(getActivity());
-                newButton.setText(date + getDayOfWeek(date));
-                // クリックリスナーを設定
-                newButton.setOnClickListener(v -> {
-                    NavController navController = Navigation.findNavController(v);
-                    // 渡したい値を用意する
-                    Bundle bundle = hoge(date, "中山");
-                    // 値を使って何か処理
-                    navController.navigate(R.id.action_fragmentB_to_fragmentC, bundle);
-                });
-                // ボタンをLinearLayoutに追加
-                buttonContainer.addView(newButton);
-            }
-        }
-
-        TextView newTextView = new TextView(getActivity());
-        newTextView.setText("");
-        newTextView.setTextSize(18);  // テキストサイズを設定
-        newTextView.setPadding(10, 20, 10, 20);  // パディングを設定
-        // TextView を LinearLayout に追加
-        buttonContainer.addView(newTextView);
-
-        TextView newTextView2 = new TextView(getActivity());
-        newTextView2.setText("");
-        newTextView2.setTextSize(18);  // テキストサイズを設定
-        newTextView2.setPadding(10, 20, 10, 20);  // パディングを設定
-        // TextView を LinearLayout に追加
-        buttonContainer.addView(newTextView2);
-
+        // 日付ごとに競馬場のクエリを順番に実行
+        executeSequentialQueriesForAllLocations(datelist, joNames);
 
         return root;
     }
@@ -305,8 +122,99 @@ public class DashboardFragment extends Fragment {
     }
 
 
+    private void executeSequentialQueriesForAllLocations(List<String> datelist, List<String> joNames) {
+        Task<Void> sequence = Tasks.forResult(null); // 最初のタスクを空タスクで初期化
 
+        // 競馬場ごとに処理を順次追加
+        for (String joName : joNames) {
+            sequence = sequence.continueWithTask(task -> {
+                // ラベルを追加 (各競馬場ごとに)
+                TextView textView = new TextView(getActivity());
+                textView.setText(joName);
+                textView.setTextSize(18);
 
+                getActivity().runOnUiThread(() -> buttonContainer.addView(textView));
+
+                // 日付ごとにクエリを実行
+                return executeSequentialQueriesForDates(datelist, joName);
+            });
+        }
+
+        // 全ての競馬場の処理が完了した後の処理（任意）
+        sequence.addOnCompleteListener(task -> {
+
+            if (task.isSuccessful()) {
+                TextView newTextView = new TextView(getActivity());
+                newTextView.setText("");
+                newTextView.setTextSize(18);  // テキストサイズを設定
+                newTextView.setPadding(10, 20, 10, 20);  // パディングを設定
+                // TextView を LinearLayout に追加
+                buttonContainer.addView(newTextView);
+
+                TextView newTextView2 = new TextView(getActivity());
+                newTextView2.setText("");
+                newTextView2.setTextSize(18);  // テキストサイズを設定
+                newTextView2.setPadding(10, 20, 10, 20);  // パディングを設定
+                // TextView を LinearLayout に追加
+                buttonContainer.addView(newTextView2);
+
+            } else {
+                System.err.println("エラーが発生しました: " + task.getException());
+            }
+        });
+    }
+
+    private Task<Void> executeSequentialQueriesForDates(List<String> datelist, String joName) {
+        Task<Void> sequence = Tasks.forResult(null); // 空タスクで初期化
+
+        // 日付ごとに非同期タスクを順次実行
+        for (String date : datelist) {
+            sequence = sequence.continueWithTask(task -> queryDataAsTask(date, joName));
+        }
+        return sequence; // 全てのクエリが完了するタスクを返す
+    }
+
+    private Task<Void> queryDataAsTask(String date, String joName) {
+        TaskCompletionSource<Void> taskCompletionSource = new TaskCompletionSource<>();
+
+        FirebaseManager.queryData("raceResult" + "/" + joName + "/" + date, "tyaku", "1", new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot childSnapshot : snapshot.getChildren()) {
+                    String sRaceNo = childSnapshot.child("raceNo").getValue(String.class);
+                    String sTyaku = childSnapshot.child("tyaku").getValue(String.class);
+
+                    if ("1".equals(sTyaku) && "1".equals(sRaceNo)) {
+                        fooMethod(joName, date);
+                    }
+                }
+                // クエリが成功したらタスクを完了
+                taskCompletionSource.setResult(null);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                System.err.println("Query failed: " + error.getMessage());
+                taskCompletionSource.setException(error.toException());
+            }
+        });
+
+        return taskCompletionSource.getTask();
+    }
+
+    private void fooMethod(String joName, String date) {
+        // ボタンを生成
+        Button newButton = new Button(getActivity());
+        newButton.setText(date + getDayOfWeek(date));
+        newButton.setOnClickListener(v -> {
+            NavController navController = Navigation.findNavController(v);
+            Bundle bundle = hoge(date, joName);
+            navController.navigate(R.id.action_fragmentB_to_fragmentC, bundle);
+        });
+
+        // ボタンを追加
+        getActivity().runOnUiThread(() -> buttonContainer.addView(newButton));
+    }
 
 }
 

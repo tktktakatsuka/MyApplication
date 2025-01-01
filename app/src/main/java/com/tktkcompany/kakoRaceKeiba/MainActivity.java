@@ -2,22 +2,16 @@ package com.tktkcompany.kakoRaceKeiba;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-
-import com.google.android.gms.ads.AdListener;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import androidx.annotation.NonNull;
 
+import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.RequestConfiguration;
 import com.google.android.gms.ads.interstitial.InterstitialAd;
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
-import com.tktkcompany.kakoRaceKeiba.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -31,9 +25,8 @@ import com.jakewharton.threetenabp.AndroidThreeTen;
 public class MainActivity extends AppCompatActivity {
     private InterstitialAd interstitialAd;
     private static final String TAG = "MainActivity";
-    private AdView bannerAdView;
     private ActivityMainBinding binding;
-//    FirebaseCrashlytics crashlytics;
+    private AdView bannerAdView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,8 +58,6 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
-
-
 
         // インタースティシャル広告の読み込み
         AdRequest adRequest = new AdRequest.Builder().build();
@@ -111,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
     // インタースティシャル広告を表示するメソッド
     private void loadInterstitialAd() {
         String adUnitId = "ca-app-pub-4855274440005459/4078939329";
+//        本番用広告ユニット　ca-app-pub-4855274440005459/4078939329
 //        テスト用広告ユニットID　ca-app-pub-3940256099942544/1033173712
 
         AdRequest adRequest = new AdRequest.Builder().build();
@@ -126,7 +118,6 @@ public class MainActivity extends AppCompatActivity {
             public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError adError) {
                 interstitialAd = null;
                 Log.d(TAG, "Failed to load interstitial ad: " + adError.getMessage());
-//                crashlytics.setCustomKey(TAG, adError.getMessage()); // カスタム情報をセット
             }
         });
     }

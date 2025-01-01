@@ -6,7 +6,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MyDatabaseManager {
 
@@ -25,21 +27,6 @@ public class MyDatabaseManager {
     // データベースのクローズ
     public void close() {
         dbHelper.close();
-    }
-
-    // データをインサートするメソッド
-    public void insertData(String raceNumber,
-                           String kaisaibi, String horseNumber, String horseName, String jockey, String winOdds) {
-        ContentValues values = new ContentValues();
-        values.put("raceNumber", raceNumber);
-        values.put("kaisaibi", kaisaibi);
-        values.put("horseNumber", horseNumber);
-        values.put("horseName", horseName);
-        values.put("jockey", jockey);
-        values.put("winOdds", winOdds);
-
-        // テーブル名は"my_table"、nullColumnHackはnull
-        database.insert("raceCard", null, values);
     }
 
     // データをインサートするメソッド
@@ -72,13 +59,8 @@ public class MyDatabaseManager {
         database.insert("raceResult", null, values);
     }
 
-    // データをインサートするメソッド
-    public void executerInsertData(String flg1) {
-        // テーブル名は"my_table"、nullColumnHackはnull
-        ContentValues values = new ContentValues();
-        values.put("flg1", flg1);
-        database.insert("EXECUTER", null, values);
-    }
+
+
 
     // レース結果を取得するメソッド
     public List<String> getRaceResults(String kaisaibi, String raceNumber, String kaisaijo) {
@@ -131,30 +113,5 @@ public class MyDatabaseManager {
         }
 
         return list;
-    }
-
-
-
-    // レース結果を取得するメソッド
-    public String getExecuter() {
-        // SQL SELECT文
-        String[] columns = {"flg1"};
-
-        String selection;
-        String[] selectionArgs;
-        // WHERE句の条件を設定
-        Cursor cursor = database.query("EXECUTER", columns, null, null, null, null, null);
-        String flg1="";
-
-        // カーソルが空でないか確認
-        if (cursor != null && cursor.moveToFirst()) {
-                flg1 = cursor.getString(cursor.getColumnIndexOrThrow("flg1"));
-        }
-        // カーソルを閉じる
-        if (cursor != null) {
-            cursor.close();
-        }
-
-        return flg1;
     }
 }

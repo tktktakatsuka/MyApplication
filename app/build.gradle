@@ -15,7 +15,7 @@ android {
         applicationId "com.tktkcompany.kakoRaceKeiba"
         minSdk 24
         targetSdk 34
-        versionCode 24
+        versionCode 26
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -61,5 +61,7 @@ dependencies {
     androidTestImplementation libs.espresso.core
     implementation 'com.google.android.gms:play-services-ads:23.6.0'
     implementation libs.annotation // 最新版を使用
+    implementation 'com.google.firebase:firebase-database:20.3.2'
+    implementation 'com.google.firebase:firebase-analytics:21.6.1'
 
 }
