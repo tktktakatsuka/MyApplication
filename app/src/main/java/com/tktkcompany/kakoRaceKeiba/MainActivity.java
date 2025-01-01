@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
 
         // インタースティシャル広告の読み込み
         AdRequest adRequest = new AdRequest.Builder().build();
-        loadInterstitialAd();
+//        loadInterstitialAd();
     }
 
     //バナーを表示するメソッド

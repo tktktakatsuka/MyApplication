@@ -38,7 +38,9 @@ import com.tktkcompany.kakoRaceKeiba.db.MyDatabaseHelper;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class DashboardFragment extends Fragment {
     private MyDatabaseHelper dbHelper;
@@ -50,6 +52,8 @@ public class DashboardFragment extends Fragment {
     private final String HUKUSIMA = "福島";
     private final String TYUKYO = "中京";
     private final String NIIGATA = "新潟";
+    private final String HANSIN = "阪神";
+    private final String KOKURA = "小倉";
     private LinearLayout buttonContainer;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -72,7 +76,7 @@ public class DashboardFragment extends Fragment {
         return root;
     }
 
-    private Bundle hoge(String date, String jo) {
+    private Bundle setKeyjoNameString(String date, String jo) {
         // 渡したい値を用意する
         // Bundleを作成して値を詰める
         Bundle bundle = new Bundle();
@@ -128,12 +132,14 @@ public class DashboardFragment extends Fragment {
         // 競馬場ごとに処理を順次追加
         for (String joName : joNames) {
             sequence = sequence.continueWithTask(task -> {
-                // ラベルを追加 (各競馬場ごとに)
-                TextView textView = new TextView(getActivity());
-                textView.setText(joName);
-                textView.setTextSize(18);
 
-                getActivity().runOnUiThread(() -> buttonContainer.addView(textView));
+                getActivity().runOnUiThread(() -> {
+                    // ラベルを追加 (各競馬場ごとに)
+                    TextView textView = new TextView(getActivity());
+                    textView.setText(joName);
+                    textView.setTextSize(18);
+                    buttonContainer.addView(textView);
+                });
 
                 // 日付ごとにクエリを実行
                 return executeSequentialQueriesForDates(datelist, joName);
@@ -142,25 +148,25 @@ public class DashboardFragment extends Fragment {
 
         // 全ての競馬場の処理が完了した後の処理（任意）
         sequence.addOnCompleteListener(task -> {
+            getActivity().runOnUiThread(() -> {
+                if (task.isSuccessful()) {
+                    TextView newTextView = new TextView(getActivity());
+                    newTextView.setText("");
+                    newTextView.setTextSize(18);  // テキストサイズを設定
+                    newTextView.setPadding(10, 20, 10, 20);  // パディングを設定
+                    // TextView を LinearLayout に追加
+                    buttonContainer.addView(newTextView);
+                    TextView newTextView2 = new TextView(getActivity());
+                    newTextView2.setText("");
+                    newTextView2.setTextSize(18);  // テキストサイズを設定
+                    newTextView2.setPadding(10, 20, 10, 20);  // パディングを設定
+                    // TextView を LinearLayout に追加
+                    buttonContainer.addView(newTextView2);
 
-            if (task.isSuccessful()) {
-                TextView newTextView = new TextView(getActivity());
-                newTextView.setText("");
-                newTextView.setTextSize(18);  // テキストサイズを設定
-                newTextView.setPadding(10, 20, 10, 20);  // パディングを設定
-                // TextView を LinearLayout に追加
-                buttonContainer.addView(newTextView);
-
-                TextView newTextView2 = new TextView(getActivity());
-                newTextView2.setText("");
-                newTextView2.setTextSize(18);  // テキストサイズを設定
-                newTextView2.setPadding(10, 20, 10, 20);  // パディングを設定
-                // TextView を LinearLayout に追加
-                buttonContainer.addView(newTextView2);
-
-            } else {
-                System.err.println("エラーが発生しました: " + task.getException());
-            }
+                } else {
+                    System.err.println("エラーが発生しました: " + task.getException());
+                }
+            });
         });
     }
 
@@ -180,12 +186,15 @@ public class DashboardFragment extends Fragment {
         FirebaseManager.queryData("raceResult" + "/" + joName + "/" + date, "tyaku", "1", new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                boolean shouldAddButton = false;
+
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
                     String sRaceNo = childSnapshot.child("raceNo").getValue(String.class);
                     String sTyaku = childSnapshot.child("tyaku").getValue(String.class);
 
                     if ("1".equals(sTyaku) && "1".equals(sRaceNo)) {
-                        fooMethod(joName, date);
+                        createBundle(joName, date);
+                        break;
                     }
                 }
                 // クエリが成功したらタスクを完了
@@ -202,18 +211,18 @@ public class DashboardFragment extends Fragment {
         return taskCompletionSource.getTask();
     }
 
-    private void fooMethod(String joName, String date) {
-        // ボタンを生成
-        Button newButton = new Button(getActivity());
-        newButton.setText(date + getDayOfWeek(date));
-        newButton.setOnClickListener(v -> {
-            NavController navController = Navigation.findNavController(v);
-            Bundle bundle = hoge(date, joName);
-            navController.navigate(R.id.action_fragmentB_to_fragmentC, bundle);
+    private void createBundle(String joName, String date) {
+        getActivity().runOnUiThread(() -> {
+            Button newButton = new Button(getActivity());
+            newButton.setText(date + getDayOfWeek(date));
+            newButton.setOnClickListener(v -> {
+                NavController navController = Navigation.findNavController(v);
+                Bundle bundle = setKeyjoNameString(date, joName);
+                navController.navigate(R.id.action_fragmentB_to_fragmentC, bundle);
+            });
+            buttonContainer.addView(newButton);
         });
 
-        // ボタンを追加
-        getActivity().runOnUiThread(() -> buttonContainer.addView(newButton));
     }
 
 }
