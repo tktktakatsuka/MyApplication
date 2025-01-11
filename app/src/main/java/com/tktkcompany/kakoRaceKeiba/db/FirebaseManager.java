@@ -73,7 +73,7 @@ public class FirebaseManager {
      * @param listener データ取得時のコールバック
      */
     public static void queryData(String path, String childKey, String value, ValueEventListener listener) {
-        Query query = mDatabase.child(path).orderByChild(childKey).equalTo(value);
+        Query query = mDatabase.child(path).orderByChild(childKey);
         query.addListenerForSingleValueEvent(listener);
     }
 
@@ -104,6 +104,6 @@ public class FirebaseManager {
         raseResult.put("horseWeight", horseWeight);
         raseResult.put("raceTitle", raceTitle);
         raseResult.put("hassouTime", hassouTime);
-        FirebaseManager.createData("raceResult" + "/" + kaisaijo +"/" + kaisaibi, raseResult);
+        FirebaseManager.createData("raceResult" + "/" + kaisaijo +"/" , raseResult);
     }
 }

@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="16dp"
-        tools:layout_editor_absoluteX="201dp"
+        tools:layout_editor_absoluteX="0dp"
         tools:layout_editor_absoluteY="0dp">
 
 
@@ -42,133 +42,22 @@
                 android:layout_marginBottom="50dp"
                 android:src="@drawable/uma" />
 
-                        <TextView
-                            android:id="@+id/latest_race_title6"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="先月,今月分を表示します。"
-                            android:textSize="20sp"
-                            android:textStyle="bold" />
+            <TextView
+                android:id="@+id/latest_race_title6"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="先月,今月分を表示します。"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
-                        <TextView
-                            android:id="@+id/latest_race_title2"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:text="race_resultをタップして,過去のレース結果を確認しよう。"
-                            android:textSize="20sp"
-                            android:textStyle="bold" />
-
-
-<!--                        <TextView-->
-<!--                            android:id="@+id/latest_race_title4"-->
-<!--                            android:layout_width="wrap_content"-->
-<!--                            android:layout_height="wrap_content"-->
-<!--                            android:layout_gravity="center"-->
-<!--                            android:paddingBottom="10dp"-->
-<!--                            android:text="レースがうまく表示されないときはボタンを押してレース情報を更新してね。"-->
-<!--                            android:textSize="20sp"-->
-<!--                            android:textStyle="bold" />-->
-
-
-<!--                        <Button-->
-<!--                            android:id="@+id/search_button"-->
-<!--                            android:layout_width="wrap_content"-->
-<!--                            android:layout_height="wrap_content"-->
-<!--                            android:layout_gravity="center"-->
-<!--                            android:text="レース情報更新" />-->
-
-<!--                        <TextView-->
-<!--                            android:id="@+id/latest_race_title5"-->
-<!--                            android:layout_width="wrap_content"-->
-<!--                            android:layout_height="wrap_content"-->
-<!--                            android:layout_gravity="center"-->
-<!--                            android:paddingBottom="10dp"-->
-<!--                            android:text="※1日1回まで更新可"-->
-<!--                            android:textColor="@color/black"-->
-<!--                            android:textSize="20sp"-->
-<!--                            android:textStyle="bold" />-->
-
-<!--                        <TextView-->
-<!--                            android:id="@+id/latest_race_title7"-->
-<!--                            android:layout_width="wrap_content"-->
-<!--                            android:layout_height="wrap_content"-->
-<!--                            android:layout_gravity="center"-->
-<!--                            android:paddingBottom="10dp"-->
-<!--                            android:text="最初の更新は2,3分程かかる場合があります。"-->
-<!--                            android:textColor="@color/black"-->
-<!--                            android:textSize="20sp"-->
-<!--                            android:textStyle="bold" />-->
-
-
-<!--            <TextView-->
-<!--                android:id="@+id/latest_race_title8"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_gravity="center"-->
-<!--                android:paddingBottom="10dp"-->
-<!--                android:text=""-->
-<!--                android:textColor="@color/black"-->
-<!--                android:textSize="20sp"-->
-<!--                android:textStyle="bold" />-->
-
-
-<!--            <TextView-->
-<!--                android:id="@+id/latest_race_title9"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_gravity="center"-->
-<!--                android:paddingBottom="10dp"-->
-<!--                android:text="ダッシュボードから過去のレース結果を確認することができます。"-->
-<!--                android:textColor="@color/black"-->
-<!--                android:textSize="20sp"-->
-<!--                android:textStyle="bold" />-->
-
-<!--            <TextView-->
-<!--                android:id="@+id/latest_race_title10"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_gravity="center"-->
-<!--                android:paddingBottom="10dp"-->
-<!--                android:text=""-->
-<!--                android:textColor="@color/black"-->
-<!--                android:textSize="20sp"-->
-<!--                android:textStyle="bold" />-->
-
-<!--            <TextView-->
-<!--                android:id="@+id/latest_race_title11"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_gravity="center"-->
-<!--                android:paddingBottom="10dp"-->
-<!--                android:text=""-->
-<!--                android:textColor="@color/black"-->
-<!--                android:textSize="20sp"-->
-<!--                android:textStyle="bold" />-->
-
-<!--            <TextView-->
-<!--                android:id="@+id/latest_race_title12"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_gravity="center"-->
-<!--                android:paddingBottom="10dp"-->
-<!--                android:text=""-->
-<!--                android:textColor="@color/black"-->
-<!--                android:textSize="20sp"-->
-<!--                android:textStyle="bold" />-->
-
-<!--            <TextView-->
-<!--                android:id="@+id/latest_race_title13"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_gravity="center"-->
-<!--                android:paddingBottom="10dp"-->
-<!--                android:text=""-->
-<!--                android:textColor="@color/black"-->
-<!--                android:textSize="20sp"-->
-<!--                android:textStyle="bold" />-->
-
-
+            <TextView
+                android:id="@+id/latest_race_title2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="race_resultをタップして,過去のレース結果を確認しよう。"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
             <!-- ここに AdMob のテンプレと広告ユニット ID を追加 -->
             <com.google.android.gms.ads.AdView
@@ -178,12 +67,11 @@
                 android:layout_alignParentBottom="true"
                 android:layout_gravity="center"
                 android:layout_marginBottom="-2dp"
+                android:baselineAligned="false"
                 app:adSize="BANNER"
                 app:adUnitId="ca-app-pub-4855274440005459/3128258657" />
             <!-- サンプルのAd Unit ID ca-app-pub-3940256099942544/6300978111-->
             <!-- 本番のAd Unit ID ca-app-pub-4855274440005459/3128258657-->
-
-
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

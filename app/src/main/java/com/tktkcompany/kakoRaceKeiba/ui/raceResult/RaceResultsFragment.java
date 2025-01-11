@@ -20,6 +20,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
 import com.tktkcompany.kakoRaceKeiba.db.MyDatabaseManager;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentRaceresultsBinding;
+import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 import java.util.List;
 
@@ -124,22 +125,25 @@ public class RaceResultsFragment extends Fragment {
 
     private void raceResultTableSet(String kaisaibi, String raceNo, String kaisaijo, String tyaku, TableLayout tableLayout, TextView raceTitle, TextView hassouTime) {
 
-        FirebaseManager.queryData("raceResult" + "/" + kaisaijo + "/" + kaisaibi, "kaisaibi", kaisaibi, new ValueEventListener() {
+        FirebaseManager.queryData("raceResult" + "/" + kaisaijo, "kaisaibi", kaisaibi, new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
 
+
                 boolean isHeader = true;
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
+
                     String sRaceNo = childSnapshot.child("raceNo").getValue(String.class);
                     String sKaisaijo = childSnapshot.child("kaisaijo").getValue(String.class);
-                    // city が "Tokyo" の場合にのみ処理
-                    if (raceNo.equals(sRaceNo) && kaisaijo.equals(sKaisaijo)) {
+                    String sKaisaibi = childSnapshot.child("kaisaibi").getValue(String.class);
+                    // 1Rで開催場所が一致している場合にのみ処理
+
+                    if (raceNo.equals(sRaceNo) && kaisaijo.equals(sKaisaijo) && sKaisaibi.equals(kaisaibi)) {
                         String sRaceTitle = childSnapshot.child("raceTitle").getValue(String.class);
                         String sWaku = childSnapshot.child("waku").getValue(String.class);
                         String sAge = childSnapshot.child("age").getValue(String.class);
                         String sHorseName = childSnapshot.child("horseName").getValue(String.class);
                         String sJockey = childSnapshot.child("jockey").getValue(String.class);
-                        String sKaisaibi = childSnapshot.child("kaisaibi").getValue(String.class);
                         String sPopular = childSnapshot.child("popular").getValue(String.class);
                         String sWinOdds = childSnapshot.child("winOdds").getValue(String.class);
                         String sTime = childSnapshot.child("time").getValue(String.class);
@@ -172,7 +176,7 @@ public class RaceResultsFragment extends Fragment {
                         hassouTime.setPadding(16, 8, 16, 16);
 
 
-                        if(isHeader) {
+                        if (isHeader) {
                             // table見出し設定
                             TableRow tableRowRetu = new TableRow(getActivity());
                             tableRowRetu.addView(createTextView("着"));
@@ -209,6 +213,7 @@ public class RaceResultsFragment extends Fragment {
                         tableLayout.addView(tableRow);
                         isHeader = false;
                     }
+
                 }
             }
 

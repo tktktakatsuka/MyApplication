@@ -9,11 +9,13 @@
         android:id="@+id/navigation_home"
         android:name="com.tktkcompany.kakoRaceKeiba.ui.home.HomeFragment"
         android:label="@string/title_home"
+        android="@color/tyairo"
         tools:layout="@layout/fragment_home" />
 
     <fragment
         android:id="@+id/navigation_dashboard"
         android:name="com.tktkcompany.kakoRaceKeiba.ui.dashboard.DashboardFragment"
+        android:textColor="@color/tyairo"
         android:label="@string/title_dashboard"
         tools:layout="@layout/fragment_dashboard">
         <action
@@ -30,6 +32,7 @@
     <fragment
         android:id="@+id/navigation_raceResults"
         android:name="com.tktkcompany.kakoRaceKeiba.ui.raceResult.RaceResultsFragment"
+        android:textColor="@color/tyairo"
         android:label="レース結果"
         tools:layout="@layout/fragment_raceresults" />
 </navigation>

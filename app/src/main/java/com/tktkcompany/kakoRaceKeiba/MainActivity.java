@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
     private InterstitialAd interstitialAd;
     private static final String TAG = "MainActivity";
     private ActivityMainBinding binding;
-    private AdView bannerAdView;
+    public static AdView bannerAdView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,8 +102,7 @@ public class MainActivity extends AppCompatActivity {
     // インタースティシャル広告を表示するメソッド
     private void loadInterstitialAd() {
         String adUnitId = "ca-app-pub-4855274440005459/4078939329";
-//        本番用広告ユニット　ca-app-pub-4855274440005459/4078939329
-//        テスト用広告ユニットID　ca-app-pub-3940256099942544/1033173712
+
 
         AdRequest adRequest = new AdRequest.Builder().build();
         InterstitialAd.load(this, adUnitId, adRequest, new InterstitialAdLoadCallback() {
