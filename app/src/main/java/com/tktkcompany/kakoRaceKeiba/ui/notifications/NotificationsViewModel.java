@@ -10,7 +10,7 @@ public class NotificationsViewModel extends ViewModel {
 
     public NotificationsViewModel() {
         mText = new MutableLiveData<>();
-        mText.setValue("追加機能実装検討中");
+        mText.setValue("");
     }
 
     public LiveData<String> getText() {

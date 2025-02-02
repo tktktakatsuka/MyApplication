@@ -8,15 +8,18 @@
     <fragment
         android:id="@+id/navigation_home"
         android:name="com.tktkcompany.kakoRaceKeiba.ui.home.HomeFragment"
-        android:label="@string/title_home"
         android="@color/tyairo"
+        android:label="@string/title_home"
         tools:layout="@layout/fragment_home" />
+
+
+
 
     <fragment
         android:id="@+id/navigation_dashboard"
         android:name="com.tktkcompany.kakoRaceKeiba.ui.dashboard.DashboardFragment"
-        android:textColor="@color/tyairo"
         android:label="@string/title_dashboard"
+        android:textColor="@color/tyairo"
         tools:layout="@layout/fragment_dashboard">
         <action
             android:id="@+id/action_fragmentB_to_fragmentC"
@@ -32,7 +35,57 @@
     <fragment
         android:id="@+id/navigation_raceResults"
         android:name="com.tktkcompany.kakoRaceKeiba.ui.raceResult.RaceResultsFragment"
-        android:textColor="@color/tyairo"
         android:label="レース結果"
+        android:textColor="@color/tyairo"
         tools:layout="@layout/fragment_raceresults" />
+
+
+
+    <fragment
+        android:id="@+id/navigation_memoLists"
+        android:name="com.tktkcompany.kakoRaceKeiba.ui.memo.MemoListFragment"
+        android="@color/tyairo"
+        android:label="メモリスト"
+        tools:layout="@layout/fragment_memo_list">
+        <action
+            android:id="@+id/action_navigation_memoLists_to_navigation_memoCreate"
+            app:destination="@id/navigation_memoCreate" />
+
+        <action
+            android:id="@+id/action_navigation_memoLists_to_navigation_memoDetail"
+            app:destination="@id/navigation_memoDetail" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_memoCreate"
+        android:name="com.tktkcompany.kakoRaceKeiba.ui.memo.MemoCreateFragment"
+        android:label="メモ作成"
+        android:textColor="@color/tyairo"
+        tools:layout="@layout/fragment_raceresults">
+        <action
+            android:id="@+id/action_navigation_memoCreate_to_navigation_memoLists"
+            app:destination="@id/navigation_memoLists" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_memoDetail"
+        android:name="com.tktkcompany.kakoRaceKeiba.ui.memo.MemoDetailFragment"
+        android:label="詳細メモ"
+        android:textColor="@color/tyairo"
+        tools:layout="@layout/fragment_memo_detail">
+        <action
+            android:id="@+id/action_navigation_memoDetail_to_navigation_memoEdit"
+            app:destination="@id/navigation_memoEdit" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_memoEdit"
+        android:name="com.tktkcompany.kakoRaceKeiba.ui.memo.MemoEditFragment"
+        android:label="メモ編集"
+        android:textColor="@color/tyairo"
+        tools:layout="@layout/fragment_memo_edit">
+    </fragment>
+
+
 </navigation>

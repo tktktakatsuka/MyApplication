@@ -7,10 +7,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
+
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ProgressBar;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.annotation.NonNull;
@@ -29,11 +32,11 @@ import com.google.firebase.database.ValueEventListener;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentNotificationsBinding;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
-import com.tktkcompany.kakoRaceKeiba.db.MyDatabaseManager;
-import com.tktkcompany.kakoRaceKeiba.databinding.FragmentRaceresultsBinding;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 import java.util.ArrayList;
+
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -56,7 +59,16 @@ public class NotificationsFragment extends Fragment {
     private TableLayout tableLayout12;
     private TableLayout tableLayout13;
     private TableLayout tableLayout14;
-    private View dialogView;
+    private TableLayout tableLayout15;
+    private TableLayout tableLayout16;
+    private TableLayout tableLayout17;
+    private TableLayout tableLayout18;
+    private TableLayout tableLayout19;
+    private TableLayout tableLayout20;
+
+    private ProgressBar progressBar;
+    private TabLayout tabLayout;
+    private ViewPager2 viewPager;
 
     private TextView raceText1;
     private TextView dateText1;
@@ -74,7 +86,12 @@ public class NotificationsFragment extends Fragment {
     private TextView dateText13;
     private TextView dateText14;
     private TextView dateText15;
-    private String joName = "中山";
+    private TextView dateText16;
+    private TextView dateText17;
+    private TextView dateText18;
+    private TextView dateText19;
+    private TextView dateText20;
+    private String joName = "東京";
 
 
     /**
@@ -89,20 +106,24 @@ public class NotificationsFragment extends Fragment {
      */
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        List<String> dateList = WeekendDays.getPastWeekendsInCurrentMonth();
-        dateList.add("20250106");
-        // ユーザーが選択したアイテムを取得
-
-
         binding = FragmentNotificationsBinding.inflate(inflater, container, false);
-        // ダイアログ用のレイアウトをインフレート
-        dialogView = inflater.inflate(R.layout.dialog_layout, null, false);
-
+        CheckBox checkBox = binding.checkboxExample;
         View root = binding.getRoot();
 
-        TabLayout tabLayout = binding.tabLayout;
-        ViewPager2 viewPager = binding.viewPager;
+        List<String> dateList = WeekendDays.getPastWeekendsInCurrentMonth();
+        if (checkBox.isChecked()) {
+            Collections.sort(dateList, Collections.reverseOrder());
+            checkBox.setChecked(true);
+        } else {
+            Collections.sort(dateList);
+        }
 
+        //スピナー表示
+        progressBar = binding.progressBar;
+        progressBar.setVisibility(View.VISIBLE);
+
+        tabLayout = binding.tabLayout;
+        viewPager = binding.viewPager;
         // ページを設定するアダプター
         List<String> tabTitles = new ArrayList<>();
         tabTitles.add("好走馬");
@@ -114,11 +135,8 @@ public class NotificationsFragment extends Fragment {
         tabTitles.add("払戻金");
         tabTitles.add("馬主");
         tabTitles.add("生産者");
-
         TabPagerAdapter adapter = new TabPagerAdapter(requireActivity(), tabTitles);
         viewPager.setAdapter(adapter);
-
-
 
         // AdViewのインスタンスを取得、ロード
         loadBannerAd();
@@ -136,6 +154,12 @@ public class NotificationsFragment extends Fragment {
         tableLayout12 = binding.tableLayout12;
         tableLayout13 = binding.tableLayout13;
         tableLayout14 = binding.tableLayout14;
+        tableLayout15 = binding.tableLayout15;
+        tableLayout16 = binding.tableLayout16;
+        tableLayout17 = binding.tableLayout17;
+        tableLayout18 = binding.tableLayout18;
+        tableLayout19 = binding.tableLayout19;
+        tableLayout20 = binding.tableLayout20;
         dateText1 = binding.textDate1;
         dateText2 = binding.textDate2;
         dateText3 = binding.textDate3;
@@ -151,22 +175,17 @@ public class NotificationsFragment extends Fragment {
         dateText13 = binding.textDate13;
         dateText14 = binding.textDate14;
         dateText15 = binding.textDate15;
+        dateText16 = binding.textDate16;
+        dateText17 = binding.textDate17;
+        dateText18 = binding.textDate18;
+        dateText19 = binding.textDate19;
+        dateText20 = binding.textDate20;
 
-        MyDatabaseManager dbManager = new MyDatabaseManager(getContext());
-        dbManager.open();
+
         // ボタンを取得
         Button showDialogButton = binding.showDialogButton;
         // ボタンのクリックリスナーを設定
         showDialogButton.setOnClickListener(view -> showDialogList());
-
-        // ダイアログを作成
-        android.app.AlertDialog.Builder builder2 = new android.app.AlertDialog.Builder(getContext());
-        builder2.setView(dialogView);
-        builder2.setCancelable(false); // ダイアログ外をタップしても閉じないようにする
-        progressDialog = builder2.create();
-        // モーダルダイアログを表示
-        showProgressDialog("読み込み中...");
-
         tableLayout1.removeAllViews();
         tableLayout2.removeAllViews();
         tableLayout3.removeAllViews();
@@ -181,6 +200,12 @@ public class NotificationsFragment extends Fragment {
         tableLayout12.removeAllViews();
         tableLayout13.removeAllViews();
         tableLayout14.removeAllViews();
+        tableLayout15.removeAllViews();
+        tableLayout16.removeAllViews();
+        tableLayout17.removeAllViews();
+        tableLayout18.removeAllViews();
+        tableLayout19.removeAllViews();
+        tableLayout20.removeAllViews();
         dateText1.setText("");
         dateText2.setText("");
         dateText3.setText("");
@@ -195,7 +220,12 @@ public class NotificationsFragment extends Fragment {
         dateText12.setText("");
         dateText13.setText("");
         dateText14.setText("");
-
+        dateText15.setText("");
+        dateText16.setText("");
+        dateText17.setText("");
+        dateText18.setText("");
+        dateText19.setText("");
+        dateText20.setText("");
 
         HashMap<String, TableLayout> tableMap = new HashMap<>();
         HashMap<String, TextView> textMap = new HashMap<>();
@@ -243,24 +273,50 @@ public class NotificationsFragment extends Fragment {
             } else if (i == 13) {
                 tableMap.put(date, tableLayout14);
                 textMap.put(date, dateText14);
+            } else if (i == 14) {
+                tableMap.put(date, tableLayout15);
+                textMap.put(date, dateText15);
+            } else if (i == 15) {
+                tableMap.put(date, tableLayout16);
+                textMap.put(date, dateText16);
+            } else if (i == 16) {
+                tableMap.put(date, tableLayout17);
+                textMap.put(date, dateText17);
+            } else if (i == 17) {
+                tableMap.put(date, tableLayout18);
+                textMap.put(date, dateText18);
+            } else if (i == 18) {
+                tableMap.put(date, tableLayout19);
+                textMap.put(date, dateText19);
+            } else if (i == 19) {
+                tableMap.put(date, tableLayout20);
+                textMap.put(date, dateText20);
             }
             i = i + 1;
         }
 
+        CheckBox checkboxHani = binding.checkboxHani;
+        int reptNumber = 0;
         for (String date : dateList) {
-            raceTrendsKousouHorseTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
-            raceTrendsKousouHorseTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
-            raceTrendsKousouHorseTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
-            raceTrendsKousouHorseTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
-            raceTrendsKousouHorseTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
-            raceTrendsKousouHorseTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
-            raceTrendsKousouHorseTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
-            raceTrendsKousouHorseTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
-            raceTrendsKousouHorseTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
-            raceTrendsKousouHorseTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
-            raceTrendsKousouHorseTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
-            raceTrendsKousouHorseTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+            if (!checkboxHani.isChecked() && reptNumber == 8) {
+                break;
+            } else {
+                raceTrendsKousouHorseTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
+                raceTrendsKousouHorseTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
+                raceTrendsKousouHorseTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
+                raceTrendsKousouHorseTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
+                raceTrendsKousouHorseTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
+                raceTrendsKousouHorseTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
+                raceTrendsKousouHorseTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
+                raceTrendsKousouHorseTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
+                raceTrendsKousouHorseTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
+                raceTrendsKousouHorseTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
+                raceTrendsKousouHorseTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
+                raceTrendsKousouHorseTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                reptNumber = reptNumber + 1;
+            }
         }
+
 
         // TabLayoutとViewPager2をリンク
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> tab.setText(tabTitles.get(position))).attach();
@@ -268,6 +324,80 @@ public class NotificationsFragment extends Fragment {
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
+
+                if (checkBox.isChecked()) {
+                    Collections.sort(dateList, Collections.reverseOrder());
+                } else {
+                    Collections.sort(dateList);
+                }
+                HashMap<String, TableLayout> tableMap = new HashMap<>();
+                HashMap<String, TextView> textMap = new HashMap<>();
+                int i = 0;
+                for (String date : dateList) {
+                    if (i == 0) {
+                        tableMap.put(date, tableLayout1);
+                        textMap.put(date, dateText1);
+                    } else if (i == 1) {
+                        tableMap.put(date, tableLayout2);
+                        textMap.put(date, dateText2);
+                    } else if (i == 2) {
+                        tableMap.put(date, tableLayout3);
+                        textMap.put(date, dateText3);
+                    } else if (i == 3) {
+                        tableMap.put(date, tableLayout4);
+                        textMap.put(date, dateText4);
+                    } else if (i == 4) {
+                        tableMap.put(date, tableLayout5);
+                        textMap.put(date, dateText5);
+                    } else if (i == 5) {
+                        tableMap.put(date, tableLayout6);
+                        textMap.put(date, dateText6);
+                    } else if (i == 6) {
+                        tableMap.put(date, tableLayout7);
+                        textMap.put(date, dateText7);
+                    } else if (i == 7) {
+                        tableMap.put(date, tableLayout8);
+                        textMap.put(date, dateText8);
+                    } else if (i == 8) {
+                        tableMap.put(date, tableLayout9);
+                        textMap.put(date, dateText9);
+                    } else if (i == 9) {
+                        tableMap.put(date, tableLayout10);
+                        textMap.put(date, dateText10);
+                    } else if (i == 10) {
+                        tableMap.put(date, tableLayout11);
+                        textMap.put(date, dateText11);
+                    } else if (i == 11) {
+                        tableMap.put(date, tableLayout12);
+                        textMap.put(date, dateText12);
+                    } else if (i == 12) {
+                        tableMap.put(date, tableLayout13);
+                        textMap.put(date, dateText13);
+                    } else if (i == 13) {
+                        tableMap.put(date, tableLayout14);
+                        textMap.put(date, dateText14);
+                    } else if (i == 14) {
+                        tableMap.put(date, tableLayout15);
+                        textMap.put(date, dateText15);
+                    } else if (i == 15) {
+                        tableMap.put(date, tableLayout16);
+                        textMap.put(date, dateText16);
+                    } else if (i == 16) {
+                        tableMap.put(date, tableLayout17);
+                        textMap.put(date, dateText17);
+                    } else if (i == 17) {
+                        tableMap.put(date, tableLayout18);
+                        textMap.put(date, dateText18);
+                    } else if (i == 18) {
+                        tableMap.put(date, tableLayout19);
+                        textMap.put(date, dateText19);
+                    } else if (i == 19) {
+                        tableMap.put(date, tableLayout20);
+                        textMap.put(date, dateText20);
+                    }
+                    i = i + 1;
+                }
+
                 //テーブル初期化
                 tableLayout1.removeAllViews();
                 tableLayout2.removeAllViews();
@@ -283,6 +413,12 @@ public class NotificationsFragment extends Fragment {
                 tableLayout12.removeAllViews();
                 tableLayout13.removeAllViews();
                 tableLayout14.removeAllViews();
+                tableLayout15.removeAllViews();
+                tableLayout16.removeAllViews();
+                tableLayout17.removeAllViews();
+                tableLayout18.removeAllViews();
+                tableLayout19.removeAllViews();
+                tableLayout20.removeAllViews();
                 dateText1.setText("");
                 dateText2.setText("");
                 dateText3.setText("");
@@ -297,29 +433,39 @@ public class NotificationsFragment extends Fragment {
                 dateText12.setText("");
                 dateText13.setText("");
                 dateText14.setText("");
+                dateText15.setText("");
+                dateText16.setText("");
+                dateText17.setText("");
+                dateText18.setText("");
+                dateText19.setText("");
+                dateText20.setText("");
                 // タブが選択されたときの処理
                 int position = tab.getPosition(); // 選択されたタブのインデックス
-                String tabTitle = tabTitles.get(position); // 選択されたタブのタイトル
 
-                Toast.makeText(getContext(), "選択されたタブ: " + tabTitle, Toast.LENGTH_SHORT).show();
-                // 必要に応じて、ここでボタン押下のイベント処理を追加
-                // タブごとの処理を switch 文で分岐
+                CheckBox checkboxHani = binding.checkboxHani;
+                int reptNumber = 0;
+
                 switch (position) {
                     case 0: // "好走馬" タブ
-                        Toast.makeText(getContext(), "好走馬タブが選択されました", Toast.LENGTH_SHORT).show();
                         for (String date : dateList) {
-                            raceTrendsKousouHorseTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKousouHorseTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKousouHorseTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKousouHorseTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKousouHorseTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKousouHorseTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKousouHorseTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKousouHorseTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKousouHorseTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKousouHorseTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKousouHorseTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKousouHorseTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                            if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                break;
+                            } else {
+                                raceTrendsKousouHorseTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKousouHorseTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKousouHorseTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKousouHorseTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKousouHorseTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKousouHorseTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKousouHorseTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKousouHorseTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKousouHorseTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKousouHorseTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKousouHorseTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKousouHorseTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                                reptNumber = reptNumber + 1;
+                            }
+
                         }
                         break;
 
@@ -327,18 +473,23 @@ public class NotificationsFragment extends Fragment {
                         Toast.makeText(getContext(), "脚質タブが選択されました", Toast.LENGTH_SHORT).show();
                         // 必要な処理をここに記述
                         for (String date : dateList) {
-                            raceTrendsKyakusituTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKyakusituTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKyakusituTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKyakusituTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKyakusituTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKyakusituTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKyakusituTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKyakusituTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKyakusituTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKyakusituTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKyakusituTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsKyakusituTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                            if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                break;
+                            } else {
+                                raceTrendsKyakusituTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKyakusituTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKyakusituTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKyakusituTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKyakusituTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKyakusituTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKyakusituTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKyakusituTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKyakusituTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKyakusituTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKyakusituTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsKyakusituTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                                reptNumber = reptNumber + 1;
+                            }
                         }
                         break;
 
@@ -346,129 +497,158 @@ public class NotificationsFragment extends Fragment {
                         Toast.makeText(getContext(), "騎手タブが選択されました", Toast.LENGTH_SHORT).show();
                         // 必要な処理をここに記述
                         for (String date : dateList) {
-                            raceTrendsJockeyTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsJockeyTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsJockeyTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsJockeyTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsJockeyTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsJockeyTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsJockeyTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsJockeyTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsJockeyTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsJockeyTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsJockeyTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsJockeyTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                            if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                break;
+                            } else {
+                                raceTrendsJockeyTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsJockeyTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsJockeyTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsJockeyTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsJockeyTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsJockeyTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsJockeyTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsJockeyTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsJockeyTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsJockeyTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsJockeyTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsJockeyTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                                reptNumber = reptNumber + 1;
+                            }
                         }
                         break;
 
                     case 3: // "調教師" タブ
-                        Toast.makeText(getContext(), "調教師タブが選択されました", Toast.LENGTH_SHORT).show();
+
                         for (String date : dateList) {
-                            raceTrendsTyokyosiTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsTyokyosiTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsTyokyosiTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsTyokyosiTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsTyokyosiTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsTyokyosiTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsTyokyosiTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsTyokyosiTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsTyokyosiTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsTyokyosiTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsTyokyosiTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsTyokyosiTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                            if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                break;
+                            } else {
+                                raceTrendsTyokyosiTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsTyokyosiTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsTyokyosiTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsTyokyosiTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsTyokyosiTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsTyokyosiTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsTyokyosiTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsTyokyosiTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsTyokyosiTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsTyokyosiTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsTyokyosiTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsTyokyosiTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                                reptNumber = reptNumber + 1;
+                            }
                         }
                         break;
 
                     case 4: // "種牡馬" タブ
-                        Toast.makeText(getContext(), "種牡馬タブが選択されました", Toast.LENGTH_SHORT).show();
                         for (String date : dateList) {
-                            raceTrendsFartherTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsFartherTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsFartherTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsFartherTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsFartherTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsFartherTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsFartherTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsFartherTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsFartherTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsFartherTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsFartherTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsFartherTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                            if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                break;
+                            } else {
+                                raceTrendsFartherTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsFartherTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsFartherTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsFartherTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsFartherTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsFartherTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsFartherTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsFartherTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsFartherTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsFartherTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsFartherTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsFartherTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                                reptNumber = reptNumber + 1;
+                            }
                         }
                         break;
 
                     case 5: // "母父" タブ
-                        Toast.makeText(getContext(), "母父タブが選択されました", Toast.LENGTH_SHORT).show();
                         for (String date : dateList) {
-                            raceTrendsMatherTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsMatherTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsMatherTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsMatherTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsMatherTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsMatherTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsMatherTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsMatherTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsMatherTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsMatherTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsMatherTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsMatherTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                            if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                break;
+                            } else {
+                                raceTrendsMatherTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsMatherTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsMatherTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsMatherTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsMatherTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsMatherTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsMatherTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsMatherTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsMatherTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsMatherTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsMatherTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsMatherTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                                reptNumber = reptNumber + 1;
+                            }
                         }
                         break;
 
                     case 6: // "払戻金" タブ
-                        Toast.makeText(getContext(), "払戻金タブが選択されました", Toast.LENGTH_SHORT).show();
                         for (String date : dateList) {
-                            raceTrendsHaraimodosiTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsHaraimodosiTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsHaraimodosiTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsHaraimodosiTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsHaraimodosiTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsHaraimodosiTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsHaraimodosiTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsHaraimodosiTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsHaraimodosiTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsHaraimodosiTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsHaraimodosiTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsHaraimodosiTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                            if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                break;
+                            } else {
+                                raceTrendsHaraimodosiTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsHaraimodosiTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsHaraimodosiTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsHaraimodosiTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsHaraimodosiTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsHaraimodosiTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsHaraimodosiTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsHaraimodosiTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsHaraimodosiTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsHaraimodosiTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsHaraimodosiTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsHaraimodosiTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                                reptNumber = reptNumber + 1;
+                            }
                         }
                         break;
 
                     case 7: // "馬主" タブ
-                        Toast.makeText(getContext(), "馬主タブが選択されました", Toast.LENGTH_SHORT).show();
                         for (String date : dateList) {
-                            raceTrendsBanusiTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsBanusiTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsBanusiTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsBanusiTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsBanusiTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsBanusiTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsBanusiTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsBanusiTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsBanusiTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsBanusiTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsBanusiTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsBanusiTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                            if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                break;
+                            } else {
+                                raceTrendsBanusiTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsBanusiTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsBanusiTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsBanusiTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsBanusiTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsBanusiTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsBanusiTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsBanusiTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsBanusiTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsBanusiTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsBanusiTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsBanusiTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                                reptNumber = reptNumber + 1;
+                            }
                         }
                         break;
 
                     case 8: // "生産者" タブ
-                        Toast.makeText(getContext(), "生産者タブが選択されました", Toast.LENGTH_SHORT).show();
                         for (String date : dateList) {
-                            raceTrendsSeisanTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsSeisanTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsSeisanTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsSeisanTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsSeisanTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsSeisanTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsSeisanTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsSeisanTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsSeisanTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsSeisanTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsSeisanTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
-                            raceTrendsSeisanTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                            if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                break;
+                            } else {
+                                raceTrendsSeisanTableSet(date, "1R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsSeisanTableSet(date, "2R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsSeisanTableSet(date, "3R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsSeisanTableSet(date, "4R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsSeisanTableSet(date, "5R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsSeisanTableSet(date, "6R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsSeisanTableSet(date, "7R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsSeisanTableSet(date, "8R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsSeisanTableSet(date, "9R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsSeisanTableSet(date, "10R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsSeisanTableSet(date, "11R", joName, tableMap.get(date), textMap.get(date));
+                                raceTrendsSeisanTableSet(date, "12R", joName, tableMap.get(date), textMap.get(date));
+                                reptNumber = reptNumber + 1;
+                            }
                         }
                         break;
-
                     default:
                         Toast.makeText(getContext(), "未知のタブが選択されました", Toast.LENGTH_SHORT).show();
                         break;
@@ -484,10 +664,10 @@ public class NotificationsFragment extends Fragment {
             public void onTabReselected(TabLayout.Tab tab) {
                 // すでに選択されているタブが再度タップされたときの処理（必要なら実装）
             }
+
         });
 
 
-        hideProgressDialog();
         return root;
     }
 
@@ -497,11 +677,84 @@ public class NotificationsFragment extends Fragment {
         binding = null;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
 
-    private void raceTrendsKousouHorseTableSet(String kaisaibi, String raceNo, String kaisaijo, TableLayout tableLayout, TextView dateTextLayout) {
+        // ViewPager2の位置をリセット
+        if (viewPager != null) {
+            viewPager.setCurrentItem(0, false); // 最初のタブに戻る
+        }
+
+        // TabLayoutの選択をリセット
+        if (tabLayout != null) {
+            TabLayout.Tab firstTab = tabLayout.getTabAt(0);
+            if (firstTab != null) {
+                firstTab.select();
+            }
+        }
+
+        //テーブルレイアウトリセット
+        tableLayout1.removeAllViews();
+        tableLayout2.removeAllViews();
+        tableLayout3.removeAllViews();
+        tableLayout4.removeAllViews();
+        tableLayout5.removeAllViews();
+        tableLayout6.removeAllViews();
+        tableLayout7.removeAllViews();
+        tableLayout8.removeAllViews();
+        tableLayout9.removeAllViews();
+        tableLayout10.removeAllViews();
+        tableLayout11.removeAllViews();
+        tableLayout12.removeAllViews();
+        tableLayout13.removeAllViews();
+        tableLayout14.removeAllViews();
+        tableLayout15.removeAllViews();
+        tableLayout16.removeAllViews();
+        tableLayout17.removeAllViews();
+        tableLayout18.removeAllViews();
+        tableLayout19.removeAllViews();
+        tableLayout20.removeAllViews();
+        dateText1.setText("");
+        dateText2.setText("");
+        dateText3.setText("");
+        dateText4.setText("");
+        dateText5.setText("");
+        dateText6.setText("");
+        dateText7.setText("");
+        dateText8.setText("");
+        dateText9.setText("");
+        dateText10.setText("");
+        dateText11.setText("");
+        dateText12.setText("");
+        dateText13.setText("");
+        dateText14.setText("");
+        dateText15.setText("");
+        dateText16.setText("");
+        dateText17.setText("");
+        dateText18.setText("");
+        dateText19.setText("");
+        dateText20.setText("");
+
+
+    }
+
+
+    public void raceTrendsKousouHorseTableSet(String kaisaibi, String raceNo, String kaisaijo, TableLayout tableLayout, TextView dateTextLayout) {
         FirebaseManager.queryData("raceTrends" + "/" + kaisaijo, "kaisaibi", kaisaibi, new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                CheckBox checkBoxShiba = binding.checkboxShiba;
+                CheckBox checkBoxDart = binding.checkboxDart;
+
+                //スピナー表示
+                if ("1R".equals(raceNo)) {
+                    progressBar = binding.progressBar;
+                    requireActivity().runOnUiThread(() -> {
+                        progressBar.setVisibility(View.VISIBLE);
+                    });
+                }
+
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
                     String sRaceNo = childSnapshot.child("raceNum").getValue(String.class);
                     String sKaisaijo = childSnapshot.child("kaisaijo").getValue(String.class);
@@ -523,11 +776,11 @@ public class NotificationsFragment extends Fragment {
                         String umaban3 = childSnapshot.child("uma3Ban").getValue(String.class);
                         String umaban3Name = childSnapshot.child("umaName").getValue(String.class);
 
-
-                        //レースタイトルセット
-                        dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
-                        dateTextLayout.setPadding(16, 8, 16, 8);
-                        requireActivity().runOnUiThread(() -> {
+                        if (dateTextLayout != null) {
+                            dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
+                            dateTextLayout.setPadding(16, 8, 16, 8);
+                        }
+                        getActivity().runOnUiThread(() -> {
                             if (isHeader) {
                                 // table見出し設定
                                 TableRow tableRowRetu = new TableRow(getActivity());
@@ -542,10 +795,14 @@ public class NotificationsFragment extends Fragment {
                                 tableRowRetu.addView(createTextView("馬番"));
                                 tableRowRetu.addView(createTextView("３着(人気)"));
                                 tableRowRetu.setBackgroundColor(Color.LTGRAY);
-                                tableLayout.addView(tableRowRetu);
+                                if (tableLayout != null) {
+                                    tableLayout.addView(tableRowRetu);
+                                }
                                 isHeader = false;
                             }
+                        });
 
+                        if (checkBoxShiba.isChecked() && sZyouken.contains("芝")) {
                             TableRow tableRow = new TableRow(getActivity());
                             //R
                             tableRow.addView(createTextView(sRaceNumber));
@@ -567,8 +824,44 @@ public class NotificationsFragment extends Fragment {
                             tableRow.addView(createTextView(umaban3));
                             //3着(人気)
                             tableRow.addView(createTextView(umaban3Name));
-                            tableLayout.addView(tableRow);
-                        });
+                            if (tableLayout != null) {
+                                tableLayout.addView(tableRow);
+                            }
+                        }
+
+                        if (checkBoxDart.isChecked() && sZyouken.contains("ダ")) {
+                            TableRow tableRow = new TableRow(getActivity());
+                            //R
+                            tableRow.addView(createTextView(sRaceNumber));
+                            // レース名
+                            tableRow.addView(createTextView(sRaceName));
+                            // 条件
+                            tableRow.addView(createTextView(sZyouken));
+                            // 馬場・天候
+                            tableRow.addView(createTextView(sbabaCondition));
+                            //馬番1
+                            tableRow.addView(createTextView(umaban1));
+                            //１着(人気)
+                            tableRow.addView(createTextView(umaban1Name));
+                            //馬番2
+                            tableRow.addView(createTextView(umaban2));
+                            //2着(人気)
+                            tableRow.addView(createTextView(umaban2Name));
+                            //馬番3
+                            tableRow.addView(createTextView(umaban3));
+                            //3着(人気)
+                            tableRow.addView(createTextView(umaban3Name));
+                            if (tableLayout != null) {
+                                tableLayout.addView(tableRow);
+                            }
+                        }
+                    }
+                }
+
+                //12R目の処理終了時に読み込みをオフにする
+                if ("12R".equals(raceNo)) {
+                    if (isAdded() && progressBar != null) {
+                        progressBar.setVisibility(View.GONE);
                     }
                 }
 
@@ -584,6 +877,9 @@ public class NotificationsFragment extends Fragment {
 
     private void raceTrendsKyakusituTableSet(String kaisaibi, String raceNo, String kaisaijo, TableLayout tableLayout, TextView dateTextLayout) {
         FirebaseManager.queryData("raceTrends" + "/" + kaisaijo, "kaisaibi", kaisaibi, new ValueEventListener() {
+            CheckBox checkBoxShiba = binding.checkboxShiba;
+            CheckBox checkBoxDart = binding.checkboxDart;
+
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
@@ -611,24 +907,25 @@ public class NotificationsFragment extends Fragment {
                         //レースタイトルセット
                         dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
                         dateTextLayout.setPadding(16, 8, 16, 8);
-                        requireActivity().runOnUiThread(() -> {
-                            if (isHeader) {
-                                // table見出し設定
-                                TableRow tableRowRetu = new TableRow(getActivity());
-                                tableRowRetu.addView(createTextView("R"));
-                                tableRowRetu.addView(createTextView("レース名"));
-                                tableRowRetu.addView(createTextView("条件"));
-                                tableRowRetu.addView(createTextView("馬場・天候"));
-                                tableRowRetu.addView(createTextView("馬番"));
-                                tableRowRetu.addView(createTextView("１着(人気)"));
-                                tableRowRetu.addView(createTextView("馬番"));
-                                tableRowRetu.addView(createTextView("２着(人気)"));
-                                tableRowRetu.addView(createTextView("馬番"));
-                                tableRowRetu.addView(createTextView("３着(人気)"));
-                                tableRowRetu.setBackgroundColor(Color.LTGRAY);
-                                tableLayout.addView(tableRowRetu);
-                                isHeader = false;
-                            }
+                        if (isHeader) {
+                            // table見出し設定
+                            TableRow tableRowRetu = new TableRow(getActivity());
+                            tableRowRetu.addView(createTextView("R"));
+                            tableRowRetu.addView(createTextView("レース名"));
+                            tableRowRetu.addView(createTextView("条件"));
+                            tableRowRetu.addView(createTextView("馬場・天候"));
+                            tableRowRetu.addView(createTextView("馬番"));
+                            tableRowRetu.addView(createTextView("１着(人気)"));
+                            tableRowRetu.addView(createTextView("馬番"));
+                            tableRowRetu.addView(createTextView("２着(人気)"));
+                            tableRowRetu.addView(createTextView("馬番"));
+                            tableRowRetu.addView(createTextView("３着(人気)"));
+                            tableRowRetu.setBackgroundColor(Color.LTGRAY);
+                            tableLayout.addView(tableRowRetu);
+                            isHeader = false;
+                        }
+
+                        if (checkBoxShiba.isChecked() && sZyouken.contains("芝")) {
 
                             TableRow tableRow = new TableRow(getActivity());
                             //R
@@ -652,8 +949,36 @@ public class NotificationsFragment extends Fragment {
                             //3着(人気)
                             tableRow.addView(createTextView(uma3Kyakusitu));
                             tableLayout.addView(tableRow);
-                        });
+                        }
+
+                        if (checkBoxDart.isChecked() && sZyouken.contains("ダ")) {
+
+                            TableRow tableRow = new TableRow(getActivity());
+                            //R
+                            tableRow.addView(createTextView(sRaceNumber));
+                            // レース名
+                            tableRow.addView(createTextView(sRaceName));
+                            // 条件
+                            tableRow.addView(createTextView(sZyouken));
+                            // 馬場・天候
+                            tableRow.addView(createTextView(sbabaCondition));
+                            //馬番1
+                            tableRow.addView(createTextView(umaban1));
+                            //１着(人気)
+                            tableRow.addView(createTextView(uma1Kyakusitu));
+                            //馬番2
+                            tableRow.addView(createTextView(umaban2));
+                            //2着(人気)
+                            tableRow.addView(createTextView(uma2Kyakusitu));
+                            //馬番3
+                            tableRow.addView(createTextView(umaban3));
+                            //3着(人気)
+                            tableRow.addView(createTextView(uma3Kyakusitu));
+                            tableLayout.addView(tableRow);
+                        }
+
                     }
+
                 }
 
             }
@@ -667,6 +992,9 @@ public class NotificationsFragment extends Fragment {
 
     private void raceTrendsJockeyTableSet(String kaisaibi, String raceNo, String kaisaijo, TableLayout tableLayout, TextView dateTextLayout) {
         FirebaseManager.queryData("raceTrends" + "/" + kaisaijo, "kaisaibi", kaisaibi, new ValueEventListener() {
+            CheckBox checkBoxShiba = binding.checkboxShiba;
+            CheckBox checkBoxDart = binding.checkboxDart;
+
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
@@ -690,11 +1018,10 @@ public class NotificationsFragment extends Fragment {
                         String umaban3 = childSnapshot.child("uma3Ban").getValue(String.class);
                         String uma3Jockey = childSnapshot.child("uma3Jockey").getValue(String.class);
 
-
                         //レースタイトルセット
-                        dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
-                        dateTextLayout.setPadding(16, 8, 16, 8);
                         requireActivity().runOnUiThread(() -> {
+                            dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
+                            dateTextLayout.setPadding(16, 8, 16, 8);
                             if (isHeader) {
                                 // table見出し設定
                                 TableRow tableRowRetu = new TableRow(getActivity());
@@ -713,28 +1040,56 @@ public class NotificationsFragment extends Fragment {
                                 isHeader = false;
                             }
 
-                            TableRow tableRow = new TableRow(getActivity());
-                            //R
-                            tableRow.addView(createTextView(sRaceNumber));
-                            // レース名
-                            tableRow.addView(createTextView(sRaceName));
-                            // 条件
-                            tableRow.addView(createTextView(sZyouken));
-                            // 馬場・天候
-                            tableRow.addView(createTextView(sbabaCondition));
-                            //馬番1
-                            tableRow.addView(createTextView(umaban1));
-                            //１着(人気)
-                            tableRow.addView(createTextView(uma1Jockey));
-                            //馬番2
-                            tableRow.addView(createTextView(umaban2));
-                            //2着(人気)
-                            tableRow.addView(createTextView(uma2Jockey));
-                            //馬番3
-                            tableRow.addView(createTextView(umaban3));
-                            //3着(人気)
-                            tableRow.addView(createTextView(uma3Jockey));
-                            tableLayout.addView(tableRow);
+                            if (checkBoxShiba.isChecked() && sZyouken.contains("芝")) {
+
+                                TableRow tableRow = new TableRow(getActivity());
+                                //R
+                                tableRow.addView(createTextView(sRaceNumber));
+                                // レース名
+                                tableRow.addView(createTextView(sRaceName));
+                                // 条件
+                                tableRow.addView(createTextView(sZyouken));
+                                // 馬場・天候
+                                tableRow.addView(createTextView(sbabaCondition));
+                                //馬番1
+                                tableRow.addView(createTextView(umaban1));
+                                //１着(人気)
+                                tableRow.addView(createTextView(uma1Jockey));
+                                //馬番2
+                                tableRow.addView(createTextView(umaban2));
+                                //2着(人気)
+                                tableRow.addView(createTextView(uma2Jockey));
+                                //馬番3
+                                tableRow.addView(createTextView(umaban3));
+                                //3着(人気)
+                                tableRow.addView(createTextView(uma3Jockey));
+                                tableLayout.addView(tableRow);
+                            }
+
+                            if (checkBoxDart.isChecked() && sZyouken.contains("ダ")) {
+                                TableRow tableRow = new TableRow(getActivity());
+                                //R
+                                tableRow.addView(createTextView(sRaceNumber));
+                                // レース名
+                                tableRow.addView(createTextView(sRaceName));
+                                // 条件
+                                tableRow.addView(createTextView(sZyouken));
+                                // 馬場・天候
+                                tableRow.addView(createTextView(sbabaCondition));
+                                //馬番1
+                                tableRow.addView(createTextView(umaban1));
+                                //１着(人気)
+                                tableRow.addView(createTextView(uma1Jockey));
+                                //馬番2
+                                tableRow.addView(createTextView(umaban2));
+                                //2着(人気)
+                                tableRow.addView(createTextView(uma2Jockey));
+                                //馬番3
+                                tableRow.addView(createTextView(umaban3));
+                                //3着(人気)
+                                tableRow.addView(createTextView(uma3Jockey));
+                                tableLayout.addView(tableRow);
+                            }
                         });
                     }
                 }
@@ -752,6 +1107,9 @@ public class NotificationsFragment extends Fragment {
         FirebaseManager.queryData("raceTrends" + "/" + kaisaijo, "kaisaibi", kaisaibi, new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                CheckBox checkBoxShiba = binding.checkboxShiba;
+                CheckBox checkBoxDart = binding.checkboxDart;
+
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
                     String sRaceNo = childSnapshot.child("raceNum").getValue(String.class);
                     String sKaisaijo = childSnapshot.child("kaisaijo").getValue(String.class);
@@ -775,9 +1133,10 @@ public class NotificationsFragment extends Fragment {
 
 
                         //レースタイトルセット
-                        dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
-                        dateTextLayout.setPadding(16, 8, 16, 8);
+
                         requireActivity().runOnUiThread(() -> {
+                            dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
+                            dateTextLayout.setPadding(16, 8, 16, 8);
                             if (isHeader) {
                                 // table見出し設定
                                 TableRow tableRowRetu = new TableRow(getActivity());
@@ -796,30 +1155,60 @@ public class NotificationsFragment extends Fragment {
                                 isHeader = false;
                             }
 
-                            TableRow tableRow = new TableRow(getActivity());
-                            //R
-                            tableRow.addView(createTextView(sRaceNumber));
-                            // レース名
-                            tableRow.addView(createTextView(sRaceName));
-                            // 条件
-                            tableRow.addView(createTextView(sZyouken));
-                            // 馬場・天候
-                            tableRow.addView(createTextView(sbabaCondition));
-                            //馬番1
-                            tableRow.addView(createTextView(umaban1));
-                            //１着(人気)
-                            tableRow.addView(createTextView(uma1tyokyosi));
-                            //馬番2
-                            tableRow.addView(createTextView(umaban2));
-                            //2着(人気)
-                            tableRow.addView(createTextView(uma2tyokyosi));
-                            //馬番3
-                            tableRow.addView(createTextView(umaban3));
-                            //3着(人気)
-                            tableRow.addView(createTextView(uma3tyokyosi));
-                            tableLayout.addView(tableRow);
+                            if (checkBoxShiba.isChecked() && sZyouken.contains("芝")) {
+
+                                TableRow tableRow = new TableRow(getActivity());
+                                //R
+                                tableRow.addView(createTextView(sRaceNumber));
+                                // レース名
+                                tableRow.addView(createTextView(sRaceName));
+                                // 条件
+                                tableRow.addView(createTextView(sZyouken));
+                                // 馬場・天候
+                                tableRow.addView(createTextView(sbabaCondition));
+                                //馬番1
+                                tableRow.addView(createTextView(umaban1));
+                                //１着(人気)
+                                tableRow.addView(createTextView(uma1tyokyosi));
+                                //馬番2
+                                tableRow.addView(createTextView(umaban2));
+                                //2着(人気)
+                                tableRow.addView(createTextView(uma2tyokyosi));
+                                //馬番3
+                                tableRow.addView(createTextView(umaban3));
+                                //3着(人気)
+                                tableRow.addView(createTextView(uma3tyokyosi));
+                                tableLayout.addView(tableRow);
+                            }
+
+                            if (checkBoxDart.isChecked() && sZyouken.contains("ダ")) {
+
+                                TableRow tableRow = new TableRow(getActivity());
+                                //R
+                                tableRow.addView(createTextView(sRaceNumber));
+                                // レース名
+                                tableRow.addView(createTextView(sRaceName));
+                                // 条件
+                                tableRow.addView(createTextView(sZyouken));
+                                // 馬場・天候
+                                tableRow.addView(createTextView(sbabaCondition));
+                                //馬番1
+                                tableRow.addView(createTextView(umaban1));
+                                //１着(人気)
+                                tableRow.addView(createTextView(uma1tyokyosi));
+                                //馬番2
+                                tableRow.addView(createTextView(umaban2));
+                                //2着(人気)
+                                tableRow.addView(createTextView(uma2tyokyosi));
+                                //馬番3
+                                tableRow.addView(createTextView(umaban3));
+                                //3着(人気)
+                                tableRow.addView(createTextView(uma3tyokyosi));
+                                tableLayout.addView(tableRow);
+                            }
                         });
                     }
+
                 }
 
             }
@@ -835,6 +1224,9 @@ public class NotificationsFragment extends Fragment {
         FirebaseManager.queryData("raceTrends" + "/" + kaisaijo, "kaisaibi", kaisaibi, new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                CheckBox checkBoxShiba = binding.checkboxShiba;
+                CheckBox checkBoxDart = binding.checkboxDart;
+
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
                     String sRaceNo = childSnapshot.child("raceNum").getValue(String.class);
                     String sKaisaijo = childSnapshot.child("kaisaijo").getValue(String.class);
@@ -858,9 +1250,10 @@ public class NotificationsFragment extends Fragment {
 
 
                         //レースタイトルセット
-                        dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
-                        dateTextLayout.setPadding(16, 8, 16, 8);
+
                         requireActivity().runOnUiThread(() -> {
+                            dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
+                            dateTextLayout.setPadding(16, 8, 16, 8);
                             if (isHeader) {
                                 // table見出し設定
                                 TableRow tableRowRetu = new TableRow(getActivity());
@@ -879,30 +1272,60 @@ public class NotificationsFragment extends Fragment {
                                 isHeader = false;
                             }
 
-                            TableRow tableRow = new TableRow(getActivity());
-                            //R
-                            tableRow.addView(createTextView(sRaceNumber));
-                            // レース名
-                            tableRow.addView(createTextView(sRaceName));
-                            // 条件
-                            tableRow.addView(createTextView(sZyouken));
-                            // 馬場・天候
-                            tableRow.addView(createTextView(sbabaCondition));
-                            //馬番1
-                            tableRow.addView(createTextView(umaban1));
-                            //１着(人気)
-                            tableRow.addView(createTextView(uma1father));
-                            //馬番2
-                            tableRow.addView(createTextView(umaban2));
-                            //2着(人気)
-                            tableRow.addView(createTextView(uma2father));
-                            //馬番3
-                            tableRow.addView(createTextView(umaban3));
-                            //3着(人気)
-                            tableRow.addView(createTextView(uma3father));
-                            tableLayout.addView(tableRow);
+                            if (checkBoxShiba.isChecked() && sZyouken.contains("芝")) {
+
+
+                                TableRow tableRow = new TableRow(getActivity());
+                                //R
+                                tableRow.addView(createTextView(sRaceNumber));
+                                // レース名
+                                tableRow.addView(createTextView(sRaceName));
+                                // 条件
+                                tableRow.addView(createTextView(sZyouken));
+                                // 馬場・天候
+                                tableRow.addView(createTextView(sbabaCondition));
+                                //馬番1
+                                tableRow.addView(createTextView(umaban1));
+                                //１着(人気)
+                                tableRow.addView(createTextView(uma1father));
+                                //馬番2
+                                tableRow.addView(createTextView(umaban2));
+                                //2着(人気)
+                                tableRow.addView(createTextView(uma2father));
+                                //馬番3
+                                tableRow.addView(createTextView(umaban3));
+                                //3着(人気)
+                                tableRow.addView(createTextView(uma3father));
+                                tableLayout.addView(tableRow);
+                            }
+
+                            if (checkBoxDart.isChecked() && sZyouken.contains("ダ")) {
+                                TableRow tableRow = new TableRow(getActivity());
+                                //R
+                                tableRow.addView(createTextView(sRaceNumber));
+                                // レース名
+                                tableRow.addView(createTextView(sRaceName));
+                                // 条件
+                                tableRow.addView(createTextView(sZyouken));
+                                // 馬場・天候
+                                tableRow.addView(createTextView(sbabaCondition));
+                                //馬番1
+                                tableRow.addView(createTextView(umaban1));
+                                //１着(人気)
+                                tableRow.addView(createTextView(uma1father));
+                                //馬番2
+                                tableRow.addView(createTextView(umaban2));
+                                //2着(人気)
+                                tableRow.addView(createTextView(uma2father));
+                                //馬番3
+                                tableRow.addView(createTextView(umaban3));
+                                //3着(人気)
+                                tableRow.addView(createTextView(uma3father));
+                                tableLayout.addView(tableRow);
+                            }
                         });
                     }
+
                 }
 
             }
@@ -918,6 +1341,9 @@ public class NotificationsFragment extends Fragment {
         FirebaseManager.queryData("raceTrends" + "/" + kaisaijo, "kaisaibi", kaisaibi, new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                CheckBox checkBoxShiba = binding.checkboxShiba;
+                CheckBox checkBoxDart = binding.checkboxDart;
+
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
                     String sRaceNo = childSnapshot.child("raceNum").getValue(String.class);
                     String sKaisaijo = childSnapshot.child("kaisaijo").getValue(String.class);
@@ -941,9 +1367,10 @@ public class NotificationsFragment extends Fragment {
 
 
                         //レースタイトルセット
-                        dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
-                        dateTextLayout.setPadding(16, 8, 16, 8);
+
                         requireActivity().runOnUiThread(() -> {
+                            dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
+                            dateTextLayout.setPadding(16, 8, 16, 8);
                             if (isHeader) {
                                 // table見出し設定
                                 TableRow tableRowRetu = new TableRow(getActivity());
@@ -962,32 +1389,61 @@ public class NotificationsFragment extends Fragment {
                                 isHeader = false;
                             }
 
-                            TableRow tableRow = new TableRow(getActivity());
-                            //R
-                            tableRow.addView(createTextView(sRaceNumber));
-                            // レース名
-                            tableRow.addView(createTextView(sRaceName));
-                            // 条件
-                            tableRow.addView(createTextView(sZyouken));
-                            // 馬場・天候
-                            tableRow.addView(createTextView(sbabaCondition));
-                            //馬番1
-                            tableRow.addView(createTextView(umaban1));
-                            //１着(人気)
-                            tableRow.addView(createTextView(uma1mather));
-                            //馬番2
-                            tableRow.addView(createTextView(umaban2));
-                            //2着(人気)
-                            tableRow.addView(createTextView(uma2mather));
-                            //馬番3
-                            tableRow.addView(createTextView(umaban3));
-                            //3着(人気)
-                            tableRow.addView(createTextView(uma3mather));
-                            tableLayout.addView(tableRow);
+                            if (checkBoxShiba.isChecked() && sZyouken.contains("芝")) {
+
+                                TableRow tableRow = new TableRow(getActivity());
+                                //R
+                                tableRow.addView(createTextView(sRaceNumber));
+                                // レース名
+                                tableRow.addView(createTextView(sRaceName));
+                                // 条件
+                                tableRow.addView(createTextView(sZyouken));
+                                // 馬場・天候
+                                tableRow.addView(createTextView(sbabaCondition));
+                                //馬番1
+                                tableRow.addView(createTextView(umaban1));
+                                //１着(人気)
+                                tableRow.addView(createTextView(uma1mather));
+                                //馬番2
+                                tableRow.addView(createTextView(umaban2));
+                                //2着(人気)
+                                tableRow.addView(createTextView(uma2mather));
+                                //馬番3
+                                tableRow.addView(createTextView(umaban3));
+                                //3着(人気)
+                                tableRow.addView(createTextView(uma3mather));
+                                tableLayout.addView(tableRow);
+                            }
+
+                            if (checkBoxDart.isChecked() && sZyouken.contains("ダ")) {
+
+                                TableRow tableRow = new TableRow(getActivity());
+                                //R
+                                tableRow.addView(createTextView(sRaceNumber));
+                                // レース名
+                                tableRow.addView(createTextView(sRaceName));
+                                // 条件
+                                tableRow.addView(createTextView(sZyouken));
+                                // 馬場・天候
+                                tableRow.addView(createTextView(sbabaCondition));
+                                //馬番1
+                                tableRow.addView(createTextView(umaban1));
+                                //１着(人気)
+                                tableRow.addView(createTextView(uma1mather));
+                                //馬番2
+                                tableRow.addView(createTextView(umaban2));
+                                //2着(人気)
+                                tableRow.addView(createTextView(uma2mather));
+                                //馬番3
+                                tableRow.addView(createTextView(umaban3));
+                                //3着(人気)
+                                tableRow.addView(createTextView(uma3mather));
+                                tableLayout.addView(tableRow);
+                            }
                         });
                     }
-                }
 
+                }
             }
 
             @Override
@@ -1001,6 +1457,9 @@ public class NotificationsFragment extends Fragment {
         FirebaseManager.queryData("raceTrends" + "/" + kaisaijo, "kaisaibi", kaisaibi, new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                CheckBox checkBoxShiba = binding.checkboxShiba;
+                CheckBox checkBoxDart = binding.checkboxDart;
+
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
                     String sRaceNo = childSnapshot.child("raceNum").getValue(String.class);
                     String sKaisaijo = childSnapshot.child("kaisaijo").getValue(String.class);
@@ -1021,9 +1480,10 @@ public class NotificationsFragment extends Fragment {
                         String haraimodosi3Rentan = childSnapshot.child("haraimodosi3Rentan").getValue(String.class);
 
                         //レースタイトルセット
-                        dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
-                        dateTextLayout.setPadding(16, 8, 16, 8);
+
                         requireActivity().runOnUiThread(() -> {
+                            dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
+                            dateTextLayout.setPadding(16, 8, 16, 8);
                             if (isHeader) {
                                 // table見出し設定
                                 TableRow tableRowRetu = new TableRow(getActivity());
@@ -1040,26 +1500,52 @@ public class NotificationsFragment extends Fragment {
                                 isHeader = false;
                             }
 
-                            TableRow tableRow = new TableRow(getActivity());
-                            //R
-                            tableRow.addView(createTextView(sRaceNumber));
-                            // レース名
-                            tableRow.addView(createTextView(sRaceName));
-                            // 条件
-                            tableRow.addView(createTextView(sZyouken));
-                            // 馬場・天候
-                            tableRow.addView(createTextView(sbabaCondition));
-                            //馬番1
-                            tableRow.addView(createTextView(haraimodosiAre));
-                            //単勝
-                            tableRow.addView(createTextView(haraimodosiTansyo));
-                            //馬連
-                            tableRow.addView(createTextView(haraimodosiUmaren));
-                            //3連単
-                            tableRow.addView(createTextView(haraimodosi3Rentan));
-                            tableLayout.addView(tableRow);
+                            if (checkBoxDart.isChecked() && sZyouken.contains("芝")) {
+
+                                TableRow tableRow = new TableRow(getActivity());
+                                //R
+                                tableRow.addView(createTextView(sRaceNumber));
+                                // レース名
+                                tableRow.addView(createTextView(sRaceName));
+                                // 条件
+                                tableRow.addView(createTextView(sZyouken));
+                                // 馬場・天候
+                                tableRow.addView(createTextView(sbabaCondition));
+                                //馬番1
+                                tableRow.addView(createTextView(haraimodosiAre));
+                                //単勝
+                                tableRow.addView(createTextView(haraimodosiTansyo));
+                                //馬連
+                                tableRow.addView(createTextView(haraimodosiUmaren));
+                                //3連単
+                                tableRow.addView(createTextView(haraimodosi3Rentan));
+                                tableLayout.addView(tableRow);
+                            }
+
+                            if (checkBoxShiba.isChecked() && sZyouken.contains("ダ")) {
+
+                                TableRow tableRow = new TableRow(getActivity());
+                                //R
+                                tableRow.addView(createTextView(sRaceNumber));
+                                // レース名
+                                tableRow.addView(createTextView(sRaceName));
+                                // 条件
+                                tableRow.addView(createTextView(sZyouken));
+                                // 馬場・天候
+                                tableRow.addView(createTextView(sbabaCondition));
+                                //馬番1
+                                tableRow.addView(createTextView(haraimodosiAre));
+                                //単勝
+                                tableRow.addView(createTextView(haraimodosiTansyo));
+                                //馬連
+                                tableRow.addView(createTextView(haraimodosiUmaren));
+                                //3連単
+                                tableRow.addView(createTextView(haraimodosi3Rentan));
+                                tableLayout.addView(tableRow);
+                            }
                         });
                     }
+
                 }
 
             }
@@ -1075,6 +1561,9 @@ public class NotificationsFragment extends Fragment {
         FirebaseManager.queryData("raceTrends" + "/" + kaisaijo, "kaisaibi", kaisaibi, new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                CheckBox checkBoxShiba = binding.checkboxShiba;
+                CheckBox checkBoxDart = binding.checkboxDart;
+
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
                     String sRaceNo = childSnapshot.child("raceNum").getValue(String.class);
                     String sKaisaijo = childSnapshot.child("kaisaijo").getValue(String.class);
@@ -1097,10 +1586,9 @@ public class NotificationsFragment extends Fragment {
                         String banusi3 = childSnapshot.child("banusi3").getValue(String.class);
 
 
-                        //レースタイトルセット
-                        dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
-                        dateTextLayout.setPadding(16, 8, 16, 8);
                         requireActivity().runOnUiThread(() -> {
+                            dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
+                            dateTextLayout.setPadding(16, 8, 16, 8);
                             if (isHeader) {
                                 // table見出し設定
                                 TableRow tableRowRetu = new TableRow(getActivity());
@@ -1119,30 +1607,60 @@ public class NotificationsFragment extends Fragment {
                                 isHeader = false;
                             }
 
-                            TableRow tableRow = new TableRow(getActivity());
-                            //R
-                            tableRow.addView(createTextView(sRaceNumber));
-                            // レース名
-                            tableRow.addView(createTextView(sRaceName));
-                            // 条件
-                            tableRow.addView(createTextView(sZyouken));
-                            // 馬場・天候
-                            tableRow.addView(createTextView(sbabaCondition));
-                            //馬番1
-                            tableRow.addView(createTextView(umaban1));
-                            //１着(人気)
-                            tableRow.addView(createTextView(banusi1));
-                            //馬番2
-                            tableRow.addView(createTextView(umaban2));
-                            //2着(人気)
-                            tableRow.addView(createTextView(banusi2));
-                            //馬番3
-                            tableRow.addView(createTextView(umaban3));
-                            //3着(人気)
-                            tableRow.addView(createTextView(banusi3));
-                            tableLayout.addView(tableRow);
+                            if (checkBoxShiba.isChecked() && sZyouken.contains("芝")) {
+
+                                TableRow tableRow = new TableRow(getActivity());
+                                //R
+                                tableRow.addView(createTextView(sRaceNumber));
+                                // レース名
+                                tableRow.addView(createTextView(sRaceName));
+                                // 条件
+                                tableRow.addView(createTextView(sZyouken));
+                                // 馬場・天候
+                                tableRow.addView(createTextView(sbabaCondition));
+                                //馬番1
+                                tableRow.addView(createTextView(umaban1));
+                                //１着(人気)
+                                tableRow.addView(createTextView(banusi1));
+                                //馬番2
+                                tableRow.addView(createTextView(umaban2));
+                                //2着(人気)
+                                tableRow.addView(createTextView(banusi2));
+                                //馬番3
+                                tableRow.addView(createTextView(umaban3));
+                                //3着(人気)
+                                tableRow.addView(createTextView(banusi3));
+                                tableLayout.addView(tableRow);
+                            }
+
+                            if (checkBoxDart.isChecked() && sZyouken.contains("ダ")) {
+
+                                TableRow tableRow = new TableRow(getActivity());
+                                //R
+                                tableRow.addView(createTextView(sRaceNumber));
+                                // レース名
+                                tableRow.addView(createTextView(sRaceName));
+                                // 条件
+                                tableRow.addView(createTextView(sZyouken));
+                                // 馬場・天候
+                                tableRow.addView(createTextView(sbabaCondition));
+                                //馬番1
+                                tableRow.addView(createTextView(umaban1));
+                                //１着(人気)
+                                tableRow.addView(createTextView(banusi1));
+                                //馬番2
+                                tableRow.addView(createTextView(umaban2));
+                                //2着(人気)
+                                tableRow.addView(createTextView(banusi2));
+                                //馬番3
+                                tableRow.addView(createTextView(umaban3));
+                                //3着(人気)
+                                tableRow.addView(createTextView(banusi3));
+                                tableLayout.addView(tableRow);
+                            }
                         });
                     }
+
                 }
             }
 
@@ -1158,6 +1676,9 @@ public class NotificationsFragment extends Fragment {
         FirebaseManager.queryData("raceTrends" + "/" + kaisaijo, "kaisaibi", kaisaibi, new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                CheckBox checkBoxShiba = binding.checkboxShiba;
+                CheckBox checkBoxDart = binding.checkboxDart;
+
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
                     String sRaceNo = childSnapshot.child("raceNum").getValue(String.class);
                     String sKaisaijo = childSnapshot.child("kaisaijo").getValue(String.class);
@@ -1181,9 +1702,9 @@ public class NotificationsFragment extends Fragment {
 
 
                         //レースタイトルセット
-                        dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
-                        dateTextLayout.setPadding(16, 8, 16, 8);
                         requireActivity().runOnUiThread(() -> {
+                            dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
+                            dateTextLayout.setPadding(16, 8, 16, 8);
                             if (isHeader) {
                                 // table見出し設定
                                 TableRow tableRowRetu = new TableRow(getActivity());
@@ -1202,30 +1723,58 @@ public class NotificationsFragment extends Fragment {
                                 isHeader = false;
                             }
 
-                            TableRow tableRow = new TableRow(getActivity());
-                            //R
-                            tableRow.addView(createTextView(sRaceNumber));
-                            // レース名
-                            tableRow.addView(createTextView(sRaceName));
-                            // 条件
-                            tableRow.addView(createTextView(sZyouken));
-                            // 馬場・天候
-                            tableRow.addView(createTextView(sbabaCondition));
-                            //馬番1
-                            tableRow.addView(createTextView(umaban1));
-                            //１着(人気)
-                            tableRow.addView(createTextView(seisann1));
-                            //馬番2
-                            tableRow.addView(createTextView(umaban2));
-                            //2着(人気)
-                            tableRow.addView(createTextView(seisann2));
-                            //馬番3
-                            tableRow.addView(createTextView(umaban3));
-                            //3着(人気)
-                            tableRow.addView(createTextView(seisann3));
-                            tableLayout.addView(tableRow);
+                            if (checkBoxShiba.isChecked() && sZyouken.contains("芝")) {
+                                TableRow tableRow = new TableRow(getActivity());
+                                //R
+                                tableRow.addView(createTextView(sRaceNumber));
+                                // レース名
+                                tableRow.addView(createTextView(sRaceName));
+                                // 条件
+                                tableRow.addView(createTextView(sZyouken));
+                                // 馬場・天候
+                                tableRow.addView(createTextView(sbabaCondition));
+                                //馬番1
+                                tableRow.addView(createTextView(umaban1));
+                                //１着(人気)
+                                tableRow.addView(createTextView(seisann1));
+                                //馬番2
+                                tableRow.addView(createTextView(umaban2));
+                                //2着(人気)
+                                tableRow.addView(createTextView(seisann2));
+                                //馬番3
+                                tableRow.addView(createTextView(umaban3));
+                                //3着(人気)
+                                tableRow.addView(createTextView(seisann3));
+                                tableLayout.addView(tableRow);
+                            }
+
+                            if (checkBoxDart.isChecked() && sZyouken.contains("ダ")) {
+                                TableRow tableRow = new TableRow(getActivity());
+                                //R
+                                tableRow.addView(createTextView(sRaceNumber));
+                                // レース名
+                                tableRow.addView(createTextView(sRaceName));
+                                // 条件
+                                tableRow.addView(createTextView(sZyouken));
+                                // 馬場・天候
+                                tableRow.addView(createTextView(sbabaCondition));
+                                //馬番1
+                                tableRow.addView(createTextView(umaban1));
+                                //１着(人気)
+                                tableRow.addView(createTextView(seisann1));
+                                //馬番2
+                                tableRow.addView(createTextView(umaban2));
+                                //2着(人気)
+                                tableRow.addView(createTextView(seisann2));
+                                //馬番3
+                                tableRow.addView(createTextView(umaban3));
+                                //3着(人気)
+                                tableRow.addView(createTextView(seisann3));
+                                tableLayout.addView(tableRow);
+                            }
                         });
                     }
+
                 }
             }
 
@@ -1250,33 +1799,22 @@ public class NotificationsFragment extends Fragment {
 
     private void showDialogList() {
         // ダイアログに表示するリスト
-        String[] items = {"東京", "中山", "京都", "中京"};
-
-        // AlertDialog を作成
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle("Choose an Option")
-                .setItems(items, (dialog, which) -> {
-                    // ユーザーが選択したアイテムを取得
-                    joName = items[which];
-                });
-
-        // ダイアログを表示
-        builder.create().show();
-    }
+        requireActivity().runOnUiThread(() -> {
+            String[] items = {"東京", "京都", "小倉"};
+            // AlertDialog を作成
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            builder.setTitle("Choose an Option")
+                    .setItems(items, (dialog, which) -> {
+                        // ユーザーが選択したアイテムを取得
+                        joName = items[which];
+                        TextView textView = binding.selectRaceText;
+                        textView.setText(joName + "競馬場の傾向を表示");
+                    });
 
 
-    // モーダルダイアログを表示するメソッド
-    private void showProgressDialog(String message) {
-        if (progressDialog != null && !progressDialog.isShowing()) {
-//            progressDialog.show(); // ダイアログを表示
-        }
-    }
-
-    // モーダルダイアログを非表示にするメソッド
-    private void hideProgressDialog() {
-        if (progressDialog != null && progressDialog.isShowing()) {
-            progressDialog.dismiss(); // ダイアログを閉じる
-        }
+            // ダイアログを表示
+            builder.create().show();
+        });
     }
 
 
@@ -1309,5 +1847,7 @@ public class NotificationsFragment extends Fragment {
 
         bannerAdView.loadAd(adRequest);
     }
+
+
 
 }

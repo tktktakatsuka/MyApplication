@@ -5,6 +5,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.tktkcompany.kakoRaceKeiba.ui.memo.Memo;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +35,7 @@ public class MyDatabaseManager {
     public void raceResultInsertData(String kaisaibi, String kaisaijo, String raceNo, String tyaku,
                                      String waku, String horseNumber, String horseName, String age, String weight,
                                      String jockey, String popular, String winOdds, String time, String tyakusa,
-                                     String tuukazyun, String nobori, String tyoukyousi, String horseWeight,String raceTitle, String hassouTime) {
+                                     String tuukazyun, String nobori, String tyoukyousi, String horseWeight, String raceTitle, String hassouTime) {
         ContentValues values = new ContentValues();
         values.put("kaisaibi", kaisaibi);
         values.put("kaisaijo", kaisaijo);
@@ -59,26 +61,67 @@ public class MyDatabaseManager {
         database.insert("raceResult", null, values);
     }
 
+    // データをインサートするメソッド
+    public void raceResultMemoInsertData(String title, String comment) {
+        ContentValues values = new ContentValues();
+        values.put("title", title);
+        values.put("comment", comment);
+
+        // テーブル名は"my_table"、nullColumnHackはnull
+        database.insert("memo", null, values);
+    }
+
+    public void deleteMemo(String title) {
+
+        database.delete("memo", "title=?", new String[]{String.valueOf(title)});
+    }
 
 
 
     // レース結果を取得するメソッド
-    public List<String> getRaceResults(String kaisaibi, String raceNumber, String kaisaijo) {
+    public List<Memo> getMemo() {
         // SQL SELECT文
-        String[] columns = {"kaisaibi", "kaisaijo", "RaceNo", "tyaku", "waku", "horseNumber", "horseName", "age", "winOdds", "time", "jockey", "popular","raceTitle","hassouTime"};
+        String[] columns = {"kaisaibi", "horseName", "title", "comment", "babaCondition", "distance", "kaisaijo"};
 
-        String selection;
-        String[] selectionArgs;
-        // WHERE句の条件を設定
-        if (!"".equals(kaisaibi)) {
-            selection = "kaisaibi = ? AND RaceNo =? AND kaisaijo=?";
-            selectionArgs = new String[]{kaisaibi, raceNumber, kaisaijo}; // ここで引数を渡します
-        } else {
-            selection = null;
-            selectionArgs =null;
+        Cursor cursor = database.query("memo", columns, null, null, null, null, null);
+        List<Memo> list = new ArrayList<Memo>();
+
+        // カーソルが空でないか確認
+
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                String title = cursor.getString(cursor.getColumnIndexOrThrow("title"));
+                String comment = cursor.getString(cursor.getColumnIndexOrThrow("comment"));
+                Memo memo = new Memo(title, comment);
+                list.add(memo);
+
+                // HashMapの作成（キー: String, 値: Integer）
+            } while (cursor.moveToNext());
+        }
+        // カーソルを閉じる
+        if (cursor != null) {
+            cursor.close();
         }
 
-        Cursor cursor = database.query("raceResult", columns, selection, selectionArgs, null, null, "tyaku ASC");
+        return list;
+    }
+
+    public void updateMemo(Memo memo) {
+
+        ContentValues values = new ContentValues();
+        values.put("title", memo.getTitle());
+        values.put("comment", memo.getContent());
+
+        database.update("memo", values, "title = ?", new String[]{String.valueOf(memo.getTitle())});
+    }
+
+
+
+    // レース結果を取得するメソッド
+    public List<String> getRaceResults() {
+        // SQL SELECT文
+        String[] columns = {"kaisaibi", "kaisaijo", "RaceNo", "tyaku", "waku", "horseNumber", "horseName", "age", "winOdds", "time", "jockey", "popular", "raceTitle", "hassouTime"};
+        Cursor cursor = database.query("memo", columns, null, null, null, null, "");
         List<String> list = new ArrayList<String>();
 
         // カーソルが空でないか確認

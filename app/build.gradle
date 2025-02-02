@@ -15,7 +15,7 @@ android {
         applicationId "com.tktkcompany.kakoRaceKeiba"
         minSdk 24
         targetSdk 34
-        versionCode 304
+        versionCode 321
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -44,6 +44,7 @@ android {
 }
 
 dependencies {
+    implementation 'com.google.firebase:firebase-messaging:23.1.2'
     implementation platform(libs.firebase.bom)
     implementation libs.firebase.analytics
     implementation libs.threetenabp

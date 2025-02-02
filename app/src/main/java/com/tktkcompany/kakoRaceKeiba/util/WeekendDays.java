@@ -1,10 +1,13 @@
 package com.tktkcompany.kakoRaceKeiba.util;
+
 import org.threeten.bp.DayOfWeek;
 import org.threeten.bp.LocalDate;
 import org.threeten.bp.YearMonth;
 import org.threeten.bp.format.DateTimeFormatter;
+import org.threeten.bp.format.DateTimeParseException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class WeekendDays {
@@ -49,13 +52,47 @@ public class WeekendDays {
             // 土曜日か日曜日をチェック
             if (date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY) {
                 // 現在の日付より前かをチェック
-                if (date.isBefore(today) || date.isEqual(today) ) {
+                if (date.isBefore(today) || date.isEqual(today)) {
                     // フォーマットしてリストに追加
                     pastWeekends.add(date.format(formatter));
                 }
             }
         }
-
+        pastWeekends.add("20250106");
+        pastWeekends.add("20250113");
+        Collections.sort(pastWeekends);
         return pastWeekends;
+    }
+
+
+    public static String getDayOfWeek(String dateStr) {
+        try {
+            // 8桁の日付フォーマットを定義
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+            LocalDate date = LocalDate.parse(dateStr, formatter);
+            // 曜日を取得
+            DayOfWeek dayOfWeek = date.getDayOfWeek();
+            // 日本語の曜日名を返す
+            switch (dayOfWeek) {
+                case MONDAY:
+                    return " (月)";
+                case TUESDAY:
+                    return " (火)";
+                case WEDNESDAY:
+                    return " (水)";
+                case THURSDAY:
+                    return " (木)";
+                case FRIDAY:
+                    return " (金)";
+                case SATURDAY:
+                    return " (土)";
+                case SUNDAY:
+                    return " (日)";
+                default:
+                    return "";
+            }
+        } catch (DateTimeParseException e) {
+            return "日付の形式が正しくありません。";
+        }
     }
 }

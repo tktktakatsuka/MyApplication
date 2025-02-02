@@ -1,5 +1,8 @@
 package com.tktkcompany.kakoRaceKeiba;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -19,6 +22,8 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import androidx.fragment.app.Fragment;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.tktkcompany.kakoRaceKeiba.databinding.ActivityMainBinding;
 import com.jakewharton.threetenabp.AndroidThreeTen;
 
@@ -27,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private ActivityMainBinding binding;
     public static AdView bannerAdView;
+    private static final String DEFAULT_CHANNEL_ID = "default_channel";
+    private static final String DEFAULT_CHANNEL_NAME = "Default Notifications";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,16 +51,11 @@ public class MainActivity extends AppCompatActivity {
         AndroidThreeTen.init(this);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
-        // AdViewのインスタンスを取得、ロード
-        loadBannerAd();
-
         BottomNavigationView navView = findViewById(R.id.nav_view);
 
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications, R.id.navigation_raceResults)
+                R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications, R.id.navigation_raceResults, R.id.navigation_memoLists, R.id.navigation_memoCreate, R.id.navigation_memoDetail, R.id.navigation_memoEdit )
                 .build();
-
 
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
@@ -62,42 +64,27 @@ public class MainActivity extends AppCompatActivity {
         // インタースティシャル広告の読み込み
         AdRequest adRequest = new AdRequest.Builder().build();
 //        loadInterstitialAd();
+
+        // 通知チャンネルを作成
+        createNotificationChannel();
+        // トークンを取得
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.w("FCM", "Fetching FCM registration token failed", task.getException());
+                        return;
+                    }
+
+                    // トークンを取得
+                    String token = task.getResult();
+                    Log.d("FCM Token", token);
+
+                    // サーバーにトークンを送信する場合はここで処理
+                });
+
+
     }
 
-    //バナーを表示するメソッド
-    private void loadBannerAd() {
-        bannerAdView = findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
-
-        bannerAdView.setAdListener(new AdListener() {
-            @Override
-            public void onAdLoaded() {
-                Log.d(TAG, "Banner ad loaded successfully.");
-            }
-
-            @Override
-            public void onAdFailedToLoad(LoadAdError adError) {
-                Log.d(TAG, "Failed to load banner ad: " + adError.getMessage());
-            }
-
-            @Override
-            public void onAdOpened() {
-                Log.d(TAG, "Banner ad opened.");
-            }
-
-            @Override
-            public void onAdClicked() {
-                Log.d(TAG, "Banner ad clicked.");
-            }
-
-            @Override
-            public void onAdClosed() {
-                Log.d(TAG, "Banner ad closed.");
-            }
-        });
-
-        bannerAdView.loadAd(adRequest);
-    }
 
     // インタースティシャル広告を表示するメソッド
     private void loadInterstitialAd() {
@@ -127,6 +114,22 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "Interstitial ad ready.");
         } else {
             Log.d(TAG, "Interstitial ad not ready.");
+        }
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    DEFAULT_CHANNEL_ID,
+                    DEFAULT_CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            channel.setDescription("This is the default notification channel.");
+
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            if (notificationManager != null) {
+                notificationManager.createNotificationChannel(channel);
+            }
         }
     }
 }

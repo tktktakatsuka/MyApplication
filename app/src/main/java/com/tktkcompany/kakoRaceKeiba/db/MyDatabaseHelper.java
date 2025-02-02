@@ -22,7 +22,18 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
                     "horseNumber TEXT ," +
                     "horseName TEXT, " +
                     "jockey TEXT," +
-                    "winOdds TEXT);" ;
+                    "winOdds TEXT);";
+
+    // テーブル作成用のSQL文
+    private static final String MEMO_CREATE =
+            "CREATE TABLE memo (" +
+                    "horseName TEXT ," +
+                    "title TEXT ," +
+                    "kaisaibi TEXT ," +
+                    "comment TEXT ," +
+                    "babaCondition TEXT ," +
+                    "distance TEXT ," +
+                    "kaisaijo TEXT);";
 
     // テーブル作成用のSQL文
     private static final String RACERESULTABLE_CREATE =
@@ -44,9 +55,9 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
                     "tuukazyun TEXT," +
                     "nobori TEXT," +
                     "tyoukyousi TEXT," +
-                    "horseWeight TEXT,"+
-                    "raceTitle TEXT,"+
-                    "hassouTime TEXT,"+
+                    "horseWeight TEXT," +
+                    "raceTitle TEXT," +
+                    "hassouTime TEXT," +
                     "PRIMARY KEY (kaisaiBi, horseName))";
 
     // テーブル作成用のSQL文
@@ -57,17 +68,15 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         // データベースが初めて作成されるときに呼び出されます
-        db.execSQL(RACECARDTABLE_CREATE);
-        db.execSQL(RACERESULTABLE_CREATE);
-        db.execSQL(EXECUTER_CREATE);
+        db.execSQL(MEMO_CREATE);
+//        db.execSQL(RACECARDTABLE_CREATE);
+//        db.execSQL(RACERESULTABLE_CREATE);
+//        db.execSQL(EXECUTER_CREATE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // データベースのアップグレードが必要なときに呼び出されます
-        db.execSQL("DROP TABLE IF EXISTS raceCard");
-        db.execSQL("DROP TABLE IF EXISTS raceResult");
-        db.execSQL("DROP TABLE IF EXISTS EXECUTER");
         onCreate(db);
     }
 

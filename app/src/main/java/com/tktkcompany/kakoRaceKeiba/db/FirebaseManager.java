@@ -77,6 +77,11 @@ public class FirebaseManager {
         query.addListenerForSingleValueEvent(listener);
     }
 
+    public static void queryDataAddWhere(String path, String childKey, String value, ValueEventListener listener) {
+        Query query = mDatabase.child(path).orderByChild(childKey).equalTo(value);
+        query.addListenerForSingleValueEvent(listener);
+    }
+
 
 
     public static void raceResultInsertDatatoFirebase(String kaisaibi, String kaisaijo, String raceNo, String tyaku,
