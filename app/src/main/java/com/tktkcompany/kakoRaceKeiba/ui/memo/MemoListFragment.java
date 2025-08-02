@@ -22,6 +22,7 @@ import com.tktkcompany.kakoRaceKeiba.MainActivity;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentMemoListBinding;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentRaceresultsBinding;
 import com.tktkcompany.kakoRaceKeiba.db.MyDatabaseManager;
+import com.tktkcompany.kakoRaceKeiba.ui.home.HorizontalAdapter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,7 +58,8 @@ public class MemoListFragment extends Fragment {
         }
 
         // アダプターを設定
-        adapter = new MemoAdapter(memoList, databaseManager, memo -> {});
+        adapter = new MemoAdapter(memoList, databaseManager, memo -> {
+        });
         recyclerView.setAdapter(adapter);
 
         // 新規メモ作成ボタン
@@ -67,6 +69,20 @@ public class MemoListFragment extends Fragment {
             Bundle bundle = null;
             navController.navigate(R.id.action_navigation_memoLists_to_navigation_memoCreate, bundle);
         });
+
+        RecyclerView recyclerView2 = binding.recyclerView2;
+        LinearLayoutManager layoutManager2 = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
+        recyclerView2.setLayoutManager(layoutManager2);
+
+//        //データのリストを準備
+//        List<String> data = new ArrayList<>();
+//        data.add("本日の馬場状態");
+//        data.add("レースカレンダー");
+//        data.add("JRAのYoutubeサイト");
+//        //アダプターを設定
+//        HorizontalAdapter adapter = new HorizontalAdapter(getContext(), data);
+//        recyclerView2.setAdapter(adapter);
+//        recyclerView2.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
 
 
 

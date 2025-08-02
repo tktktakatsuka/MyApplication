@@ -12,11 +12,13 @@ import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
@@ -31,6 +33,7 @@ import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentDashboardBinding;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
 
+import com.tktkcompany.kakoRaceKeiba.dto.SharedViewModel;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 
@@ -43,17 +46,7 @@ public class DashboardFragment extends Fragment {
 
     private static AdView bannerAdView;
     private FragmentDashboardBinding binding;
-
-    private final String TOKYO = "東京";
-    private final String NAKAYAMA = "中山";
-    private final String KYOTO = "京都";
-    private final String HUKUSIMA = "福島";
-    private final String TYUKYO = "中京";
-    private final String NIIGATA = "新潟";
-    private final String HANSIN = "阪神";
-    private final String KOKURA = "小倉";
     private ProgressBar progressBar;
-
     private LinearLayout buttonContainer;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -61,25 +54,23 @@ public class DashboardFragment extends Fragment {
         binding = FragmentDashboardBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        //スピナー表示
         progressBar = binding.progressBar;
         progressBar.setVisibility(View.VISIBLE);
 
-        // ボタンを追加するLinearLayoutの参照を取得
         buttonContainer = root.findViewById(R.id.button_container);
 
-        // 各競馬場のリストを作成
-        List<String> joNames = List.of(TOKYO, KYOTO, KOKURA);
+        SharedViewModel sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
+        sharedViewModel.getJoNames().observe(getViewLifecycleOwner(), joNames -> {
+            // joNames（競馬場名リスト）をここで使える！
+            List<String> datelist = WeekendDays.getPastWeekendsInCurrentMonth();
+            executeSequentialQueriesForAllLocations(datelist, joNames);
+        });
 
-        // 日付のリストを取得
-        List<String> datelist = WeekendDays.getPastWeekendsInCurrentMonth();
-        // 日付ごとに競馬場のクエリを順番に実行
-        executeSequentialQueriesForAllLocations(datelist, joNames);
-
-        // AdViewのインスタンスを取得、ロード
+        progressBar.setVisibility(View.GONE);
         loadBannerAd();
         return root;
     }
+
 
     private Bundle setKeyjoNameString(String date, String jo) {
         // 渡したい値を用意する
@@ -130,7 +121,7 @@ public class DashboardFragment extends Fragment {
                     checkBox.setChecked(true);
                 }
 
-                for (DataSnapshot reserveSnapshot : dataList){
+                for (DataSnapshot reserveSnapshot : dataList) {
                     String sRaceNo = reserveSnapshot.child("raceNo").getValue(String.class);
                     String sTyaku = reserveSnapshot.child("tyaku").getValue(String.class);
                     String kaisaibi = reserveSnapshot.child("kaisaibi").getValue(String.class);

@@ -2,9 +2,11 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        jcenter() // (必要なら追加)
+        maven { url 'https://jitpack.io' }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.2' // Android Gradle Plugin
+        classpath 'com.android.tools.build:gradle:8.8.0' // Android Gradle Plugin
         classpath 'com.google.gms:google-services:4.3.15'
         classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.7'
 

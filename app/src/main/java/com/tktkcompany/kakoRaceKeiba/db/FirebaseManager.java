@@ -66,7 +66,7 @@ public class FirebaseManager {
     }
 
     /**
-     * 条件付きデータの取得
+     * データの取得
      * @param path Firebase Realtime Databaseのパス
      * @param childKey 検索条件のキー
      * @param value 検索する値
@@ -77,6 +77,13 @@ public class FirebaseManager {
         query.addListenerForSingleValueEvent(listener);
     }
 
+    /**
+     * 条件付きデータの取得
+     * @param path Firebase Realtime Databaseのパス
+     * @param childKey 検索条件のキー
+     * @param value 検索する値
+     * @param listener データ取得時のコールバック
+     */
     public static void queryDataAddWhere(String path, String childKey, String value, ValueEventListener listener) {
         Query query = mDatabase.child(path).orderByChild(childKey).equalTo(value);
         query.addListenerForSingleValueEvent(listener);

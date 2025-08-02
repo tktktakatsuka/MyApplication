@@ -234,7 +234,7 @@ public class RaceResultsFragment extends Fragment {
         textView.setBackground(border);
         return textView;
     }
-    
+
     //バナーを表示するメソッド
     public void loadBannerAd() {
         bannerAdView = binding.adView;

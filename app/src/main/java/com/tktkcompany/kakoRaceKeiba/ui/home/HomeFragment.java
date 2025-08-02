@@ -1,5 +1,6 @@
 package com.tktkcompany.kakoRaceKeiba.ui.home;
 
+import android.graphics.Color;
 import android.os.Bundle;
 
 import android.os.Looper;
@@ -10,11 +11,18 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
@@ -29,15 +37,31 @@ import com.tktkcompany.kakoRaceKeiba.dto.SharedViewModel;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import android.os.Handler;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.threeten.bp.LocalDate;
 import org.threeten.bp.format.DateTimeFormatter;
+
+// 比率を管理するクラス
+class Ratio {
+    String name;
+    int num;
+    float value;
+
+    Ratio(String name, float value, int num) {
+        this.name = name;
+        this.value = value;
+        this.num = num;
+    }
+}
+
 
 public class HomeFragment extends Fragment {
 
@@ -48,6 +72,7 @@ public class HomeFragment extends Fragment {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     public static AdView bannerAdView;
     private SharedViewModel sharedViewModel;
+    private PieChart pieChart;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
@@ -72,18 +97,29 @@ public class HomeFragment extends Fragment {
         textView.setText(sToday + youbi + "の開催情報");
         getKaisaiWetherInfo(sToday);
 
-        RecyclerView recyclerView2 = binding.recyclerView2;
-        LinearLayoutManager layoutManager2 = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
-        recyclerView2.setLayoutManager(layoutManager2);
 
-//         データのリストを準備
-        List<String> data = new ArrayList<>();
-        data.add("本日の馬場状態");
-        data.add("レースカレンダー");
-        data.add("JRAのYoutubeサイト");
-//         アダプターを設定
-        HorizontalAdapter adapter = new HorizontalAdapter(getContext(), data);
-        recyclerView2.setAdapter(adapter);
+        // Firebaseから開催中の競馬場リストを取得
+        FirebaseManager.queryDataAddWhere("racecourses", "isActive", "true", new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<String> joNames = new ArrayList<>();
+
+                for (DataSnapshot joSnapshot : snapshot.getChildren()) {
+                    String joName = joSnapshot.child("name").getValue(String.class);
+                    if (joName != null) {
+                        joNames.add(joName);
+                    }
+                }
+                sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
+                sharedViewModel.setJoNames(joNames);
+                // 日付のリストを取得
+                List<String> datelist = WeekendDays.getPastWeekendsInCurrentMonth();
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(getContext(), "データの読み込みに失敗しました", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         return root;
     }
@@ -134,8 +170,8 @@ public class HomeFragment extends Fragment {
                 // 開催データをセット
                 sharedViewModel.setSharedData(kaisaiList);
 
-
             }
+
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
