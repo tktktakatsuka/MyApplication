@@ -4,7 +4,14 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.tktkcompany.kakoRaceKeiba.BuildConfig;
+
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.http.Body;
+import retrofit2.http.Headers;
+import retrofit2.http.POST;
 
 public class SharedViewModel extends ViewModel {
     private final MutableLiveData<List<String>> sharedData = new MutableLiveData<>();
@@ -23,5 +30,6 @@ public class SharedViewModel extends ViewModel {
     public LiveData<List<String>> getJoNames() {
         return joNames;
     }
+
 }
 

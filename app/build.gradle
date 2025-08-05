@@ -1,3 +1,6 @@
+// local.propertiesファイルを読み込むための準備
+
+
 plugins {
     alias(libs.plugins.android.application)
     id 'com.google.gms.google-services'
@@ -5,18 +8,24 @@ plugins {
 }
 
 android {
+    Properties properties = new Properties()
+    if (rootProject.file("local.properties").exists()) {
+        properties.load(rootProject.file("local.properties").newDataInputStream())
+    }
     namespace 'com.tktkcompany.kakoRaceKeiba'
-    compileSdk 34
+    compileSdk 36
     defaultConfig {
-        targetSdkVersion 34
+        targetSdkVersion 36
     }
 
     defaultConfig {
         applicationId "com.tktkcompany.kakoRaceKeiba"
         minSdk 24
-        targetSdk 34
+        targetSdk 36
         versionCode 331
         versionName "1.0"
+        // BuildConfigフィールドとしてAPIキーを定義
+        buildConfigField "String", "GEMINI_API_KEY", properties.getProperty("GEMINI_API_KEY", "")
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -33,6 +42,8 @@ android {
     }
     buildFeatures {
         viewBinding true
+        buildConfig true
+
     }
 
     sourceSets {
@@ -44,6 +55,11 @@ android {
 }
 
 dependencies {
+    // Retrofit (HTTP通信ライブラリ)
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    // OkHttp (Retrofitの内部で使われる。Logging Interceptorで通信内容をログ出力するのに便利)
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.9.3'
     implementation 'com.google.firebase:firebase-messaging:23.1.2'
     implementation platform(libs.firebase.bom)
     implementation libs.firebase.analytics

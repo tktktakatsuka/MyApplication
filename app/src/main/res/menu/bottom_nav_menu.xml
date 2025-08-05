@@ -28,4 +28,12 @@
         app:showAsAction="ifRoom"/>
 
 
+    <!-- ここから追加 -->
+    <item
+        android:id="@+id/navigation_chat"
+        android:icon="@drawable/ic_racekeikou_black_24dp"
+        android:title="チャット" />
+    <!-- ここまで追加 -->
+
+
 </menu>

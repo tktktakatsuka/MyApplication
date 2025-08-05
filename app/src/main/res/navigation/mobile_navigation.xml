@@ -13,8 +13,6 @@
         tools:layout="@layout/fragment_home" />
 
 
-
-
     <fragment
         android:id="@+id/navigation_dashboard"
         android:name="com.tktkcompany.kakoRaceKeiba.ui.dashboard.DashboardFragment"
@@ -54,8 +52,15 @@
         <action
             android:id="@+id/action_navigation_memoLists_to_navigation_memoDetail"
             app:destination="@id/navigation_memoDetail" />
-
     </fragment>
+
+    <!-- ここから追加 -->
+    <fragment
+        android:id="@+id/navigation_chat"
+        android:name="com.tktkcompany.kakoRaceKeiba.ui.chat.ChatFragment"
+        android:label="AIチャット"
+        tools:layout="@layout/fragment_chat" />
+    <!-- ここまで追加 -->
 
     <fragment
         android:id="@+id/navigation_memoCreate"

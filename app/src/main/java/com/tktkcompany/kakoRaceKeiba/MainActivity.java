@@ -8,10 +8,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.interstitial.InterstitialAd;
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
@@ -31,7 +28,6 @@ public class MainActivity extends AppCompatActivity {
     private InterstitialAd interstitialAd;
     private static final String TAG = "MainActivity";
     private ActivityMainBinding binding;
-    public static AdView bannerAdView;
     private static final String DEFAULT_CHANNEL_ID = "default_channel";
     private static final String DEFAULT_CHANNEL_NAME = "Default Notifications";
 
@@ -54,16 +50,12 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView navView = findViewById(R.id.nav_view);
 
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications, R.id.navigation_raceResults, R.id.navigation_memoLists, R.id.navigation_memoCreate, R.id.navigation_memoDetail, R.id.navigation_memoEdit )
+                R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications, R.id.navigation_raceResults, R.id.navigation_memoLists, R.id.navigation_memoCreate, R.id.navigation_memoDetail, R.id.navigation_memoEdit, R.id.navigation_chat )
                 .build();
 
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
-
-        // インタースティシャル広告の読み込み
-        AdRequest adRequest = new AdRequest.Builder().build();
-//        loadInterstitialAd();
 
         // 通知チャンネルを作成
         createNotificationChannel();
