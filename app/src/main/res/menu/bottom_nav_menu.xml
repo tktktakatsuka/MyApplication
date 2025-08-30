@@ -31,8 +31,8 @@
     <!-- ここから追加 -->
     <item
         android:id="@+id/navigation_chat"
-        android:icon="@drawable/ic_racekeikou_black_24dp"
-        android:title="チャット" />
+        android:icon="@drawable/uma"
+        android:title="AIチャット" />
     <!-- ここまで追加 -->
 
 

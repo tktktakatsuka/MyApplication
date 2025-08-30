@@ -5,7 +5,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.tktkcompany.kakoRaceKeiba.ui.raceResult.RaceResultsFragment">
+    tools:context="com.tktkcompany.kakoRaceKeiba.ui.memo.MemoListFragment">
+
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adView"
+        android:layout_width="198dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        app:adSize="BANNER"
+        app:adUnitId="ca-app-pub-4855274440005459/8405629625">
+    </com.google.android.gms.ads.AdView>
 
 
     <Button
@@ -14,10 +25,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginTop="16dp"
-        android:text="メモを作成する"
+        android:text="@string/memo_create_message"
         android:textColor="@color/material_dynamic_primary95" />
-
-
 
 
     <androidx.recyclerview.widget.RecyclerView
@@ -26,22 +35,10 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp" />
 
-<!--    <TextView-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_gravity="left"-->
-<!--        android:layout_marginTop="20dp"-->
-<!--        android:text="外部リンク(JRA公式サイト)"-->
-<!--        android:textSize="15dp"-->
-<!--        android:textStyle="bold" />-->
-
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal" />
-
-
 
 </LinearLayout>

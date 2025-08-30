@@ -3,27 +3,23 @@ package com.tktkcompany.kakoRaceKeiba.dto;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-
-import com.tktkcompany.kakoRaceKeiba.BuildConfig;
-
 import java.util.List;
 
-import retrofit2.Call;
-import retrofit2.http.Body;
-import retrofit2.http.Headers;
-import retrofit2.http.POST;
-
 public class SharedViewModel extends ViewModel {
+    // 既存のデータ
     private final MutableLiveData<List<String>> sharedData = new MutableLiveData<>();
+    private final MutableLiveData<List<String>> joNames = new MutableLiveData<>();
+
+    // ★★★ 1. UIDを保持するためのLiveDataを追加 (型をStringに) ★★★
+    private final MutableLiveData<String> uid = new MutableLiveData<>();
+
+    // --- 既存のメソッド ---
     public void setSharedData(List<String> data) {
         sharedData.setValue(data);
     }
     public LiveData<List<String>> getSharedData() {
         return sharedData;
     }
-
-
-    private MutableLiveData<List<String>> joNames = new MutableLiveData<>();
     public void setJoNames(List<String> joNamesList) {
         joNames.setValue(joNamesList);
     }
@@ -31,5 +27,11 @@ public class SharedViewModel extends ViewModel {
         return joNames;
     }
 
+    // ★★★ 2. UIDを操作するためのセッターとゲッターを追加 ★★★
+    public void setUid(String userId) {
+        uid.setValue(userId);
+    }
+    public LiveData<String> getUid() {
+        return uid;
+    }
 }
-

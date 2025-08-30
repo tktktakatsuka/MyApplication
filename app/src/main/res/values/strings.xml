@@ -3,4 +3,6 @@
     <string name="title_home">ホーム</string>
     <string name="title_dashboard">レース一覧</string>
     <string name="title_notifications">レース傾向分析</string>
+    <string name="kaisai_info_format">%1$s%2$sの開催情報</string>
+    <string name="memo_create_message">メモを作成する</string>
 </resources>

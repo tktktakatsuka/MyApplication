@@ -2,8 +2,30 @@
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24.0"
-    android:viewportHeight="24.0">
+    android:viewportHeight="24.0"
+    android:tint="?attr/colorControlNormal"> <!-- ★ 汎用性を高めるためtintを追加 -->
+
+    <!-- ロボットの頭の輪郭 (少し大きめの四角形) -->
     <path
-        android:fillColor="#FF000000"
-        android:pathData="M3,13h8L11,3L3,3v10zM3,21h8v-6L3,15v6zM13,21h8L21,11h-8v10zM13,3v6h8L21,3h-8z" />
+        android:fillColor="@android:color/white"
+        android:pathData="M4,4 L20,4 L20,20 L4,20 z" />
+
+    <!-- 左目 (元の四角形を小さくして移動) -->
+    <!-- 元の M3,13h8L11,3L3,3v10z を変更 -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M7,8 L10,8 L10,11 L7,11 z" />
+
+    <!-- 右目 (元の四角形を小さくして移動) -->
+    <!-- 元の M13,3v6h8L21,3h-8z を変更 -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M14,8 L17,8 L17,11 L14,11 z" />
+
+    <!-- 口 (下の2つの四角形を1つの横長の長方形に変更) -->
+    <!-- 元の M3,21h8v-6L3,15v6z と M13,21h8L21,11h-8v10z を変更 -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M7,15 L17,15 L17,17 L7,17 z" />
+
 </vector>

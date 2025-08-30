@@ -12,7 +12,6 @@ import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 
 import androidx.annotation.NonNull;
@@ -44,7 +43,6 @@ import java.util.List;
 
 public class DashboardFragment extends Fragment {
 
-    private static AdView bannerAdView;
     private FragmentDashboardBinding binding;
     private ProgressBar progressBar;
     private LinearLayout buttonContainer;
@@ -100,6 +98,12 @@ public class DashboardFragment extends Fragment {
         FirebaseManager.queryData("raceResult" + "/" + joName, "kaisaibi", "", new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                // binding が null の場合は、ビューが既に破棄されているため、何もせずに return する
+                if (binding == null) {
+                    return;
+                }
+
                 // 競馬場名を表示する固定テキストを追加
                 if (isAdded() && getActivity() != null) {
                     TextView textView = new TextView(getActivity());
@@ -163,7 +167,7 @@ public class DashboardFragment extends Fragment {
 
     //バナーを表示するメソッド
     public void loadBannerAd() {
-        bannerAdView = binding.adView;
+        AdView bannerAdView = binding.adView;
         AdRequest adRequest = new AdRequest.Builder().build();
 
         bannerAdView.setAdListener(new AdListener() {
@@ -172,7 +176,7 @@ public class DashboardFragment extends Fragment {
             }
 
             @Override
-            public void onAdFailedToLoad(LoadAdError adError) {
+            public void onAdFailedToLoad(@NonNull LoadAdError adError) {
             }
 
             @Override

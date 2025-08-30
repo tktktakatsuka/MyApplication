@@ -8,6 +8,10 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.LoadAdError;
 import com.tktkcompany.kakoRaceKeiba.R;
 
 import androidx.annotation.NonNull;
@@ -19,10 +23,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.tktkcompany.kakoRaceKeiba.MainActivity;
+import com.tktkcompany.kakoRaceKeiba.databinding.FragmentHomeBinding;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentMemoListBinding;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentRaceresultsBinding;
 import com.tktkcompany.kakoRaceKeiba.db.MyDatabaseManager;
 import com.tktkcompany.kakoRaceKeiba.ui.home.HorizontalAdapter;
+import com.tktkcompany.kakoRaceKeiba.ui.home.HomeFragment;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,16 +39,16 @@ public class MemoListFragment extends Fragment {
     private List<Memo> memoList = new ArrayList<>();
     private MemoAdapter adapter;
     private FragmentMemoListBinding binding;
-
+    private AdView bannerAdView;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_memo_list, container, false);
         binding = FragmentMemoListBinding.inflate(inflater, container, false);
+        View root = binding.getRoot();
 
         // RecyclerViewのセットアップ
-        RecyclerView recyclerView = view.findViewById(R.id.recycler_view);
+        RecyclerView recyclerView = root.findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         // データベースマネージャーのインスタンス作成
@@ -63,7 +69,7 @@ public class MemoListFragment extends Fragment {
         recyclerView.setAdapter(adapter);
 
         // 新規メモ作成ボタン
-        Button createButton = view.findViewById(R.id.button_create_memo);
+        Button createButton = root.findViewById(R.id.button_create_memo);
         createButton.setOnClickListener(v -> {
             NavController navController = Navigation.findNavController(v);
             Bundle bundle = null;
@@ -74,18 +80,41 @@ public class MemoListFragment extends Fragment {
         LinearLayoutManager layoutManager2 = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         recyclerView2.setLayoutManager(layoutManager2);
 
-//        //データのリストを準備
-//        List<String> data = new ArrayList<>();
-//        data.add("本日の馬場状態");
-//        data.add("レースカレンダー");
-//        data.add("JRAのYoutubeサイト");
-//        //アダプターを設定
-//        HorizontalAdapter adapter = new HorizontalAdapter(getContext(), data);
-//        recyclerView2.setAdapter(adapter);
-//        recyclerView2.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        loadBannerAd();
 
+        return root;
+    }
 
+    //バナーを表示するメソッド
+    public void loadBannerAd() { // 引数から binding を削除
+        AdView adView = binding.adView; // ローカル変数にした方が良い場合もある
+        AdRequest adRequest = new AdRequest.Builder().build();
 
-        return view;
+        adView.setAdListener(new AdListener() {
+            @Override
+            public void onAdLoaded() {
+            }
+
+            @Override
+            public void onAdFailedToLoad(LoadAdError adError) {
+            }
+
+            @Override
+            public void onAdOpened() {
+                // 広告が開かれたときの処理
+            }
+
+            @Override
+            public void onAdClicked() {
+                // 広告がクリックされたときの処理
+            }
+
+            @Override
+            public void onAdClosed() {
+                // 広告が閉じられたときの処理 (ユーザーが広告からアプリに戻ったときなど)
+            }
+        });
+
+        adView.loadAd(adRequest);
     }
 }

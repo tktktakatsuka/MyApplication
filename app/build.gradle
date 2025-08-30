@@ -20,13 +20,12 @@ android {
 
     defaultConfig {
         applicationId "com.tktkcompany.kakoRaceKeiba"
-        minSdk 24
+        minSdk 28
         targetSdk 36
-        versionCode 331
+        versionCode 345
         versionName "1.0"
         // BuildConfigフィールドとしてAPIキーを定義
         buildConfigField "String", "GEMINI_API_KEY", properties.getProperty("GEMINI_API_KEY", "")
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -43,7 +42,6 @@ android {
     buildFeatures {
         viewBinding true
         buildConfig true
-
     }
 
     sourceSets {
@@ -56,11 +54,11 @@ android {
 
 dependencies {
     // Retrofit (HTTP通信ライブラリ)
-    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
-    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation libs.retrofit
+    implementation libs.converter.gson
     // OkHttp (Retrofitの内部で使われる。Logging Interceptorで通信内容をログ出力するのに便利)
-    implementation 'com.squareup.okhttp3:logging-interceptor:4.9.3'
-    implementation 'com.google.firebase:firebase-messaging:23.1.2'
+    implementation libs.logging.interceptor
+    implementation libs.firebase.messaging
     implementation platform(libs.firebase.bom)
     implementation libs.firebase.analytics
     implementation libs.threetenabp
@@ -73,12 +71,21 @@ dependencies {
     implementation libs.navigation.fragment
     implementation libs.navigation.ui
     implementation libs.firebase.crashlytics
+    implementation libs.firebase.auth
+    implementation libs.credentials
+    implementation libs.credentials.play.services.auth
+    implementation libs.googleid
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
-    implementation 'com.google.android.gms:play-services-ads:23.6.0'
+    implementation libs.play.services.ads.v2450
     implementation libs.annotation // 最新版を使用
-    implementation 'com.google.firebase:firebase-database:20.3.2'
-    implementation 'com.google.firebase:firebase-analytics:21.6.1'
-    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    implementation libs.firebase.database
+    implementation libs.google.firebase.analytics
+    implementation libs.mpandroidchart
+    implementation libs.firebase.auth
+    implementation libs.credentials
+    implementation libs.credentials.play.services.auth
+    implementation libs.googleid
+
 }

@@ -36,7 +36,6 @@ public class RaceResultsFragment extends Fragment {
      *                           but this can be used to generate the LayoutParams of the view.
      * @param savedInstanceState If non-null, this fragment is being re-constructed
      *                           from a previous saved state as given here.
-     * @return
      */
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -155,21 +154,21 @@ public class RaceResultsFragment extends Fragment {
 
                         //発走時刻セット
                         String sHassouTime = childSnapshot.child("hassouTime").getValue(String.class);
-                        String text = sHassouTime;
                         String targetWord = "馬齢";
                         // targetWordの位置を探す
-                        int index = text.indexOf(targetWord);
+                        assert sHassouTime != null;
+                        int index = sHassouTime.indexOf(targetWord);
                         String result = "";
                         if (index != -1) {
                             // targetWordまでの文字を削除
-                            result = text.substring(index);
+                            result = sHassouTime.substring(index);
                         }
                         String targetWord2 = "発走";
                         // targetWordの位置を探す
-                        int index2 = text.indexOf(targetWord2);
+                        int index2 = sHassouTime.indexOf(targetWord2);
                         if (index2 != -1) {
                             // targetWordの直前までの文字列を取得
-                            result = text.substring(0, index2 + targetWord2.length());
+                            result = sHassouTime.substring(0, index2 + targetWord2.length());
                         }
                         hassouTime.setText(result);
                         hassouTime.setTextSize(12);
@@ -246,7 +245,7 @@ public class RaceResultsFragment extends Fragment {
             }
 
             @Override
-            public void onAdFailedToLoad(LoadAdError adError) {
+            public void onAdFailedToLoad(@NonNull LoadAdError adError) {
             }
 
             @Override

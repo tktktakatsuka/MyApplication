@@ -1,88 +1,65 @@
 package com.tktkcompany.kakoRaceKeiba.ui.home;
 
-import android.graphics.Color;
+
 import android.os.Bundle;
 
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
-
 import android.view.ViewGroup;
-import android.widget.Button;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.github.mikephil.charting.charts.PieChart;
-import com.github.mikephil.charting.data.PieData;
-import com.github.mikephil.charting.data.PieDataSet;
-import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.formatter.ValueFormatter;
-import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.LoadAdError;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
+import com.tktkcompany.kakoRaceKeiba.MainActivity;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentHomeBinding;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
 import com.tktkcompany.kakoRaceKeiba.dto.SharedViewModel;
+import com.tktkcompany.kakoRaceKeiba.ui.dialog.WebViewDialogFragment;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import android.os.Handler;
+import java.util.List;
+
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.threeten.bp.LocalDate;
 import org.threeten.bp.format.DateTimeFormatter;
 
-// 比率を管理するクラス
-class Ratio {
-    String name;
-    int num;
-    float value;
 
-    Ratio(String name, float value, int num) {
-        this.name = name;
-        this.value = value;
-        this.num = num;
-    }
-}
 
 
 public class HomeFragment extends Fragment {
 
     private FragmentHomeBinding binding;
-
-    Button myButton;
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
     public static AdView bannerAdView;
     private SharedViewModel sharedViewModel;
-    private PieChart pieChart;
+    private FirebaseAuth mAuth; // mAuthをメンバー変数として追加
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
+        // ★★★ Firebase Authを初期化 ★★★
+        mAuth = FirebaseAuth.getInstance();
+
 
         // AdViewのインスタンスを取得、ロード
         loadBannerAd(binding);
-
-        //昇順で表示
-        List<String> dateList = WeekendDays.getPastWeekendsInCurrentMonth();
 
 
         // 今日の日付を取得
@@ -91,12 +68,12 @@ public class HomeFragment extends Fragment {
         // 現在の日付
         LocalDate today = LocalDate.now();
         String sToday = today.format(formatter);
-        String youbi = WeekendDays.getDayOfWeek(sToday);
+        String dayOfWeek = WeekendDays.getDayOfWeek(sToday);
 
         TextView textView = binding.kaisai;
-        textView.setText(sToday + youbi + "の開催情報");
+        String formattedKaisaiInfo = getString(R.string.kaisai_info_format, sToday, dayOfWeek); // 修正後
+        textView.setText(formattedKaisaiInfo);
         getKaisaiWetherInfo(sToday);
-
 
         // Firebaseから開催中の競馬場リストを取得
         FirebaseManager.queryDataAddWhere("racecourses", "isActive", "true", new ValueEventListener() {
@@ -112,15 +89,32 @@ public class HomeFragment extends Fragment {
                 }
                 sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
                 sharedViewModel.setJoNames(joNames);
-                // 日付のリストを取得
-                List<String> datelist = WeekendDays.getPastWeekendsInCurrentMonth();
             }
+
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Toast.makeText(getContext(), "データの読み込みに失敗しました", Toast.LENGTH_SHORT).show();
             }
         });
 
+        // レイアウトファイルからボタンのインスタンスを取得
+        Button showWebViewDialogButton = root.findViewById(R.id.showWebViewDialogButton);
+
+        // ボタンにクリックリスナーを設定
+        showWebViewDialogButton.setOnClickListener(v -> {
+            // ダイアログに表示したいURLを指定
+            String url = "https://www.jra.go.jp/"; // 表示したいURLに変更してください
+
+            // WebViewDialogFragmentのインスタンスを生成
+            WebViewDialogFragment webViewDialogFragment = WebViewDialogFragment.newInstance(url);
+
+            // DialogFragmentを表示
+            // getParentFragmentManager() を使い、ActivityのFragmentManager経由で表示します
+            webViewDialogFragment.show(getParentFragmentManager(), "webview_dialog");
+
+        });
+
+        // (もしViewModelなど他の初期化コードがあれば、それはそのまま残してください)
         return root;
     }
 
@@ -176,14 +170,74 @@ public class HomeFragment extends Fragment {
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
             }
+        });
+    }
 
-            ;
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        // ★★★ 自分のボタンのクリックイベントは自分で処理する ★★★
+        binding.googleSignInButton.setOnClickListener(v -> {
+            // 実際のログイン処理は親のMainActivityに依頼する
+            if (getActivity() instanceof MainActivity) {
+                ((MainActivity) getActivity()).signInWithGoogle();
+            }
+        });
+
+        // ★★★ ログアウトボタンのクリックリスナーを追加 ★★★
+        binding.logoutButton.setOnClickListener(v -> {
+            // 実際のログアウト処理は親のMainActivityに依頼する
+            if (getActivity() instanceof MainActivity) {
+                ((MainActivity) getActivity()).signOut();
+            }
         });
     }
 
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        // ★★★ ここからが重要な修正 ★★★
+        // Fragmentが表示されるたびに、現在のログイン状態をチェックしてUIを更新する
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        updateUI(currentUser);
+        // ★★★ ここまで ★★★
+    }
+
+    // ★★★ 自分の画面のUI更新は自分で行う ★★★
+    // (MainActivityから呼び出されるようにpublicにする)
+    public void updateUI(FirebaseUser user) {
+        if (binding == null) return; // 画面が破棄された後は何もしない
+
+        if (user != null) {
+            // ログイン済みの場合
+            binding.userInfoText.setText("ようこそ, " + user.getDisplayName() + "さん　ログイン中です。");
+            binding.userInfoText.setVisibility(View.VISIBLE);
+            binding.googleSignInButton.setVisibility(View.GONE);
+            binding.logoutButton.setText("ログアウト");
+            binding.logoutButton.setVisibility(View.VISIBLE);
+            binding.aichat.setText("AIチャットを利用することが可能です");
+
+            // ★ ViewModelの初期化をここで行うとより安全
+            if (sharedViewModel == null) {
+                sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
+            }
+            String userId = user.getUid();
+            sharedViewModel.setUid(userId);
+
+        } else {
+            // 未ログインの場合
+            binding.userInfoText.setVisibility(View.GONE);
+            binding.logoutButton.setVisibility(View.GONE);
+            binding.googleSignInButton.setVisibility(View.VISIBLE);
+
+        }
+    }
+
+
     //バナーを表示するメソッド
-    private void loadBannerAd(FragmentHomeBinding binding) {
+    public void loadBannerAd(FragmentHomeBinding binding) {
         bannerAdView = binding.adView;
         AdRequest adRequest = new AdRequest.Builder().build();
 
@@ -211,4 +265,6 @@ public class HomeFragment extends Fragment {
 
         bannerAdView.loadAd(adRequest);
     }
+
+
 }

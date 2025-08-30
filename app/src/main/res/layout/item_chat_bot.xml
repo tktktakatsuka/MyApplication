@@ -1,23 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="8dp"
-    android:gravity="start">
+    android:padding="8dp">
 
     <ImageView
         android:id="@+id/imageViewBotIcon"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_marginEnd="8dp"
-        android:src="@drawable/ic_bot_avatar" />
+        android:src="@drawable/uma"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/textViewMessage"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/item_chat_opponent"
         android:padding="12dp"
-        android:text="Bot message"
-        android:textColor="@android:color/black" />
-</LinearLayout>
+        android:text="Bot message. 長いメッセージの場合も、このように折り返されて画面内に収まります。"
+        android:textColor="@android:color/black"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/imageViewBotIcon"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_default="wrap"
+        app:layout_constraintWidth_max="280dp" />
+
+    <ImageButton
+        android:id="@+id/buttonShare"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginTop="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_share"
+        app:tint="?attr/colorControlNormal"
+        app:layout_constraintTop_toBottomOf="@+id/imageViewBotIcon"
+        app:layout_constraintStart_toStartOf="@+id/imageViewBotIcon"
+        app:layout_constraintEnd_toEndOf="@+id/imageViewBotIcon" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
