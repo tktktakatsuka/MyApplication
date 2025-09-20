@@ -22,7 +22,7 @@ android {
         applicationId "com.tktkcompany.kakoRaceKeiba"
         minSdk 28
         targetSdk 36
-        versionCode 345
+        versionCode 346
         versionName "1.0"
         // BuildConfigフィールドとしてAPIキーを定義
         buildConfigField "String", "GEMINI_API_KEY", properties.getProperty("GEMINI_API_KEY", "")

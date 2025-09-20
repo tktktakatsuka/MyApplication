@@ -58,8 +58,8 @@ public class WeekendDays {
                 }
             }
         }
-        pastWeekends.add("20250106");
-        pastWeekends.add("20250113");
+        pastWeekends.add("20250915");
+
         Collections.sort(pastWeekends);
         return pastWeekends;
     }
