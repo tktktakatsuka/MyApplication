@@ -137,6 +137,18 @@ public class DashboardFragment extends Fragment {
                     }
                 }
 
+                //テキストビューを追加
+                if (isAdded() && getActivity() != null) {
+                    // 余白用のViewを作成
+                    View spacer = new View(getActivity());
+                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            170 // 高さ20pxの余白。必要に応じてdpに変換してもOK
+                    );
+                    spacer.setLayoutParams(params);
+                    buttonContainer.addView(spacer);
+                }
+
 
                 if (isAdded() && progressBar != null) {
                     progressBar.setVisibility(View.GONE);
@@ -150,7 +162,7 @@ public class DashboardFragment extends Fragment {
         });
     }
 
-    private void createBundle(String joName, String date) {
+    public void createBundle(String joName, String date) {
         if (isAdded() && getActivity() != null) {
             getActivity().runOnUiThread(() -> {
                 Button newButton = new Button(getActivity());

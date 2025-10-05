@@ -27,6 +27,7 @@ import com.tktkcompany.kakoRaceKeiba.databinding.FragmentHomeBinding;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentMemoListBinding;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentRaceresultsBinding;
 import com.tktkcompany.kakoRaceKeiba.db.MyDatabaseManager;
+import com.tktkcompany.kakoRaceKeiba.ui.dialog.WebViewDialogFragment;
 import com.tktkcompany.kakoRaceKeiba.ui.home.HorizontalAdapter;
 import com.tktkcompany.kakoRaceKeiba.ui.home.HomeFragment;
 
@@ -48,7 +49,7 @@ public class MemoListFragment extends Fragment {
         View root = binding.getRoot();
 
         // RecyclerViewのセットアップ
-        RecyclerView recyclerView = root.findViewById(R.id.recycler_view);
+        RecyclerView recyclerView = binding.recyclerView;
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         // データベースマネージャーのインスタンス作成
@@ -59,9 +60,7 @@ public class MemoListFragment extends Fragment {
 
         // サンプルデータ
         memoList.clear();  // 追加する前にリストをクリア
-        for (int i = 0; i < list.size(); i++) {
-            memoList.add(list.get(i));
-        }
+        memoList.addAll(list);
 
         // アダプターを設定
         adapter = new MemoAdapter(memoList, databaseManager, memo -> {
@@ -81,6 +80,24 @@ public class MemoListFragment extends Fragment {
         recyclerView2.setLayoutManager(layoutManager2);
 
         loadBannerAd();
+
+
+        // レイアウトファイルからボタンのインスタンスを取得
+        Button showWebViewDialogButton = root.findViewById(R.id.showWebViewDialogButton);
+
+        // ボタンにクリックリスナーを設定
+        showWebViewDialogButton.setOnClickListener(v -> {
+            // ダイアログに表示したいURLを指定
+            String url = "https://www.jra.go.jp/"; // 表示したいURLに変更してください
+
+            // WebViewDialogFragmentのインスタンスを生成
+            WebViewDialogFragment webViewDialogFragment = WebViewDialogFragment.newInstance(url);
+
+            // DialogFragmentを表示
+            // getParentFragmentManager() を使い、ActivityのFragmentManager経由で表示します
+            webViewDialogFragment.show(getParentFragmentManager(), "webview_dialog");
+
+        });
 
         return root;
     }

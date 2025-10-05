@@ -7,26 +7,23 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class MyDatabaseHelper extends SQLiteOpenHelper {
 
     // データベースの名前とバージョンを指定
-    private static final String DATABASE_NAME = "mydatabase.db";
+    private static final String DATABASE_NAME = "mydb.db";
     private static final int DATABASE_VERSION = 1;
+
+    public static final String TABLE_MEMO = "Memo";
+    public static final String COL_ID = "id";
+    public static final String COL_TITLE = "title";
+    public static final String COL_CONTENT = "content";
 
     public MyDatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    // テーブル作成用のSQL文
-    private static final String RACECARDTABLE_CREATE =
-            "CREATE TABLE raceCard (" +
-                    "raceNumber TEXT ," +
-                    "kaisaibi TEXT ," +
-                    "horseNumber TEXT ," +
-                    "horseName TEXT, " +
-                    "jockey TEXT," +
-                    "winOdds TEXT);";
+
 
     // テーブル作成用のSQL文
     private static final String MEMO_CREATE =
-            "CREATE TABLE memo (" +
+            "CREATE TABLE IF NOT EXISTS  memo (" +
                     "horseName TEXT ," +
                     "title TEXT ," +
                     "kaisaibi TEXT ," +
@@ -69,14 +66,14 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         // データベースが初めて作成されるときに呼び出されます
         db.execSQL(MEMO_CREATE);
-//        db.execSQL(RACECARDTABLE_CREATE);
-//        db.execSQL(RACERESULTABLE_CREATE);
-//        db.execSQL(EXECUTER_CREATE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // データベースのアップグレードが必要なときに呼び出されます
+        onCreate(db);
+        // 必要に応じてテーブル再作成
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_MEMO);
         onCreate(db);
     }
 

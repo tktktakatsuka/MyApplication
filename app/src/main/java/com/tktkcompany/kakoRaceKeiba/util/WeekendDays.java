@@ -16,7 +16,6 @@ public class WeekendDays {
     public static List<String> getPastWeekendsInCurrentMonth() {
         List<String> pastWeekends = new ArrayList<>();
 
-
         // 現在の年月を取得
         YearMonth currentMonth = YearMonth.now();
         // 月の初日を取得
@@ -58,6 +57,8 @@ public class WeekendDays {
                 }
             }
         }
+
+        //祝日用の日付を追加したい
         pastWeekends.add("20250915");
 
         Collections.sort(pastWeekends);

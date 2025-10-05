@@ -3,11 +3,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <!-- インターネットアクセスの権限を追加 -->
-
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="merge"/>
+    <uses-permission
+        android:name="com.google.android.gms.permission.AD_ID"
+        tools:node="merge" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
     <application
         android:allowBackup="true"
@@ -17,15 +17,14 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MyApplication"
-        >
+        android:theme="@style/Theme.MyApplication">
 
         <!-- FCMサービス -->
         <service
             android:name=".MyFirebaseMessagingService"
             android:exported="true">
             <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
 
@@ -33,7 +32,7 @@
         <!-- Sample AdMob App ID: ca-app-pub-3940256099942544~3347511713 -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-4855274440005459~6583986610" /> <!-- ここに正しいアプリIDを設定 -->
+            android:value="ca-app-pub-4855274440005459~6583986610" />
 
         <activity
             android:name="com.tktkcompany.kakoRaceKeiba.MainActivity"

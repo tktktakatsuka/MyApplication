@@ -307,7 +307,7 @@ public class ChatFragment extends Fragment implements ChatAdapter.OnShareButtonC
 
             // 6. AIへの指示書（プロンプト）を作成してAPIを呼び出す
             String prompt = "あなたは非常に優秀な競馬データアナリストです。以下の詳細なレース結果データを分析し、データ全体から読み取れる勝利馬の興味深い傾向や、騎手と人気の関係、あるいは何か特筆すべきパターンがあれば、プロの視点で詳しく解説してください。\n\n"
-                    + raceDataText.toString();
+                    + raceDataText;
 
             callGeminiApiWithPrompt(prompt);
 

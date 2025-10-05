@@ -30,7 +30,6 @@ import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
-import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentNotificationsBinding;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
 import com.tktkcompany.kakoRaceKeiba.dto.SharedViewModel;
@@ -93,7 +92,7 @@ public class NotificationsFragment extends Fragment {
     private TextView dateText18;
     private TextView dateText19;
     private TextView dateText20;
-    private List<String> joNameList =  new ArrayList<String>();
+    private List<String> joNameList = new ArrayList<String>();
 
 
     /**
@@ -114,11 +113,12 @@ public class NotificationsFragment extends Fragment {
         View root = binding.getRoot();
 
         SharedViewModel sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
-        sharedViewModel.getJoNames().observe(getViewLifecycleOwner(), joNames -> {
-            // joNames（競馬場名リスト）をここで使える！
-            joNameList = joNames;
+        joNameList.add("京都");
+        joNameList.add("東京");
+        sharedViewModel.setJoNames(joNameList);
 
-
+        // joNames（競馬場名リスト）をここで使える！
+        binding.selectRaceText.setText(joNameList.get(0) + "競馬場の傾向を表示");
         List<String> dateList = WeekendDays.getPastWeekendsInCurrentMonth();
         if (checkBox.isChecked()) {
             Collections.sort(dateList, Collections.reverseOrder());
@@ -454,6 +454,28 @@ public class NotificationsFragment extends Fragment {
                 CheckBox checkboxHani = binding.checkboxHani;
                 int reptNumber = 0;
 
+                for (String date : dateList) {
+                    if (!checkboxHani.isChecked() && reptNumber == 8) {
+                        break;
+                    } else {
+                        raceTrendsKousouHorseTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                        raceTrendsKousouHorseTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                        raceTrendsKousouHorseTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                        raceTrendsKousouHorseTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                        raceTrendsKousouHorseTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                        raceTrendsKousouHorseTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                        raceTrendsKousouHorseTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                        raceTrendsKousouHorseTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                        raceTrendsKousouHorseTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                        raceTrendsKousouHorseTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                        raceTrendsKousouHorseTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                        raceTrendsKousouHorseTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                        reptNumber = reptNumber + 1;
+                    }
+
+                }
+
+
                 switch (position) {
                     case 0: // "好走馬" タブ
                         for (String date : dateList) {
@@ -675,11 +697,6 @@ public class NotificationsFragment extends Fragment {
             }
 
         });
-
-
-
-        //このした
-        });
         return root;
     }
 
@@ -693,63 +710,6 @@ public class NotificationsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-
-        // ViewPager2の位置をリセット
-        if (viewPager != null) {
-            viewPager.setCurrentItem(0, false); // 最初のタブに戻る
-        }
-
-        // TabLayoutの選択をリセット
-        if (tabLayout != null) {
-            TabLayout.Tab firstTab = tabLayout.getTabAt(0);
-            if (firstTab != null) {
-                firstTab.select();
-            }
-        }
-
-        //テーブルレイアウトリセット
-        tableLayout1.removeAllViews();
-        tableLayout2.removeAllViews();
-        tableLayout3.removeAllViews();
-        tableLayout4.removeAllViews();
-        tableLayout5.removeAllViews();
-        tableLayout6.removeAllViews();
-        tableLayout7.removeAllViews();
-        tableLayout8.removeAllViews();
-        tableLayout9.removeAllViews();
-        tableLayout10.removeAllViews();
-        tableLayout11.removeAllViews();
-        tableLayout12.removeAllViews();
-        tableLayout13.removeAllViews();
-        tableLayout14.removeAllViews();
-        tableLayout15.removeAllViews();
-        tableLayout16.removeAllViews();
-        tableLayout17.removeAllViews();
-        tableLayout18.removeAllViews();
-        tableLayout19.removeAllViews();
-        tableLayout20.removeAllViews();
-        dateText1.setText("");
-        dateText2.setText("");
-        dateText3.setText("");
-        dateText4.setText("");
-        dateText5.setText("");
-        dateText6.setText("");
-        dateText7.setText("");
-        dateText8.setText("");
-        dateText9.setText("");
-        dateText10.setText("");
-        dateText11.setText("");
-        dateText12.setText("");
-        dateText13.setText("");
-        dateText14.setText("");
-        dateText15.setText("");
-        dateText16.setText("");
-        dateText17.setText("");
-        dateText18.setText("");
-        dateText19.setText("");
-        dateText20.setText("");
-
-
     }
 
 
@@ -1813,7 +1773,8 @@ public class NotificationsFragment extends Fragment {
     private void showDialogList() {
         // ダイアログに表示するリスト
         requireActivity().runOnUiThread(() -> {
-            String[] items =  joNameList.toArray(new String[joNameList.size()]);;
+            String[] items = joNameList.toArray(new String[joNameList.size()]);
+            ;
             // AlertDialog を作成
             AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
             builder.setTitle("Choose an Option")
@@ -1823,9 +1784,8 @@ public class NotificationsFragment extends Fragment {
                         joNameList.add(0, joName);
                         TextView textView = binding.selectRaceText;
                         textView.setText(joNameList.get(0) + "競馬場の傾向を表示");
+                        joNameList.remove(which + 1);
                     });
-
-
             // ダイアログを表示
             builder.create().show();
         });
@@ -1861,7 +1821,6 @@ public class NotificationsFragment extends Fragment {
 
         bannerAdView.loadAd(adRequest);
     }
-
 
 
 }

@@ -2,11 +2,13 @@ package com.tktkcompany.kakoRaceKeiba;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.credentials.Credential;
@@ -16,6 +18,7 @@ import androidx.credentials.CustomCredential;
 import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.GetCredentialException;
+import androidx.credentials.exceptions.NoCredentialException;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -23,8 +26,13 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
-
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 import com.google.firebase.auth.AuthCredential;
@@ -39,53 +47,87 @@ import com.tktkcompany.kakoRaceKeiba.ui.home.HomeFragment;
 
 import static com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL;
 
-
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private static final String DEFAULT_CHANNEL_ID = "default_channel";
     private static final String DEFAULT_CHANNEL_NAME = "Default Notifications";
+
     private CredentialManager credentialManager;
     private final FirebaseAuth mAuth = FirebaseAuth.getInstance();
+
+    // MainActivity のフィールド
+    private ActivityResultLauncher<Intent> googleSignInLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // ★★★ 2. 変数を必ず初期化する ★★★
+
+        // CredentialManager 初期化
         credentialManager = CredentialManager.create(this);
 
-        new Thread(
-                () -> MobileAds.initialize(this, initializationStatus -> Log.d(TAG, "AdMob initialized")))
+        // ActivityResultLauncher 初期化（Google Sign-In fallback 用）
+        googleSignInLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK) {
+                        Intent data = result.getData();
+                        Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+                        try {
+                            GoogleSignInAccount account = task.getResult(ApiException.class);
+                            if (account != null) {
+                                String idToken = account.getIdToken();
+                                firebaseAuthWithGoogle(idToken); // 既存のFirebase認証処理を使う
+                            }
+                        } catch (ApiException e) {
+                            Log.w(TAG, "Google sign in failed", e);
+                            Toast.makeText(this, "Googleサインインに失敗しました", Toast.LENGTH_SHORT).show();
+                            updateHomeFragmentUI(null);
+                        }
+                    }
+                }
+        );
+
+        // AdMob 初期化（別スレッドで）
+        new Thread(() -> MobileAds.initialize(this, initializationStatus -> Log.d(TAG, "AdMob initialized")))
                 .start();
 
-        // ThreeTenABPの初期化
+        // ThreeTenABP の初期化
         AndroidThreeTen.init(this);
-        com.tktkcompany.kakoRaceKeiba.databinding.ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
+
+        ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications, R.id.navigation_raceResults, R.id.navigation_memoLists, R.id.navigation_memoCreate, R.id.navigation_memoDetail, R.id.navigation_memoEdit, R.id.navigation_chat)
-                .build();
+                R.id.navigation_home,
+                R.id.navigation_dashboard,
+                R.id.navigation_notifications,
+                R.id.navigation_raceResults,
+                R.id.navigation_memoLists,
+                R.id.navigation_memoCreate,
+                R.id.navigation_memoDetail,
+                R.id.navigation_memoEdit,
+                R.id.navigation_chat
+        ).build();
 
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
 
-        // 通知チャンネルを作成
+        // 通知チャンネル作成
         createNotificationChannel();
-        // トークンを取得
+
+        // FCM トークン取得
         FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(task -> {
                     if (!task.isSuccessful()) {
                         Log.w("FCM", "Fetching FCM registration token failed", task.getException());
                         return;
                     }
-                    // トークンを取得
                     String token = task.getResult();
                     Log.d("FCM Token", token);
                 });
     }
-
 
     private void createNotificationChannel() {
         NotificationChannel channel = new NotificationChannel(
@@ -101,7 +143,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     /**
      * HomeFragmentから呼び出されるサインイン処理
      */
@@ -116,36 +157,42 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         credentialManager.getCredentialAsync(
-                this, request, null, getMainExecutor(),
+                this,
+                request,
+                null,
+                getMainExecutor(),
                 new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
                     @Override
                     public void onResult(GetCredentialResponse result) {
-                        // ★★★ ここからが抜けていた重要な処理 ★★★
+                        // 取得した Credential を処理
                         Credential credential = result.getCredential();
-                        if (credential instanceof CustomCredential && credential.getType().equals(TYPE_GOOGLE_ID_TOKEN_CREDENTIAL)) {
+                        if (credential instanceof CustomCredential
+                                && credential.getType().equals(TYPE_GOOGLE_ID_TOKEN_CREDENTIAL)) {
                             try {
-                                // 宝箱から鍵（IDトークン）を取り出す
                                 Bundle credentialData = credential.getData();
                                 GoogleIdTokenCredential googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credentialData);
                                 String idToken = googleIdTokenCredential.getIdToken();
-                                // 取り出した鍵をFirebaseに渡す
                                 firebaseAuthWithGoogle(idToken);
                             } catch (Exception e) {
-                                Log.e(TAG, "GoogleIdTokenCredentialの作成に失敗", e);
-                                updateHomeFragmentUI(null); // UIを更新
+                                Log.e(TAG, "GoogleIdTokenCredential の作成に失敗", e);
+                                updateHomeFragmentUI(null);
                             }
                         } else {
-                            Log.w(TAG, "取得したCredentialがGoogle IDトークンではありませんでした。");
+                            Log.w(TAG, "取得した Credential が Google ID トークンではありませんでした。");
                             Toast.makeText(MainActivity.this, "ログインに失敗しました。", Toast.LENGTH_SHORT).show();
-                            updateHomeFragmentUI(null); // UIを更新
+                            updateHomeFragmentUI(null);
                         }
                     }
 
                     @Override
                     public void onError(@NonNull GetCredentialException e) {
-                        Log.e(TAG, "GetCredential failed", e);
-                        Toast.makeText(MainActivity.this, "ログイン処理でエラーが発生しました。", Toast.LENGTH_SHORT).show();
-                        // 失敗した場合もFragmentのUIを更新する
+                        if (e instanceof NoCredentialException) {
+                            Log.w(TAG, "保存済みの認証情報がありません。GoogleサインインUIを表示します。");
+                            launchGoogleSignInFallback();
+                        } else {
+                            Log.e(TAG, "GetCredential failed", e);
+                            Toast.makeText(MainActivity.this, "ログイン処理でエラーが発生しました。", Toast.LENGTH_SHORT).show();
+                        }
                         updateHomeFragmentUI(null);
                     }
                 }
@@ -153,30 +200,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * ★★★ ログアウト処理を行うメソッド ★★★
-     * HomeFragmentから呼び出されるようにpublicにする
+     * ログアウト処理（HomeFragment から呼ばれる）
      */
     public void signOut() {
-        // 1. Firebaseからログアウト
+        // Firebase からログアウト
         mAuth.signOut();
-        // ★★★ ViewModelを初期化 ★★★
-        // ★★★ ViewModelのインスタンスをメンバー変数として宣言 ★★★
+
+        // ViewModel の UID をクリア
         SharedViewModel sharedViewModel = new ViewModelProvider(this).get(SharedViewModel.class);
-        // 3. ViewModelに保持しているUIDをクリアする
         sharedViewModel.setUid(null);
-        // 4. HomeFragmentのUIを更新するよう依頼する (未ログイン状態を渡す)
+
+        // HomeFragment の UI を未ログイン状態に更新
         updateHomeFragmentUI(null);
-        // 5. ユーザーにログアウトしたことを通知する
+
         Toast.makeText(this, "ログアウトしました。", Toast.LENGTH_SHORT).show();
     }
-
 
     private void firebaseAuthWithGoogle(String idToken) {
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
         mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, task -> {
                     FirebaseUser user = mAuth.getCurrentUser();
-                    // 認証完了後、HomeFragmentにUIの更新を依頼する
+                    // 認証完了後、HomeFragment に UI 更新を依頼
                     updateHomeFragmentUI(user);
 
                     if (task.isSuccessful()) {
@@ -191,10 +236,21 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    private void launchGoogleSignInFallback() {
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+
+        GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
+        Intent signInIntent = googleSignInClient.getSignInIntent();
+        googleSignInLauncher.launch(signInIntent);
+    }
+
     /**
-     * 表示されているHomeFragmentを見つけて、UIの更新を依頼するメソッド
+     * 表示されている HomeFragment を見つけて UI を更新する
      *
-     * @param user ログインユーザー情報 (未ログインならnull)
+     * @param user ログインユーザー情報 (未ログインなら null)
      */
     private void updateHomeFragmentUI(FirebaseUser user) {
         try {

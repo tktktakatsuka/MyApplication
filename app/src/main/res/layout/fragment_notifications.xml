@@ -113,8 +113,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:clipToPadding="false"
-                        android:paddingStart="0dp"
-                        android:paddingEnd="0dp"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
                         app:tabGravity="center"
                         app:tabMode="scrollable" />
                 </HorizontalScrollView>
@@ -123,6 +123,7 @@
                     android:id="@+id/viewPager"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" />
+
             </LinearLayout>
 
             <!-- ProgressBar (インジケーター) -->

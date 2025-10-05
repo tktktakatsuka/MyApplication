@@ -22,7 +22,7 @@ android {
         applicationId "com.tktkcompany.kakoRaceKeiba"
         minSdk 28
         targetSdk 36
-        versionCode 346
+        versionCode 355
         versionName "1.0"
         // BuildConfigフィールドとしてAPIキーを定義
         buildConfigField "String", "GEMINI_API_KEY", properties.getProperty("GEMINI_API_KEY", "")
@@ -87,5 +87,15 @@ dependencies {
     implementation libs.credentials
     implementation libs.credentials.play.services.auth
     implementation libs.googleid
+    // Firebase Authentication
+    implementation libs.firebase.auth.v2300
 
+    // Google Identity Services (Credential Manager)
+    implementation libs.credentials.v130
+    implementation libs.credentials.play.services.auth.v130
+    implementation libs.googleid
+    implementation libs.play.services.ads.v2330
+
+    // Google Sign-In fallback 用
+    implementation libs.play.services.auth
 }
