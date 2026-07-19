@@ -143,22 +143,9 @@ public class HomeFragment extends Fragment {
             }
         });
 
-
         mAuth.addAuthStateListener(firebaseAuth -> {
             FirebaseUser currentUser = firebaseAuth.getCurrentUser();
             updateUI(currentUser);
-        });
-
-        binding.googleSignInButton.setOnClickListener(v -> {
-            if (getActivity() instanceof MainActivity) {
-                ((MainActivity) getActivity()).signInWithGoogle();
-            }
-        });
-
-        binding.logoutButton.setOnClickListener(v -> {
-            if (getActivity() instanceof MainActivity) {
-                ((MainActivity) getActivity()).signOut();
-            }
         });
 
         // ★★★ ログアウトボタンのクリックリスナーを追加 ★★★
@@ -295,7 +282,7 @@ public class HomeFragment extends Fragment {
             //レースの着順を設定する。
             binding.text2RaceResult1Name.setText(horseName);
             // ▼ ここで「もっと見る」にクリックリスナーを設定する
-            TextView moreTextView = root.findViewById(R.id.text_popular_raceResult_more);
+            TextView moreTextView = root.findViewById(R.id.text2_popular_raceResult_more);
             moreTextView.setOnClickListener(v -> {
                 // 例: 直近の「日付」と「競馬場」を渡して同じ画面に遷移
                 String date = raceDateStr; // ← 実際には任意の date に置き換える

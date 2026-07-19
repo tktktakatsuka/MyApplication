@@ -41,16 +41,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal" />
 
-    <Button
-        android:id="@+id/showWebViewDialogButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="JRA公式Webページを表示"
-        android:layout_gravity="center"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:textColor="@color/material_dynamic_primary95"/>
+
 
 
 </LinearLayout>

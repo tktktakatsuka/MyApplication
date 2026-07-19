@@ -3,6 +3,7 @@ package com.tktkcompany.kakoRaceKeiba.ui.notifications;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -95,6 +96,7 @@ public class NotificationsFragment extends Fragment {
     private List<String> joNameList = new ArrayList<String>();
 
 
+
     /**
      * @param inflater           The LayoutInflater object that can be used to inflate
      *                           any views in the fragment,
@@ -113,593 +115,531 @@ public class NotificationsFragment extends Fragment {
         View root = binding.getRoot();
 
         SharedViewModel sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
-        joNameList.add("京都");
-        joNameList.add("東京");
-        sharedViewModel.setJoNames(joNameList);
+        sharedViewModel.getJoNames().observe(getViewLifecycleOwner(), joNames -> {
+            joNameList = (joNames);
 
-        // joNames（競馬場名リスト）をここで使える！
-        binding.selectRaceText.setText(joNameList.get(0) + "競馬場の傾向を表示");
-        List<String> dateList = WeekendDays.getPastWeekendsInCurrentMonth();
-        if (checkBox.isChecked()) {
-            Collections.sort(dateList, Collections.reverseOrder());
-            checkBox.setChecked(true);
-        } else {
-            Collections.sort(dateList);
-        }
-
-        //スピナー表示
-        progressBar = binding.progressBar;
-        progressBar.setVisibility(View.VISIBLE);
-
-        tabLayout = binding.tabLayout;
-        viewPager = binding.viewPager;
-        // ページを設定するアダプター
-        List<String> tabTitles = new ArrayList<>();
-        tabTitles.add("好走馬");
-        tabTitles.add("脚質");
-        tabTitles.add("騎手");
-        tabTitles.add("調教師");
-        tabTitles.add("種牡馬");
-        tabTitles.add("母父");
-        tabTitles.add("払戻金");
-        tabTitles.add("馬主");
-        tabTitles.add("生産者");
-        TabPagerAdapter adapter = new TabPagerAdapter(requireActivity(), tabTitles);
-        viewPager.setAdapter(adapter);
-
-        // AdViewのインスタンスを取得、ロード
-        loadBannerAd();
-        tableLayout1 = binding.tableLayout1;
-        tableLayout2 = binding.tableLayout2;
-        tableLayout3 = binding.tableLayout3;
-        tableLayout4 = binding.tableLayout4;
-        tableLayout5 = binding.tableLayout5;
-        tableLayout6 = binding.tableLayout6;
-        tableLayout7 = binding.tableLayout7;
-        tableLayout8 = binding.tableLayout8;
-        tableLayout9 = binding.tableLayout9;
-        tableLayout10 = binding.tableLayout10;
-        tableLayout11 = binding.tableLayout11;
-        tableLayout12 = binding.tableLayout12;
-        tableLayout13 = binding.tableLayout13;
-        tableLayout14 = binding.tableLayout14;
-        tableLayout15 = binding.tableLayout15;
-        tableLayout16 = binding.tableLayout16;
-        tableLayout17 = binding.tableLayout17;
-        tableLayout18 = binding.tableLayout18;
-        tableLayout19 = binding.tableLayout19;
-        tableLayout20 = binding.tableLayout20;
-        dateText1 = binding.textDate1;
-        dateText2 = binding.textDate2;
-        dateText3 = binding.textDate3;
-        dateText4 = binding.textDate4;
-        dateText5 = binding.textDate5;
-        dateText6 = binding.textDate6;
-        dateText7 = binding.textDate7;
-        dateText8 = binding.textDate8;
-        dateText9 = binding.textDate9;
-        dateText10 = binding.textDate10;
-        dateText11 = binding.textDate11;
-        dateText12 = binding.textDate12;
-        dateText13 = binding.textDate13;
-        dateText14 = binding.textDate14;
-        dateText15 = binding.textDate15;
-        dateText16 = binding.textDate16;
-        dateText17 = binding.textDate17;
-        dateText18 = binding.textDate18;
-        dateText19 = binding.textDate19;
-        dateText20 = binding.textDate20;
-
-
-        // ボタンを取得
-        Button showDialogButton = binding.showDialogButton;
-        // ボタンのクリックリスナーを設定
-        showDialogButton.setOnClickListener(view -> showDialogList());
-        tableLayout1.removeAllViews();
-        tableLayout2.removeAllViews();
-        tableLayout3.removeAllViews();
-        tableLayout4.removeAllViews();
-        tableLayout5.removeAllViews();
-        tableLayout6.removeAllViews();
-        tableLayout7.removeAllViews();
-        tableLayout8.removeAllViews();
-        tableLayout9.removeAllViews();
-        tableLayout10.removeAllViews();
-        tableLayout11.removeAllViews();
-        tableLayout12.removeAllViews();
-        tableLayout13.removeAllViews();
-        tableLayout14.removeAllViews();
-        tableLayout15.removeAllViews();
-        tableLayout16.removeAllViews();
-        tableLayout17.removeAllViews();
-        tableLayout18.removeAllViews();
-        tableLayout19.removeAllViews();
-        tableLayout20.removeAllViews();
-        dateText1.setText("");
-        dateText2.setText("");
-        dateText3.setText("");
-        dateText4.setText("");
-        dateText5.setText("");
-        dateText6.setText("");
-        dateText7.setText("");
-        dateText8.setText("");
-        dateText9.setText("");
-        dateText10.setText("");
-        dateText11.setText("");
-        dateText12.setText("");
-        dateText13.setText("");
-        dateText14.setText("");
-        dateText15.setText("");
-        dateText16.setText("");
-        dateText17.setText("");
-        dateText18.setText("");
-        dateText19.setText("");
-        dateText20.setText("");
-
-        HashMap<String, TableLayout> tableMap = new HashMap<>();
-        HashMap<String, TextView> textMap = new HashMap<>();
-        int i = 0;
-        for (String date : dateList) {
-            if (i == 0) {
-                tableMap.put(date, tableLayout1);
-                textMap.put(date, dateText1);
-            } else if (i == 1) {
-                tableMap.put(date, tableLayout2);
-                textMap.put(date, dateText2);
-            } else if (i == 2) {
-                tableMap.put(date, tableLayout3);
-                textMap.put(date, dateText3);
-            } else if (i == 3) {
-                tableMap.put(date, tableLayout4);
-                textMap.put(date, dateText4);
-            } else if (i == 4) {
-                tableMap.put(date, tableLayout5);
-                textMap.put(date, dateText5);
-            } else if (i == 5) {
-                tableMap.put(date, tableLayout6);
-                textMap.put(date, dateText6);
-            } else if (i == 6) {
-                tableMap.put(date, tableLayout7);
-                textMap.put(date, dateText7);
-            } else if (i == 7) {
-                tableMap.put(date, tableLayout8);
-                textMap.put(date, dateText8);
-            } else if (i == 8) {
-                tableMap.put(date, tableLayout9);
-                textMap.put(date, dateText9);
-            } else if (i == 9) {
-                tableMap.put(date, tableLayout10);
-                textMap.put(date, dateText10);
-            } else if (i == 10) {
-                tableMap.put(date, tableLayout11);
-                textMap.put(date, dateText11);
-            } else if (i == 11) {
-                tableMap.put(date, tableLayout12);
-                textMap.put(date, dateText12);
-            } else if (i == 12) {
-                tableMap.put(date, tableLayout13);
-                textMap.put(date, dateText13);
-            } else if (i == 13) {
-                tableMap.put(date, tableLayout14);
-                textMap.put(date, dateText14);
-            } else if (i == 14) {
-                tableMap.put(date, tableLayout15);
-                textMap.put(date, dateText15);
-            } else if (i == 15) {
-                tableMap.put(date, tableLayout16);
-                textMap.put(date, dateText16);
-            } else if (i == 16) {
-                tableMap.put(date, tableLayout17);
-                textMap.put(date, dateText17);
-            } else if (i == 17) {
-                tableMap.put(date, tableLayout18);
-                textMap.put(date, dateText18);
-            } else if (i == 18) {
-                tableMap.put(date, tableLayout19);
-                textMap.put(date, dateText19);
-            } else if (i == 19) {
-                tableMap.put(date, tableLayout20);
-                textMap.put(date, dateText20);
-            }
-            i = i + 1;
-        }
-
-        CheckBox checkboxHani = binding.checkboxHani;
-        int reptNumber = 0;
-        for (String date : dateList) {
-            if (!checkboxHani.isChecked() && reptNumber == 8) {
-                break;
+            // joNames（競馬場名リスト）をここで使える！
+            binding.selectRaceText.setText(joNameList.get(0) + "競馬場の傾向を表示");
+            List<String> dateList = WeekendDays.getPastWeekendsInCurrentMonth();
+            if (checkBox.isChecked()) {
+                Collections.sort(dateList, Collections.reverseOrder());
+                checkBox.setChecked(true);
             } else {
-                raceTrendsKousouHorseTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                raceTrendsKousouHorseTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                raceTrendsKousouHorseTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                raceTrendsKousouHorseTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                raceTrendsKousouHorseTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                raceTrendsKousouHorseTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                raceTrendsKousouHorseTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                raceTrendsKousouHorseTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                raceTrendsKousouHorseTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                raceTrendsKousouHorseTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                raceTrendsKousouHorseTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                raceTrendsKousouHorseTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                reptNumber = reptNumber + 1;
+                Collections.sort(dateList);
             }
-        }
+
+            //スピナー表示
+            progressBar = binding.progressBar;
+            progressBar.setVisibility(View.VISIBLE);
+
+            tabLayout = binding.tabLayout;
+            viewPager = binding.viewPager;
+            // ページを設定するアダプター
+            List<String> tabTitles = new ArrayList<>();
+            tabTitles.add("好走馬");
+            tabTitles.add("脚質");
+            tabTitles.add("騎手");
+            tabTitles.add("調教師");
+            tabTitles.add("種牡馬");
+            tabTitles.add("母父");
+            tabTitles.add("払戻金");
+            tabTitles.add("馬主");
+            tabTitles.add("生産者");
+            TabPagerAdapter adapter = new TabPagerAdapter(requireActivity(), tabTitles);
+            viewPager.setAdapter(adapter);
+
+            // AdViewのインスタンスを取得、ロード
+            loadBannerAd();
+            tableLayout1 = binding.tableLayout1;
+            tableLayout2 = binding.tableLayout2;
+            tableLayout3 = binding.tableLayout3;
+            tableLayout4 = binding.tableLayout4;
+            tableLayout5 = binding.tableLayout5;
+            tableLayout6 = binding.tableLayout6;
+            tableLayout7 = binding.tableLayout7;
+            tableLayout8 = binding.tableLayout8;
+            tableLayout9 = binding.tableLayout9;
+            tableLayout10 = binding.tableLayout10;
+            tableLayout11 = binding.tableLayout11;
+            tableLayout12 = binding.tableLayout12;
+            tableLayout13 = binding.tableLayout13;
+            tableLayout14 = binding.tableLayout14;
+            tableLayout15 = binding.tableLayout15;
+            tableLayout16 = binding.tableLayout16;
+            tableLayout17 = binding.tableLayout17;
+            tableLayout18 = binding.tableLayout18;
+            tableLayout19 = binding.tableLayout19;
+            tableLayout20 = binding.tableLayout20;
+            dateText1 = binding.textDate1;
+            dateText2 = binding.textDate2;
+            dateText3 = binding.textDate3;
+            dateText4 = binding.textDate4;
+            dateText5 = binding.textDate5;
+            dateText6 = binding.textDate6;
+            dateText7 = binding.textDate7;
+            dateText8 = binding.textDate8;
+            dateText9 = binding.textDate9;
+            dateText10 = binding.textDate10;
+            dateText11 = binding.textDate11;
+            dateText12 = binding.textDate12;
+            dateText13 = binding.textDate13;
+            dateText14 = binding.textDate14;
+            dateText15 = binding.textDate15;
+            dateText16 = binding.textDate16;
+            dateText17 = binding.textDate17;
+            dateText18 = binding.textDate18;
+            dateText19 = binding.textDate19;
+            dateText20 = binding.textDate20;
 
 
-        // TabLayoutとViewPager2をリンク
-        new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> tab.setText(tabTitles.get(position))).attach();
-        // タブ選択リスナーを追加
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
+            // ボタンを取得
+            Button showDialogButton = binding.showDialogButton;
+            // ボタンのクリックリスナーを設定
+            showDialogButton.setOnClickListener(view -> showDialogList());
 
-                if (checkBox.isChecked()) {
-                    Collections.sort(dateList, Collections.reverseOrder());
+            HashMap<String, TableLayout> tableMap = new HashMap<>();
+            HashMap<String, TextView> textMap = new HashMap<>();
+            int i = 0;
+            for (String date : dateList) {
+                if (i == 0) {
+                    tableMap.put(date, tableLayout1);
+                    textMap.put(date, dateText1);
+                } else if (i == 1) {
+                    tableMap.put(date, tableLayout2);
+                    textMap.put(date, dateText2);
+                } else if (i == 2) {
+                    tableMap.put(date, tableLayout3);
+                    textMap.put(date, dateText3);
+                } else if (i == 3) {
+                    tableMap.put(date, tableLayout4);
+                    textMap.put(date, dateText4);
+                } else if (i == 4) {
+                    tableMap.put(date, tableLayout5);
+                    textMap.put(date, dateText5);
+                } else if (i == 5) {
+                    tableMap.put(date, tableLayout6);
+                    textMap.put(date, dateText6);
+                } else if (i == 6) {
+                    tableMap.put(date, tableLayout7);
+                    textMap.put(date, dateText7);
+                } else if (i == 7) {
+                    tableMap.put(date, tableLayout8);
+                    textMap.put(date, dateText8);
+                } else if (i == 8) {
+                    tableMap.put(date, tableLayout9);
+                    textMap.put(date, dateText9);
+                } else if (i == 9) {
+                    tableMap.put(date, tableLayout10);
+                    textMap.put(date, dateText10);
+                } else if (i == 10) {
+                    tableMap.put(date, tableLayout11);
+                    textMap.put(date, dateText11);
+                } else if (i == 11) {
+                    tableMap.put(date, tableLayout12);
+                    textMap.put(date, dateText12);
+                } else if (i == 12) {
+                    tableMap.put(date, tableLayout13);
+                    textMap.put(date, dateText13);
+                } else if (i == 13) {
+                    tableMap.put(date, tableLayout14);
+                    textMap.put(date, dateText14);
+                } else if (i == 14) {
+                    tableMap.put(date, tableLayout15);
+                    textMap.put(date, dateText15);
+                } else if (i == 15) {
+                    tableMap.put(date, tableLayout16);
+                    textMap.put(date, dateText16);
+                } else if (i == 16) {
+                    tableMap.put(date, tableLayout17);
+                    textMap.put(date, dateText17);
+                } else if (i == 17) {
+                    tableMap.put(date, tableLayout18);
+                    textMap.put(date, dateText18);
+                } else if (i == 18) {
+                    tableMap.put(date, tableLayout19);
+                    textMap.put(date, dateText19);
+                } else if (i == 19) {
+                    tableMap.put(date, tableLayout20);
+                    textMap.put(date, dateText20);
+                }
+                i = i + 1;
+            }
+
+            CheckBox checkboxHani = binding.checkboxHani;
+            int reptNumber = 0;
+            for (String date : dateList) {
+                if (!checkboxHani.isChecked() && reptNumber == 8) {
+                    break;
                 } else {
-                    Collections.sort(dateList);
+                    raceTrendsKousouHorseTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                    raceTrendsKousouHorseTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                    raceTrendsKousouHorseTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                    raceTrendsKousouHorseTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                    raceTrendsKousouHorseTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                    raceTrendsKousouHorseTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                    raceTrendsKousouHorseTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                    raceTrendsKousouHorseTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                    raceTrendsKousouHorseTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                    raceTrendsKousouHorseTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                    raceTrendsKousouHorseTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                    raceTrendsKousouHorseTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                    reptNumber = reptNumber + 1;
                 }
-                HashMap<String, TableLayout> tableMap = new HashMap<>();
-                HashMap<String, TextView> textMap = new HashMap<>();
-                int i = 0;
-                for (String date : dateList) {
-                    if (i == 0) {
-                        tableMap.put(date, tableLayout1);
-                        textMap.put(date, dateText1);
-                    } else if (i == 1) {
-                        tableMap.put(date, tableLayout2);
-                        textMap.put(date, dateText2);
-                    } else if (i == 2) {
-                        tableMap.put(date, tableLayout3);
-                        textMap.put(date, dateText3);
-                    } else if (i == 3) {
-                        tableMap.put(date, tableLayout4);
-                        textMap.put(date, dateText4);
-                    } else if (i == 4) {
-                        tableMap.put(date, tableLayout5);
-                        textMap.put(date, dateText5);
-                    } else if (i == 5) {
-                        tableMap.put(date, tableLayout6);
-                        textMap.put(date, dateText6);
-                    } else if (i == 6) {
-                        tableMap.put(date, tableLayout7);
-                        textMap.put(date, dateText7);
-                    } else if (i == 7) {
-                        tableMap.put(date, tableLayout8);
-                        textMap.put(date, dateText8);
-                    } else if (i == 8) {
-                        tableMap.put(date, tableLayout9);
-                        textMap.put(date, dateText9);
-                    } else if (i == 9) {
-                        tableMap.put(date, tableLayout10);
-                        textMap.put(date, dateText10);
-                    } else if (i == 10) {
-                        tableMap.put(date, tableLayout11);
-                        textMap.put(date, dateText11);
-                    } else if (i == 11) {
-                        tableMap.put(date, tableLayout12);
-                        textMap.put(date, dateText12);
-                    } else if (i == 12) {
-                        tableMap.put(date, tableLayout13);
-                        textMap.put(date, dateText13);
-                    } else if (i == 13) {
-                        tableMap.put(date, tableLayout14);
-                        textMap.put(date, dateText14);
-                    } else if (i == 14) {
-                        tableMap.put(date, tableLayout15);
-                        textMap.put(date, dateText15);
-                    } else if (i == 15) {
-                        tableMap.put(date, tableLayout16);
-                        textMap.put(date, dateText16);
-                    } else if (i == 16) {
-                        tableMap.put(date, tableLayout17);
-                        textMap.put(date, dateText17);
-                    } else if (i == 17) {
-                        tableMap.put(date, tableLayout18);
-                        textMap.put(date, dateText18);
-                    } else if (i == 18) {
-                        tableMap.put(date, tableLayout19);
-                        textMap.put(date, dateText19);
-                    } else if (i == 19) {
-                        tableMap.put(date, tableLayout20);
-                        textMap.put(date, dateText20);
-                    }
-                    i = i + 1;
-                }
+            }
 
-                //テーブル初期化
-                tableLayout1.removeAllViews();
-                tableLayout2.removeAllViews();
-                tableLayout3.removeAllViews();
-                tableLayout4.removeAllViews();
-                tableLayout5.removeAllViews();
-                tableLayout6.removeAllViews();
-                tableLayout7.removeAllViews();
-                tableLayout8.removeAllViews();
-                tableLayout9.removeAllViews();
-                tableLayout10.removeAllViews();
-                tableLayout11.removeAllViews();
-                tableLayout12.removeAllViews();
-                tableLayout13.removeAllViews();
-                tableLayout14.removeAllViews();
-                tableLayout15.removeAllViews();
-                tableLayout16.removeAllViews();
-                tableLayout17.removeAllViews();
-                tableLayout18.removeAllViews();
-                tableLayout19.removeAllViews();
-                tableLayout20.removeAllViews();
-                dateText1.setText("");
-                dateText2.setText("");
-                dateText3.setText("");
-                dateText4.setText("");
-                dateText5.setText("");
-                dateText6.setText("");
-                dateText7.setText("");
-                dateText8.setText("");
-                dateText9.setText("");
-                dateText10.setText("");
-                dateText11.setText("");
-                dateText12.setText("");
-                dateText13.setText("");
-                dateText14.setText("");
-                dateText15.setText("");
-                dateText16.setText("");
-                dateText17.setText("");
-                dateText18.setText("");
-                dateText19.setText("");
-                dateText20.setText("");
-                // タブが選択されたときの処理
-                int position = tab.getPosition(); // 選択されたタブのインデックス
 
-                CheckBox checkboxHani = binding.checkboxHani;
-                int reptNumber = 0;
+            // TabLayoutとViewPager2をリンク
+            new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> tab.setText(tabTitles.get(position))).attach();
+            // タブ選択リスナーを追加
+            tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+                @Override
+                public void onTabSelected(TabLayout.Tab tab) {
 
-                for (String date : dateList) {
-                    if (!checkboxHani.isChecked() && reptNumber == 8) {
-                        break;
+                    if (checkBox.isChecked()) {
+                        Collections.sort(dateList, Collections.reverseOrder());
                     } else {
-                        raceTrendsKousouHorseTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                        raceTrendsKousouHorseTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                        raceTrendsKousouHorseTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                        raceTrendsKousouHorseTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                        raceTrendsKousouHorseTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                        raceTrendsKousouHorseTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                        raceTrendsKousouHorseTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                        raceTrendsKousouHorseTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                        raceTrendsKousouHorseTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                        raceTrendsKousouHorseTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                        raceTrendsKousouHorseTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                        raceTrendsKousouHorseTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                        reptNumber = reptNumber + 1;
+                        Collections.sort(dateList);
+                    }
+                    HashMap<String, TableLayout> tableMap = new HashMap<>();
+                    HashMap<String, TextView> textMap = new HashMap<>();
+                    int i = 0;
+                    for (String date : dateList) {
+                        if (i == 0) {
+                            tableMap.put(date, tableLayout1);
+                            textMap.put(date, dateText1);
+                        } else if (i == 1) {
+                            tableMap.put(date, tableLayout2);
+                            textMap.put(date, dateText2);
+                        } else if (i == 2) {
+                            tableMap.put(date, tableLayout3);
+                            textMap.put(date, dateText3);
+                        } else if (i == 3) {
+                            tableMap.put(date, tableLayout4);
+                            textMap.put(date, dateText4);
+                        } else if (i == 4) {
+                            tableMap.put(date, tableLayout5);
+                            textMap.put(date, dateText5);
+                        } else if (i == 5) {
+                            tableMap.put(date, tableLayout6);
+                            textMap.put(date, dateText6);
+                        } else if (i == 6) {
+                            tableMap.put(date, tableLayout7);
+                            textMap.put(date, dateText7);
+                        } else if (i == 7) {
+                            tableMap.put(date, tableLayout8);
+                            textMap.put(date, dateText8);
+                        } else if (i == 8) {
+                            tableMap.put(date, tableLayout9);
+                            textMap.put(date, dateText9);
+                        } else if (i == 9) {
+                            tableMap.put(date, tableLayout10);
+                            textMap.put(date, dateText10);
+                        } else if (i == 10) {
+                            tableMap.put(date, tableLayout11);
+                            textMap.put(date, dateText11);
+                        } else if (i == 11) {
+                            tableMap.put(date, tableLayout12);
+                            textMap.put(date, dateText12);
+                        } else if (i == 12) {
+                            tableMap.put(date, tableLayout13);
+                            textMap.put(date, dateText13);
+                        } else if (i == 13) {
+                            tableMap.put(date, tableLayout14);
+                            textMap.put(date, dateText14);
+                        } else if (i == 14) {
+                            tableMap.put(date, tableLayout15);
+                            textMap.put(date, dateText15);
+                        } else if (i == 15) {
+                            tableMap.put(date, tableLayout16);
+                            textMap.put(date, dateText16);
+                        } else if (i == 16) {
+                            tableMap.put(date, tableLayout17);
+                            textMap.put(date, dateText17);
+                        } else if (i == 17) {
+                            tableMap.put(date, tableLayout18);
+                            textMap.put(date, dateText18);
+                        } else if (i == 18) {
+                            tableMap.put(date, tableLayout19);
+                            textMap.put(date, dateText19);
+                        } else if (i == 19) {
+                            tableMap.put(date, tableLayout20);
+                            textMap.put(date, dateText20);
+                        }
+                        i = i + 1;
                     }
 
+                    //テーブル初期化
+                    tableLayout1.removeAllViews();
+                    tableLayout2.removeAllViews();
+                    tableLayout3.removeAllViews();
+                    tableLayout4.removeAllViews();
+                    tableLayout5.removeAllViews();
+                    tableLayout6.removeAllViews();
+                    tableLayout7.removeAllViews();
+                    tableLayout8.removeAllViews();
+                    tableLayout9.removeAllViews();
+                    tableLayout10.removeAllViews();
+                    tableLayout11.removeAllViews();
+                    tableLayout12.removeAllViews();
+                    tableLayout13.removeAllViews();
+                    tableLayout14.removeAllViews();
+                    tableLayout15.removeAllViews();
+                    tableLayout16.removeAllViews();
+                    tableLayout17.removeAllViews();
+                    tableLayout18.removeAllViews();
+                    tableLayout19.removeAllViews();
+                    tableLayout20.removeAllViews();
+                    dateText1.setText("");
+                    dateText2.setText("");
+                    dateText3.setText("");
+                    dateText4.setText("");
+                    dateText5.setText("");
+                    dateText6.setText("");
+                    dateText7.setText("");
+                    dateText8.setText("");
+                    dateText9.setText("");
+                    dateText10.setText("");
+                    dateText11.setText("");
+                    dateText12.setText("");
+                    dateText13.setText("");
+                    dateText14.setText("");
+                    dateText15.setText("");
+                    dateText16.setText("");
+                    dateText17.setText("");
+                    dateText18.setText("");
+                    dateText19.setText("");
+                    dateText20.setText("");
+                    // タブが選択されたときの処理
+                    int position = tab.getPosition(); // 選択されたタブのインデックス
+
+                    CheckBox checkboxHani = binding.checkboxHani;
+                    int reptNumber = 0;
+
+                    switch (position) {
+                        case 0: // "好走馬" タブ
+                            for (String date : dateList) {
+                                if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                    break;
+                                } else {
+                                    raceTrendsKousouHorseTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKousouHorseTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKousouHorseTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKousouHorseTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKousouHorseTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKousouHorseTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKousouHorseTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKousouHorseTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKousouHorseTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKousouHorseTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKousouHorseTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKousouHorseTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    reptNumber = reptNumber + 1;
+                                }
+
+                            }
+                            break;
+
+                        case 1: // "脚質" タブ
+                            Toast.makeText(getContext(), "脚質タブが選択されました", Toast.LENGTH_SHORT).show();
+                            // 必要な処理をここに記述
+                            for (String date : dateList) {
+                                if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                    break;
+                                } else {
+                                    raceTrendsKyakusituTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKyakusituTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKyakusituTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKyakusituTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKyakusituTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKyakusituTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKyakusituTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKyakusituTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKyakusituTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKyakusituTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKyakusituTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsKyakusituTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    reptNumber = reptNumber + 1;
+                                }
+                            }
+                            break;
+
+                        case 2: // "騎手" タブ
+                            Toast.makeText(getContext(), "騎手タブが選択されました", Toast.LENGTH_SHORT).show();
+                            // 必要な処理をここに記述
+                            for (String date : dateList) {
+                                if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                    break;
+                                } else {
+                                    raceTrendsJockeyTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsJockeyTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsJockeyTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsJockeyTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsJockeyTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsJockeyTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsJockeyTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsJockeyTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsJockeyTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsJockeyTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsJockeyTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsJockeyTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    reptNumber = reptNumber + 1;
+                                }
+                            }
+                            break;
+
+                        case 3: // "調教師" タブ
+
+                            for (String date : dateList) {
+                                if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                    break;
+                                } else {
+                                    raceTrendsTyokyosiTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsTyokyosiTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsTyokyosiTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsTyokyosiTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsTyokyosiTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsTyokyosiTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsTyokyosiTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsTyokyosiTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsTyokyosiTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsTyokyosiTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsTyokyosiTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsTyokyosiTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    reptNumber = reptNumber + 1;
+                                }
+                            }
+                            break;
+
+                        case 4: // "種牡馬" タブ
+                            for (String date : dateList) {
+                                if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                    break;
+                                } else {
+                                    raceTrendsFartherTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsFartherTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsFartherTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsFartherTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsFartherTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsFartherTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsFartherTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsFartherTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsFartherTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsFartherTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsFartherTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsFartherTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    reptNumber = reptNumber + 1;
+                                }
+                            }
+                            break;
+
+                        case 5: // "母父" タブ
+                            for (String date : dateList) {
+                                if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                    break;
+                                } else {
+                                    raceTrendsMatherTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsMatherTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsMatherTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsMatherTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsMatherTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsMatherTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsMatherTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsMatherTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsMatherTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsMatherTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsMatherTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsMatherTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    reptNumber = reptNumber + 1;
+                                }
+                            }
+                            break;
+
+                        case 6: // "払戻金" タブ
+                            for (String date : dateList) {
+                                if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                    break;
+                                } else {
+                                    raceTrendsHaraimodosiTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsHaraimodosiTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsHaraimodosiTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsHaraimodosiTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsHaraimodosiTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsHaraimodosiTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsHaraimodosiTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsHaraimodosiTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsHaraimodosiTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsHaraimodosiTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsHaraimodosiTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsHaraimodosiTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    reptNumber = reptNumber + 1;
+                                }
+                            }
+                            break;
+
+                        case 7: // "馬主" タブ
+                            for (String date : dateList) {
+                                if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                    break;
+                                } else {
+                                    raceTrendsBanusiTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsBanusiTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsBanusiTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsBanusiTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsBanusiTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsBanusiTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsBanusiTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsBanusiTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsBanusiTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsBanusiTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsBanusiTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsBanusiTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    reptNumber = reptNumber + 1;
+                                }
+                            }
+                            break;
+
+                        case 8: // "生産者" タブ
+                            for (String date : dateList) {
+                                if (!checkboxHani.isChecked() && reptNumber == 8) {
+                                    break;
+                                } else {
+                                    raceTrendsSeisanTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsSeisanTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsSeisanTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsSeisanTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsSeisanTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsSeisanTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsSeisanTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsSeisanTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsSeisanTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsSeisanTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsSeisanTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    raceTrendsSeisanTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
+                                    reptNumber = reptNumber + 1;
+                                }
+                            }
+                            break;
+                        default:
+                            Toast.makeText(getContext(), "未知のタブが選択されました", Toast.LENGTH_SHORT).show();
+                            break;
+                    }
                 }
 
-
-                switch (position) {
-                    case 0: // "好走馬" タブ
-                        for (String date : dateList) {
-                            if (!checkboxHani.isChecked() && reptNumber == 8) {
-                                break;
-                            } else {
-                                raceTrendsKousouHorseTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKousouHorseTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKousouHorseTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKousouHorseTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKousouHorseTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKousouHorseTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKousouHorseTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKousouHorseTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKousouHorseTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKousouHorseTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKousouHorseTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKousouHorseTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                reptNumber = reptNumber + 1;
-                            }
-
-                        }
-                        break;
-
-                    case 1: // "脚質" タブ
-                        Toast.makeText(getContext(), "脚質タブが選択されました", Toast.LENGTH_SHORT).show();
-                        // 必要な処理をここに記述
-                        for (String date : dateList) {
-                            if (!checkboxHani.isChecked() && reptNumber == 8) {
-                                break;
-                            } else {
-                                raceTrendsKyakusituTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKyakusituTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKyakusituTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKyakusituTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKyakusituTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKyakusituTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKyakusituTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKyakusituTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKyakusituTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKyakusituTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKyakusituTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsKyakusituTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                reptNumber = reptNumber + 1;
-                            }
-                        }
-                        break;
-
-                    case 2: // "騎手" タブ
-                        Toast.makeText(getContext(), "騎手タブが選択されました", Toast.LENGTH_SHORT).show();
-                        // 必要な処理をここに記述
-                        for (String date : dateList) {
-                            if (!checkboxHani.isChecked() && reptNumber == 8) {
-                                break;
-                            } else {
-                                raceTrendsJockeyTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsJockeyTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsJockeyTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsJockeyTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsJockeyTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsJockeyTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsJockeyTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsJockeyTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsJockeyTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsJockeyTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsJockeyTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsJockeyTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                reptNumber = reptNumber + 1;
-                            }
-                        }
-                        break;
-
-                    case 3: // "調教師" タブ
-
-                        for (String date : dateList) {
-                            if (!checkboxHani.isChecked() && reptNumber == 8) {
-                                break;
-                            } else {
-                                raceTrendsTyokyosiTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsTyokyosiTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsTyokyosiTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsTyokyosiTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsTyokyosiTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsTyokyosiTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsTyokyosiTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsTyokyosiTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsTyokyosiTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsTyokyosiTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsTyokyosiTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsTyokyosiTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                reptNumber = reptNumber + 1;
-                            }
-                        }
-                        break;
-
-                    case 4: // "種牡馬" タブ
-                        for (String date : dateList) {
-                            if (!checkboxHani.isChecked() && reptNumber == 8) {
-                                break;
-                            } else {
-                                raceTrendsFartherTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsFartherTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsFartherTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsFartherTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsFartherTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsFartherTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsFartherTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsFartherTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsFartherTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsFartherTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsFartherTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsFartherTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                reptNumber = reptNumber + 1;
-                            }
-                        }
-                        break;
-
-                    case 5: // "母父" タブ
-                        for (String date : dateList) {
-                            if (!checkboxHani.isChecked() && reptNumber == 8) {
-                                break;
-                            } else {
-                                raceTrendsMatherTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsMatherTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsMatherTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsMatherTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsMatherTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsMatherTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsMatherTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsMatherTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsMatherTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsMatherTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsMatherTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsMatherTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                reptNumber = reptNumber + 1;
-                            }
-                        }
-                        break;
-
-                    case 6: // "払戻金" タブ
-                        for (String date : dateList) {
-                            if (!checkboxHani.isChecked() && reptNumber == 8) {
-                                break;
-                            } else {
-                                raceTrendsHaraimodosiTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsHaraimodosiTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsHaraimodosiTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsHaraimodosiTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsHaraimodosiTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsHaraimodosiTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsHaraimodosiTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsHaraimodosiTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsHaraimodosiTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsHaraimodosiTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsHaraimodosiTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsHaraimodosiTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                reptNumber = reptNumber + 1;
-                            }
-                        }
-                        break;
-
-                    case 7: // "馬主" タブ
-                        for (String date : dateList) {
-                            if (!checkboxHani.isChecked() && reptNumber == 8) {
-                                break;
-                            } else {
-                                raceTrendsBanusiTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsBanusiTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsBanusiTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsBanusiTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsBanusiTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsBanusiTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsBanusiTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsBanusiTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsBanusiTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsBanusiTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsBanusiTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsBanusiTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                reptNumber = reptNumber + 1;
-                            }
-                        }
-                        break;
-
-                    case 8: // "生産者" タブ
-                        for (String date : dateList) {
-                            if (!checkboxHani.isChecked() && reptNumber == 8) {
-                                break;
-                            } else {
-                                raceTrendsSeisanTableSet(date, "1R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsSeisanTableSet(date, "2R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsSeisanTableSet(date, "3R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsSeisanTableSet(date, "4R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsSeisanTableSet(date, "5R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsSeisanTableSet(date, "6R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsSeisanTableSet(date, "7R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsSeisanTableSet(date, "8R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsSeisanTableSet(date, "9R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsSeisanTableSet(date, "10R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsSeisanTableSet(date, "11R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                raceTrendsSeisanTableSet(date, "12R", joNameList.get(0), tableMap.get(date), textMap.get(date));
-                                reptNumber = reptNumber + 1;
-                            }
-                        }
-                        break;
-                    default:
-                        Toast.makeText(getContext(), "未知のタブが選択されました", Toast.LENGTH_SHORT).show();
-                        break;
+                @Override
+                public void onTabUnselected(TabLayout.Tab tab) {
+                    // タブが選択解除されたときの処理（必要なら実装）
                 }
-            }
 
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-                // タブが選択解除されたときの処理（必要なら実装）
-            }
+                @Override
+                public void onTabReselected(TabLayout.Tab tab) {
+                    // すでに選択されているタブが再度タップされたときの処理（必要なら実装）
+                }
 
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-                // すでに選択されているタブが再度タップされたときの処理（必要なら実装）
-            }
-
+            });
         });
+
         return root;
     }
-
 
     @Override
     public void onDestroyView() {
@@ -707,18 +647,14 @@ public class NotificationsFragment extends Fragment {
         binding = null;
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-    }
-
-
     public void raceTrendsKousouHorseTableSet(String kaisaibi, String raceNo, String kaisaijo, TableLayout tableLayout, TextView dateTextLayout) {
         FirebaseManager.queryData("raceTrends" + "/" + kaisaijo, "kaisaibi", kaisaibi, new ValueEventListener() {
+
+            CheckBox checkBoxShiba = binding.checkboxShiba;
+            CheckBox checkBoxDart = binding.checkboxDart;
+
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                CheckBox checkBoxShiba = binding.checkboxShiba;
-                CheckBox checkBoxDart = binding.checkboxDart;
 
                 //スピナー表示
                 if ("1R".equals(raceNo)) {
@@ -732,6 +668,8 @@ public class NotificationsFragment extends Fragment {
                     String sRaceNo = childSnapshot.child("raceNum").getValue(String.class);
                     String sKaisaijo = childSnapshot.child("kaisaijo").getValue(String.class);
                     String sKaisaibi = childSnapshot.child("kaisaibi").getValue(String.class);
+
+                    if (sRaceNo == null || sKaisaijo == null || sKaisaibi == null) continue;
 
                     // Rで開催場所が一致している場合にのみ処理
                     if (raceNo.equals(sRaceNo) & kaisaijo.equals(sKaisaijo) && sKaisaibi.equals(kaisaibi)) {
@@ -753,6 +691,9 @@ public class NotificationsFragment extends Fragment {
                             dateTextLayout.setText(kaisaijo + "   " + kaisaibi);
                             dateTextLayout.setPadding(16, 8, 16, 8);
                         }
+
+                        if (sZyouken == null) continue;
+
                         getActivity().runOnUiThread(() -> {
                             if (isHeader) {
                                 // table見出し設定
@@ -1078,10 +1019,11 @@ public class NotificationsFragment extends Fragment {
 
     private void raceTrendsTyokyosiTableSet(String kaisaibi, String raceNo, String kaisaijo, TableLayout tableLayout, TextView dateTextLayout) {
         FirebaseManager.queryData("raceTrends" + "/" + kaisaijo, "kaisaibi", kaisaibi, new ValueEventListener() {
+            CheckBox checkBoxShiba = binding.checkboxShiba;
+            CheckBox checkBoxDart = binding.checkboxDart;
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                CheckBox checkBoxShiba = binding.checkboxShiba;
-                CheckBox checkBoxDart = binding.checkboxDart;
+
 
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
                     String sRaceNo = childSnapshot.child("raceNum").getValue(String.class);
@@ -1195,10 +1137,11 @@ public class NotificationsFragment extends Fragment {
 
     private void raceTrendsFartherTableSet(String kaisaibi, String raceNo, String kaisaijo, TableLayout tableLayout, TextView dateTextLayout) {
         FirebaseManager.queryData("raceTrends" + "/" + kaisaijo, "kaisaibi", kaisaibi, new ValueEventListener() {
+            CheckBox checkBoxShiba = binding.checkboxShiba;
+            CheckBox checkBoxDart = binding.checkboxDart;
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                CheckBox checkBoxShiba = binding.checkboxShiba;
-                CheckBox checkBoxDart = binding.checkboxDart;
+
 
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
                     String sRaceNo = childSnapshot.child("raceNum").getValue(String.class);
@@ -1312,10 +1255,11 @@ public class NotificationsFragment extends Fragment {
 
     private void raceTrendsMatherTableSet(String kaisaibi, String raceNo, String kaisaijo, TableLayout tableLayout, TextView dateTextLayout) {
         FirebaseManager.queryData("raceTrends" + "/" + kaisaijo, "kaisaibi", kaisaibi, new ValueEventListener() {
+            CheckBox checkBoxShiba = binding.checkboxShiba;
+            CheckBox checkBoxDart = binding.checkboxDart;
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                CheckBox checkBoxShiba = binding.checkboxShiba;
-                CheckBox checkBoxDart = binding.checkboxDart;
+
 
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
                     String sRaceNo = childSnapshot.child("raceNum").getValue(String.class);
@@ -1428,10 +1372,12 @@ public class NotificationsFragment extends Fragment {
 
     private void raceTrendsHaraimodosiTableSet(String kaisaibi, String raceNo, String kaisaijo, TableLayout tableLayout, TextView dateTextLayout) {
         FirebaseManager.queryData("raceTrends" + "/" + kaisaijo, "kaisaibi", kaisaibi, new ValueEventListener() {
+            CheckBox checkBoxShiba = binding.checkboxShiba;
+            CheckBox checkBoxDart = binding.checkboxDart;
+
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                CheckBox checkBoxShiba = binding.checkboxShiba;
-                CheckBox checkBoxDart = binding.checkboxDart;
+
 
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
                     String sRaceNo = childSnapshot.child("raceNum").getValue(String.class);
@@ -1532,10 +1478,12 @@ public class NotificationsFragment extends Fragment {
 
     private void raceTrendsBanusiTableSet(String kaisaibi, String raceNo, String kaisaijo, TableLayout tableLayout, TextView dateTextLayout) {
         FirebaseManager.queryData("raceTrends" + "/" + kaisaijo, "kaisaibi", kaisaibi, new ValueEventListener() {
+            CheckBox checkBoxShiba = binding.checkboxShiba;
+            CheckBox checkBoxDart = binding.checkboxDart;
+
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                CheckBox checkBoxShiba = binding.checkboxShiba;
-                CheckBox checkBoxDart = binding.checkboxDart;
+
 
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
                     String sRaceNo = childSnapshot.child("raceNum").getValue(String.class);

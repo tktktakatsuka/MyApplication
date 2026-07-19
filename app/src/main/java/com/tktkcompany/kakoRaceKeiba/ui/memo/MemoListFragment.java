@@ -80,25 +80,6 @@ public class MemoListFragment extends Fragment {
         recyclerView2.setLayoutManager(layoutManager2);
 
         loadBannerAd();
-
-
-        // レイアウトファイルからボタンのインスタンスを取得
-        Button showWebViewDialogButton = root.findViewById(R.id.showWebViewDialogButton);
-
-        // ボタンにクリックリスナーを設定
-        showWebViewDialogButton.setOnClickListener(v -> {
-            // ダイアログに表示したいURLを指定
-            String url = "https://www.jra.go.jp/"; // 表示したいURLに変更してください
-
-            // WebViewDialogFragmentのインスタンスを生成
-            WebViewDialogFragment webViewDialogFragment = WebViewDialogFragment.newInstance(url);
-
-            // DialogFragmentを表示
-            // getParentFragmentManager() を使い、ActivityのFragmentManager経由で表示します
-            webViewDialogFragment.show(getParentFragmentManager(), "webview_dialog");
-
-        });
-
         return root;
     }
 

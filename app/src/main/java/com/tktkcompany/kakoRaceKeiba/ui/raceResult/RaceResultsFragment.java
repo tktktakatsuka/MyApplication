@@ -128,6 +128,9 @@ public class RaceResultsFragment extends Fragment {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
 
+                if (getActivity() == null) {
+                    return; // フラグメントがデタッチされている場合は処理をスキップ
+                }
 
                 boolean isHeader = true;
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {

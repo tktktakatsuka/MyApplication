@@ -60,6 +60,7 @@ public class WeekendDays {
 
         //祝日用の日付を追加したい
         pastWeekends.add("20250915");
+        pastWeekends.add("20251013");
 
         Collections.sort(pastWeekends);
         return pastWeekends;
