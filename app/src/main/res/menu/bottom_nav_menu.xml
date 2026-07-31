@@ -28,12 +28,6 @@
         app:showAsAction="ifRoom"/>
 
 
-    <!-- ここから追加 -->
-    <item
-        android:id="@+id/navigation_chat"
-        android:icon="@drawable/uma"
-        android:title="AIチャット" />
-    <!-- ここまで追加 -->
 
 
 </menu>
