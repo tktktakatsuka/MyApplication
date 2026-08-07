@@ -10,7 +10,7 @@ pluginManagement {
         mavenCentral()
         google()
         maven { url 'https://jitpack.io' }
-        jcenter() // (必要なら追加)
+        // (必要なら追加)
         gradlePluginPortal()
     }
 

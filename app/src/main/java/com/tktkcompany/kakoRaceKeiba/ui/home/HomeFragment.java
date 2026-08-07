@@ -25,7 +25,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.tktkcompany.kakoRaceKeiba.MainActivity;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentHomeBinding;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
@@ -60,7 +59,7 @@ public class HomeFragment extends Fragment {
         loadBannerAd(binding);
 
         // Firebaseから開催中の競馬場リストを取得
-        FirebaseManager.queryDataAddWhere("racePickUp", "isActive", "true", new ValueEventListener() {
+        FirebaseManager.queryDataAddWhere("racePickUp", "isActive", true, new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List<String> joNames = new ArrayList<>();
@@ -87,7 +86,10 @@ public class HomeFragment extends Fragment {
             if (joNames == null || joNames.isEmpty()) return;
 
             DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference("raceResult");
-            for (String joName : joNames) {
+            int limit = Math.min(joNames.size(), 2);
+            for (int i = 0; i < limit; i++) {
+                final int index = i;
+                String joName = joNames.get(i);
                 dbRef.child(joName).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -102,13 +104,11 @@ public class HomeFragment extends Fragment {
                             String hassouTime = raceSnap.child("hassouTime").getValue(String.class);
                             String winOdds = raceSnap.child("winOdds").getValue(String.class);
 
-                            if ("東京".equals(kaisaijo)) {
+                            if (index == 0) {
                                 raceResultSet(tyaku, raceTitle, kaisaijo, hassouTime, raceDateStr, winOdds, horseName, root);
-                            } else {
+                            } else if (index == 1) {
                                 raceResultSet2(tyaku, raceTitle, kaisaijo, hassouTime, raceDateStr, winOdds, horseName, root);
                             }
-
-
                         }
                     }
 
@@ -135,26 +135,6 @@ public class HomeFragment extends Fragment {
         // ★★★ Firebase Authを初期化 ★★★
         mAuth = FirebaseAuth.getInstance();
 
-        // ★★★ 自分のボタンのクリックイベントは自分で処理する ★★★
-        binding.googleSignInButton.setOnClickListener(v -> {
-            // 実際のログイン処理は親のMainActivityに依頼する
-            if (getActivity() instanceof MainActivity) {
-                ((MainActivity) getActivity()).signInWithGoogle();
-            }
-        });
-
-        mAuth.addAuthStateListener(firebaseAuth -> {
-            FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-            updateUI(currentUser);
-        });
-
-        // ★★★ ログアウトボタンのクリックリスナーを追加 ★★★
-        binding.logoutButton.setOnClickListener(v -> {
-            // 実際のログアウト処理は親のMainActivityに依頼する
-            if (getActivity() instanceof MainActivity) {
-                ((MainActivity) getActivity()).signOut();
-            }
-        });
     }
 
     @Override
@@ -172,28 +152,6 @@ public class HomeFragment extends Fragment {
     public void updateUI(FirebaseUser user) {
         if (binding == null) return; // 画面が破棄された後は何もしない
 
-        if (user != null) {
-            // ログイン済みの場合
-            binding.userInfoText.setText("ようこそ, " + user.getDisplayName() + "さん　ログイン中です。");
-            binding.userInfoText.setVisibility(View.VISIBLE);
-            binding.googleSignInButton.setVisibility(View.GONE);
-            binding.logoutButton.setText("ログアウト");
-            binding.logoutButton.setVisibility(View.VISIBLE);
-
-            // ★ ViewModelの初期化をここで行うとより安全
-            if (sharedViewModel == null) {
-                sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
-            }
-            String userId = user.getUid();
-            sharedViewModel.setUid(userId);
-
-        } else {
-            // 未ログインの場合
-            binding.userInfoText.setVisibility(View.GONE);
-            binding.logoutButton.setVisibility(View.GONE);
-            binding.googleSignInButton.setVisibility(View.VISIBLE);
-
-        }
     }
 
 

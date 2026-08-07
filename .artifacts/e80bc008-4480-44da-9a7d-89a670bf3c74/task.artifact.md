@@ -1,0 +1,9 @@
+- [x] Refactor `FirebaseManager.java` and `NotificationsFragment.java`
+- [x] Refactor `RaceResultsFragment.java`
+    - [x] Initialize View lists (TableLayouts, TextViews) using reflection
+    - [x] Consolidate Firebase queries into a single call
+    - [x] Implement race data processing and UI distribution logic
+    - [x] Clean up unused code (`MyDatabaseManager`)
+- [x] Verify refactoring
+    - [x] Build project
+    - [x] Manual test check (simulated via analysis)

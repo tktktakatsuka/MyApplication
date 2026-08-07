@@ -13,16 +13,13 @@ android {
         properties.load(rootProject.file("local.properties").newDataInputStream())
     }
     namespace 'com.tktkcompany.kakoRaceKeiba'
-    compileSdk 36
-    defaultConfig {
-        targetSdkVersion 36
-    }
+    compileSdk 37
 
     defaultConfig {
         applicationId "com.tktkcompany.kakoRaceKeiba"
         minSdk 28
         targetSdk 36
-        versionCode 364
+        versionCode 368
         versionName "1.0"
         // BuildConfigフィールドとしてAPIキーを定義
         buildConfigField "String", "GEMINI_API_KEY", properties.getProperty("GEMINI_API_KEY", "")

@@ -84,7 +84,15 @@ public class FirebaseManager {
      * @param value 検索する値
      * @param listener データ取得時のコールバック
      */
-    public static void queryDataAddWhere(String path, String childKey, String value, ValueEventListener listener) {
+    public static void queryDataAddWhere(String path, String childKey, boolean value, ValueEventListener listener) {
+        Query query = mDatabase.child(path).orderByChild(childKey).equalTo(value);
+        query.addListenerForSingleValueEvent(listener);
+    }
+
+    /**
+     * 指定したキーが値と一致するデータを取得する
+     */
+    public static void queryDataEqualTo(String path, String childKey, String value, ValueEventListener listener) {
         Query query = mDatabase.child(path).orderByChild(childKey).equalTo(value);
         query.addListenerForSingleValueEvent(listener);
     }
