@@ -27,5 +27,5 @@
         android:layout_height="wrap_content"
         android:gravity=""
         android:text="削除"
-        android:textColor="@color/material_dynamic_primary95" />
+        android:textColor="@android:color/white" />
 </LinearLayout>

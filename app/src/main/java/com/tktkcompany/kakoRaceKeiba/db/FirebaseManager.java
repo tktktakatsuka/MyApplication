@@ -4,6 +4,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import android.util.Log;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -98,6 +99,53 @@ public class FirebaseManager {
     }
 
 
+
+    /**
+     * Firebaseのキーとして使用できない文字を除去する
+     */
+    public static String sanitizeKey(String key) {
+        if (key == null) return "";
+        return key.trim().replaceAll("[.\\$#\\[\\]/]", "");
+    }
+
+    /**
+     * お気に入り馬を追加する
+     */
+    public static void addFavoriteHorse(String uid, String horseName) {
+        if (uid == null || horseName == null) return;
+        String safeName = sanitizeKey(horseName);
+        mDatabase.child("users").child(uid).child("favoriteHorses").child(safeName).setValue(true)
+                .addOnSuccessListener(aVoid -> Log.d("FirebaseManager", "Added favorite: " + safeName))
+                .addOnFailureListener(e -> Log.e("FirebaseManager", "Failed to add favorite", e));
+    }
+
+    /**
+     * お気に入り馬を削除する
+     */
+    public static void removeFavoriteHorse(String uid, String horseName) {
+        if (uid == null || horseName == null) return;
+        String safeName = sanitizeKey(horseName);
+        mDatabase.child("users").child(uid).child("favoriteHorses").child(safeName).removeValue()
+                .addOnSuccessListener(aVoid -> Log.d("FirebaseManager", "Removed favorite: " + safeName))
+                .addOnFailureListener(e -> Log.e("FirebaseManager", "Failed to remove favorite", e));
+    }
+
+    /**
+     * お気に入り馬かどうかをチェックする
+     */
+    public static void isFavoriteHorse(String uid, String horseName, ValueEventListener listener) {
+        if (uid == null || horseName == null) return;
+        String safeName = sanitizeKey(horseName);
+        mDatabase.child("users").child(uid).child("favoriteHorses").child(safeName).addListenerForSingleValueEvent(listener);
+    }
+
+    /**
+     * お気に入り馬リストを取得する (リアルタイム監視)
+     */
+    public static void getFavoriteHorses(String uid, ValueEventListener listener) {
+        if (uid == null) return;
+        mDatabase.child("users").child(uid).child("favoriteHorses").addValueEventListener(listener);
+    }
 
     public static void raceResultInsertDatatoFirebase(String kaisaibi, String kaisaijo, String raceNo, String tyaku,
                                                String waku, String horseNumber, String horseName, String age, String weight,

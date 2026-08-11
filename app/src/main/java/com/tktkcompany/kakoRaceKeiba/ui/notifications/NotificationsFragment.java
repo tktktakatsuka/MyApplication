@@ -86,7 +86,10 @@ public class NotificationsFragment extends Fragment {
     private void setupViewModel() {
         SharedViewModel sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
         sharedViewModel.getJoNames().observe(getViewLifecycleOwner(), joNames -> {
-            if (joNames == null || joNames.isEmpty()) return;
+            if (joNames == null || joNames.isEmpty()) {
+                binding.selectRaceText.setText("現在、開催中の競馬場はありません");
+                return;
+            }
             joNameList = new ArrayList<>(joNames);
             updateRaceText();
             refreshData();
@@ -273,7 +276,11 @@ public class NotificationsFragment extends Fragment {
     }
 
     private void updateRaceText() {
-        binding.selectRaceText.setText(joNameList.get(0) + "競馬場の傾向を表示");
+        if (joNameList != null && !joNameList.isEmpty()) {
+            binding.selectRaceText.setText(joNameList.get(0) + "競馬場の傾向を表示");
+        } else {
+            binding.selectRaceText.setText("競馬場が選択されていません");
+        }
     }
 
     private void setupAd() {

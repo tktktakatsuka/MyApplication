@@ -14,6 +14,9 @@
         <action
             android:id="@+id/action_navigation_home_to_navigation_raceResults"
             app:destination="@id/navigation_raceResults" />
+        <action
+            android:id="@+id/action_navigation_home_to_navigation_favorites"
+            app:destination="@id/navigation_favorites" />
     </fragment>
 
 
@@ -95,6 +98,12 @@
         android:textColor="@color/tyairo"
         tools:layout="@layout/fragment_memo_edit">
     </fragment>
+
+    <fragment
+        android:id="@+id/navigation_favorites"
+        android:name="com.tktkcompany.kakoRaceKeiba.ui.favorite.FavoriteHorsesFragment"
+        android:label="お気に入り馬"
+        tools:layout="@layout/fragment_favorite_horses" />
 
 
 </navigation>

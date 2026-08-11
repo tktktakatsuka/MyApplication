@@ -24,6 +24,6 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:layout_gravity="center"
-        android:textColor="@color/material_dynamic_primary95"
+        android:textColor="@android:color/white"
         android:text="編集する" />
 </LinearLayout>

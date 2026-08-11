@@ -1,9 +1,6 @@
-- [x] Refactor `FirebaseManager.java` and `NotificationsFragment.java`
-- [x] Refactor `RaceResultsFragment.java`
-    - [x] Initialize View lists (TableLayouts, TextViews) using reflection
-    - [x] Consolidate Firebase queries into a single call
-    - [x] Implement race data processing and UI distribution logic
-    - [x] Clean up unused code (`MyDatabaseManager`)
-- [x] Verify refactoring
-    - [x] Build project
-    - [x] Manual test check (simulated via analysis)
+- [x] お気に入り馬一覧画面の戻るボタンUI改善
+    - [x] `fragment_favorite_horses.xml` のアイコンと色を修正
+    - [x] マージンの微調整
+- [x] 動作確認
+    - [x] アイコンが白い「←」になっていること
+    - [x] タップで戻れること

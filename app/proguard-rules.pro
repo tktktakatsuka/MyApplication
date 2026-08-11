@@ -1,32 +1,21 @@
 # Add project specific ProGuard rules here.
 # You can control the set of applied configuration files using the
 # proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Preserve line number information for debugging stack traces.
+-keepattributes SourceFile,LineNumberTable
+-keep public class * extends java.lang.Exception
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# =================================================================
+#  Google Play Services & Firebase
+# =================================================================
 -keep class com.google.android.gms.** { *; }
 -keep class * extends java.lang.annotation.Annotation { *; }
+-keepattributes Signature
+-keepnames class com.google.firebase.database.** { *; }
 
-
-```proguard
 # =================================================================
 #  Retrofit & OkHttp
-#  RetrofitとOkHttpが内部的に使用するクラスを保持するためのルール
 # =================================================================
 -dontwarn retrofit2.**
 -keep class retrofit2.** { *; }
@@ -39,33 +28,40 @@
 -dontwarn okio.**
 -keep class okio.** { *; }
 
-
 # =================================================================
 #  Gson & DTO (Data Transfer Object)
-#  Gsonがリフレクションで利用するデータクラスを保持するためのルール
 # =================================================================
-
-# --- あなたのアプリのDTOパッケージを指定 ---
-# ★★★ "com.tktkcompany.kakoRaceKeiba.dto" の部分は、
-# あなたのプロジェクトのパッケージ名に合わせてください ★★★
+# Keep your DTO classes to ensure reflection-based parsing works correctly
 -keep class com.tktkcompany.kakoRaceKeiba.dto.** { *; }
-
-# シリアライズ/デシリアライズ対象のクラスとそのメンバーを保持
 -keepclassmembers class com.tktkcompany.kakoRaceKeiba.dto.** { *; }
-
-# もしDTOクラスに @SerializedName アノテーションを使っている場合は、
-# 以下のルールも追加するとより安全です。
 -keepattributes *Annotation*
 
+# =================================================================
+#  ThreeTenABP (Date/Time Backport)
+# =================================================================
+-keep class org.threeten.bp.** { *; }
+-dontwarn org.threeten.bp.**
 
 # =================================================================
-#  (おまけ) Firebaseなど他のライブラリを使用している場合の一般的なルール
+#  Jsoup (HTML Parser)
 # =================================================================
-# Firebase
--keepattributes Signature
--keepnames class com.google.firebase.database.** { *; }
+-keep class org.jsoup.** { *; }
+-dontwarn org.jsoup.**
 
-# Parcelable（Androidのデータ運搬用インターフェース）を実装したクラス
+# =================================================================
+#  MPAndroidChart
+# =================================================================
+-keep class com.github.mikephil.charting.** { *; }
+-dontwarn com.github.mikephil.charting.**
+-keep public class * extends com.github.mikephil.charting.charts.Chart {
+    public <init>(android.content.Context);
+    public <init>(android.content.Context, android.util.AttributeSet);
+    public <init>(android.content.Context, android.util.AttributeSet, int);
+}
+
+# =================================================================
+#  Android Core
+# =================================================================
 -keep class * implements android.os.Parcelable {
   public static final android.os.Parcelable$Creator *;
 }

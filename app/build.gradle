@@ -12,23 +12,24 @@ android {
     if (rootProject.file("local.properties").exists()) {
         properties.load(rootProject.file("local.properties").newDataInputStream())
     }
-    namespace 'com.tktkcompany.kakoRaceKeiba'
-    compileSdk 37
+    namespace = 'com.tktkcompany.kakoRaceKeiba'
+    compileSdk = 36
 
     defaultConfig {
-        applicationId "com.tktkcompany.kakoRaceKeiba"
-        minSdk 28
-        targetSdk 36
-        versionCode 368
-        versionName "1.0"
+        applicationId = "com.tktkcompany.kakoRaceKeiba"
+        minSdk = 28
+        targetSdk = 35
+        versionCode = 374
+        versionName = "1.0"
         // BuildConfigフィールドとしてAPIキーを定義
         buildConfigField "String", "GEMINI_API_KEY", properties.getProperty("GEMINI_API_KEY", "")
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -50,16 +51,22 @@ android {
 }
 
 dependencies {
-    // Retrofit (HTTP通信ライブラリ)
-    implementation libs.retrofit
-    implementation libs.converter.gson
-    // OkHttp (Retrofitの内部で使われる。Logging Interceptorで通信内容をログ出力するのに便利)
-    implementation libs.logging.interceptor
-    implementation libs.firebase.messaging
+    // Firebase (BOMを使用)
     implementation platform(libs.firebase.bom)
     implementation libs.firebase.analytics
-    implementation libs.threetenabp
-    implementation libs.jsoup
+    implementation libs.firebase.crashlytics
+    implementation libs.firebase.auth
+    implementation libs.firebase.messaging
+    implementation libs.firebase.database
+
+    // Google Identity & Ads
+    implementation libs.googleid
+    implementation libs.credentials
+    implementation libs.credentials.play.services.auth
+    implementation libs.play.services.auth
+    implementation libs.play.services.ads.v2450
+
+    // AndroidX & UI
     implementation libs.appcompat
     implementation libs.material
     implementation libs.constraintlayout
@@ -67,32 +74,20 @@ dependencies {
     implementation libs.lifecycle.viewmodel.ktx
     implementation libs.navigation.fragment
     implementation libs.navigation.ui
-    implementation libs.firebase.crashlytics
-    implementation libs.firebase.auth
-    implementation libs.credentials
-    implementation libs.credentials.play.services.auth
-    implementation libs.googleid
+    implementation libs.androidx.activity
+    implementation libs.work.runtime
+
+    // Network & Utils
+    implementation libs.retrofit
+    implementation libs.converter.gson
+    implementation libs.logging.interceptor
+    implementation libs.threetenabp
+    implementation libs.jsoup
+    implementation libs.mpandroidchart
+    implementation libs.annotation
+
+    // Testing
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
-    implementation libs.play.services.ads.v2450
-    implementation libs.annotation // 最新版を使用
-    implementation libs.firebase.database
-    implementation libs.google.firebase.analytics
-    implementation libs.mpandroidchart
-    implementation libs.firebase.auth
-    implementation libs.credentials
-    implementation libs.credentials.play.services.auth
-    implementation libs.googleid
-    // Firebase Authentication
-    implementation libs.firebase.auth.v2300
-
-    // Google Identity Services (Credential Manager)
-    implementation libs.credentials.v130
-    implementation libs.credentials.play.services.auth.v130
-    implementation libs.googleid
-    implementation libs.play.services.ads.v2330
-
-    // Google Sign-In fallback 用
-    implementation libs.play.services.auth
 }

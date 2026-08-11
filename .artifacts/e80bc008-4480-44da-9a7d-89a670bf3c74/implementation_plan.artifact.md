@@ -1,29 +1,35 @@
-# Refactor `RaceResultsFragment.java`
+# Fix WorkManager `StartupException` and `WorkDatabase` Failure
 
-Clean up `RaceResultsFragment.java` by removing redundant view mappings, consolidating repetitive logic, and optimizing Firebase queries.
+This plan addresses the crash caused by `androidx.work.impl.WorkDatabase` initialization failure, typically due to database corruption or schema migration issues.
+
+## User Review Required
+
+> [!IMPORTANT]
+> This change introduces a custom `Application` class. If you already have one that was not detected, please let me know.
+> It also disables the default WorkManager initializer in `AndroidManifest.xml` to gain manual control over its lifecycle.
 
 ## Proposed Changes
 
-### [RaceResultsFragment](file:///C:/Users/Administrator/AndroidStudioProjects/MyApplication7/app/src/main/java/com/tktkcompany/kakoRaceKeiba/ui/raceResult/RaceResultsFragment.java)
+### 1. Build Configuration
+- **[libs.versions.toml](file:///C:/Users/Administrator/AndroidStudioProjects/MyApplication7/gradle/libs.versions.toml)**: Added `androidx.work:work-runtime` v2.10.0.
+- **[app/build.gradle](file:///C:/Users/Administrator/AndroidStudioProjects/MyApplication7/app/build.gradle)**: Added explicit dependency on `libs.work.runtime`.
 
-- **View Management**:
-    - Replace 36+ individual `TableLayout` and `TextView` fields with three lists: `List<TableLayout>`, `List<TextView>` (for titles), and `List<TextView>` (for times).
-    - Use reflection to initialize these lists from the `binding` object.
-- **Firebase Optimization**:
-    - Replace 12 individual queries with a single query using `FirebaseManager.queryDataEqualTo` to fetch all race results for the specified date and course.
-- **Logic Consolidation**:
-    - Process the fetched results in a single callback, sorting them by race number and distributing them to the corresponding UI slots.
-    - Centralize `hassouTime` parsing logic.
-- **Cleanup**:
-    - Remove unused `MyDatabaseManager` if it's not being used.
-    - Consolidate `TableRow` and `TextView` creation.
+### 2. Custom Application Class
+- **[NEW] [MyApplication.java](file:///C:/Users/Administrator/AndroidStudioProjects/MyApplication7/app/src/main/java/com/tktkcompany/kakoRaceKeiba/MyApplication.java)**:
+    - Implements `Configuration.Provider` for on-demand `WorkManager` initialization.
+    - Handles database corruption gracefully in `onCreate()` by detecting `StartupException` or Room errors and deleting the corrupted `androidx.work.workdb` file if necessary.
+
+### 3. Manifest Update
+- **[AndroidManifest.xml](file:///C:/Users/Administrator/AndroidStudioProjects/MyApplication7/app/src/main/AndroidManifest.xml)**:
+    - Registers `.MyApplication` as the app's entry point.
+    - Disables the default `WorkManagerInitializer` using the `androidx.startup.InitializationProvider` configuration.
 
 ## Verification Plan
 
 ### Automated Tests
-- Run `app:assembleDebug` to ensure compilation.
+- Run `gradlew :app:assembleDebug` to ensure no compilation errors.
+- Sync Gradle to verify dependency resolution.
 
 ### Manual Verification
-- Verify that race results for 1R through 12R are correctly displayed in their respective slots.
-- Verify that race titles and post times are correctly formatted and displayed.
-- Verify that the data still loads correctly when navigating from the Home screen.
+- Launch the app and verify it no longer crashes during startup.
+- Inspect Logcat for "WorkManager initialization successful" or any logs related to database cleanup if failure was encountered.

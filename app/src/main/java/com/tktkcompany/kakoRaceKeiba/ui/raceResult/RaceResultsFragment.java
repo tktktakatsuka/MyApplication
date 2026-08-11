@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -17,6 +18,8 @@ import androidx.fragment.app.Fragment;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.LoadAdError;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
@@ -140,18 +143,82 @@ public class RaceResultsFragment extends Fragment {
     private TableRow createHeaderRow() {
         TableRow row = new TableRow(getContext());
         row.setBackgroundColor(Color.LTGRAY);
-        String[] headers = {"着", "枠", "馬名", "性齢", "騎手", "人気", "単勝", "タイム"};
+        String[] headers = {"★", "着", "枠", "馬名", "性齢", "騎手", "人気", "単勝", "タイム"};
         for (String h : headers) row.addView(createTextView(h));
         return row;
     }
 
     private TableRow createDataRow(DataSnapshot snap) {
         TableRow row = new TableRow(getContext());
+
+        String horseName = snap.child("horseName").getValue(String.class);
+
+        // お気に入りボタンを最初に追加
+        TextView favTv = createTextView("☆");
+        favTv.setOnClickListener(v -> toggleFavorite(row, favTv, horseName));
+
+        // クリック可能であることを示すエフェクト
+        favTv.setClickable(true);
+        favTv.setFocusable(true);
+        if (getContext() != null) {
+            android.util.TypedValue outValue = new android.util.TypedValue();
+            getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true);
+            favTv.setBackgroundResource(outValue.resourceId);
+        }
+
+        // 現在の登録状態を確認
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            FirebaseManager.isFavoriteHorse(user.getUid(), horseName, new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        Boolean isFav = snapshot.getValue(Boolean.class);
+                        if (isFav != null && isFav) {
+                            favTv.setText("★");
+                            favTv.setTextColor(Color.parseColor("#FFD700")); // 金色
+                            row.setBackgroundColor(Color.parseColor("#33FFD700")); // 行をハイライト
+                        }
+                    }
+                }
+                @Override public void onCancelled(@NonNull DatabaseError error) {}
+            });
+        }
+        row.addView(favTv);
+
         String[] keys = {"tyaku", "waku", "horseName", "age", "jockey", "popular", "winOdds", "time"};
         for (String key : keys) {
             row.addView(createTextView(snap.child(key).getValue(String.class)));
         }
+
         return row;
+    }
+
+    private void toggleFavorite(TableRow row, TextView textView, String horseName) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Toast.makeText(getContext(), "お気に入り機能を利用するにはログインが必要です", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String uid = user.getUid();
+        String safeName = FirebaseManager.sanitizeKey(horseName);
+        
+        if (safeName.isEmpty()) return;
+
+        if ("☆".equals(textView.getText().toString())) {
+            FirebaseManager.addFavoriteHorse(uid, horseName);
+            textView.setText("★");
+            textView.setTextColor(Color.parseColor("#FFD700"));
+            row.setBackgroundColor(Color.parseColor("#33FFD700"));
+            Toast.makeText(getContext(), safeName + "をお気に入りに追加しました", Toast.LENGTH_SHORT).show();
+        } else {
+            FirebaseManager.removeFavoriteHorse(uid, horseName);
+            textView.setText("☆");
+            textView.setTextColor(Color.BLACK);
+            row.setBackgroundColor(Color.TRANSPARENT);
+            Toast.makeText(getContext(), safeName + "をお気に入りから削除しました", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private TextView createTextView(String text) {

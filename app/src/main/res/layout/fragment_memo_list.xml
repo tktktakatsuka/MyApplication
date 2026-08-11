@@ -26,7 +26,7 @@
         android:layout_gravity="center"
         android:layout_marginTop="16dp"
         android:text="@string/memo_create_message"
-        android:textColor="@color/material_dynamic_primary95" />
+        android:textColor="@android:color/white" />
 
 
     <androidx.recyclerview.widget.RecyclerView

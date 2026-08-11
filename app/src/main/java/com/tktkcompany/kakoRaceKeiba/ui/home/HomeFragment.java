@@ -25,6 +25,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.tktkcompany.kakoRaceKeiba.MainActivity;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentHomeBinding;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
@@ -57,6 +58,25 @@ public class HomeFragment extends Fragment {
 
         // AdViewのインスタンスを取得、ロード
         loadBannerAd(binding);
+
+        // お気に入り一覧ボタンの設定
+        binding.btnFavoriteHorses.setOnClickListener(v -> {
+            NavController navController = Navigation.findNavController(v);
+            navController.navigate(R.id.action_navigation_home_to_navigation_favorites);
+        });
+
+        // ログイン・ログアウトボタンの設定
+        binding.btnLogin.setOnClickListener(v -> {
+            if (getActivity() instanceof MainActivity) {
+                ((MainActivity) getActivity()).signInWithGoogle();
+            }
+        });
+
+        binding.btnLogout.setOnClickListener(v -> {
+            if (getActivity() instanceof MainActivity) {
+                ((MainActivity) getActivity()).signOut();
+            }
+        });
 
         // Firebaseから開催中の競馬場リストを取得
         FirebaseManager.queryDataAddWhere("racePickUp", "isActive", true, new ValueEventListener() {
@@ -152,6 +172,18 @@ public class HomeFragment extends Fragment {
     public void updateUI(FirebaseUser user) {
         if (binding == null) return; // 画面が破棄された後は何もしない
 
+        if (user != null) {
+            // ログイン中
+            binding.layoutUserInfo.setVisibility(View.VISIBLE);
+            binding.textUserName.setText(user.getDisplayName() + " さんとしてログイン中");
+            binding.btnLogin.setVisibility(View.GONE);
+            binding.btnFavoriteHorses.setVisibility(View.VISIBLE);
+        } else {
+            // 未ログイン
+            binding.layoutUserInfo.setVisibility(View.GONE);
+            binding.btnLogin.setVisibility(View.VISIBLE);
+            binding.btnFavoriteHorses.setVisibility(View.GONE);
+        }
     }
 
 
