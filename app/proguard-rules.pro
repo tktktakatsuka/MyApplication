@@ -6,6 +6,10 @@
 -keepattributes SourceFile,LineNumberTable
 -keep public class * extends java.lang.Exception
 
+# Aggressive optimizations
+-allowaccessmodification
+-repackageclasses ''
+
 # =================================================================
 #  Google Play Services & Firebase
 # =================================================================

@@ -65,6 +65,8 @@ dependencies {
     implementation libs.credentials.play.services.auth
     implementation libs.play.services.auth
     implementation libs.play.services.ads.v2450
+    implementation libs.play.app.update
+    implementation libs.play.review
 
     // AndroidX & UI
     implementation libs.appcompat

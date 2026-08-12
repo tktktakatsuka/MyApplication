@@ -12,6 +12,9 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.credentials.Credential;
 import androidx.credentials.CredentialManager;
 import androidx.credentials.CredentialManagerCallback;
@@ -99,6 +102,13 @@ public class MainActivity extends AppCompatActivity {
 
         ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main, (v, windowInsets) -> {
+            Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
+            binding.navView.setPadding(0, 0, 0, systemBars.bottom);
+            return windowInsets;
+        });
 
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.navigation_home,
