@@ -8,6 +8,8 @@
         tools:node="merge" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Android 13以降で通知を表示するための権限 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".MyApplication"
@@ -31,6 +33,11 @@
                 android:value="removed"
                 tools:node="remove" />
         </provider>
+
+        <!-- FCMの既定通知チャンネル（NotificationHelper.DEFAULT_CHANNEL_ID と一致させる） -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="default_channel" />
 
         <!-- FCMサービス -->
         <service

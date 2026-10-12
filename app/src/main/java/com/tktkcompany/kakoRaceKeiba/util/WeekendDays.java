@@ -12,60 +12,58 @@ import java.util.List;
 
 public class WeekendDays {
 
-    // 今月の土曜日と日曜日のうち、現在日時より前の日付を取得するメソッド
+    // 先月と今月の開催候補日（土日・祝日の月曜）のうち、今日以前の日付を取得するメソッド
     public static List<String> getPastWeekendsInCurrentMonth() {
         List<String> pastWeekends = new ArrayList<>();
-
-        // 現在の年月を取得
-        YearMonth currentMonth = YearMonth.now();
-        // 月の初日を取得
-        LocalDate firstDayOfMonth = currentMonth.atDay(1);
-        // 月の最終日を取得
-        LocalDate lastDayOfMonth = currentMonth.atEndOfMonth();
-
-        // 日付フォーマット（yyyyMMdd）
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-
-        // 現在の日付
         LocalDate today = LocalDate.now();
+        YearMonth currentMonth = YearMonth.now();
 
-        // 1か月前の年月を取得
-        YearMonth lastMonth = currentMonth.minusMonths(1);
-        // 1か月前の最終日を取得
-        LocalDate lastDayOfLastMonth = lastMonth.atEndOfMonth();
-
-        // 1か月前の月の初日から最終日までループ
-        for (LocalDate date = lastMonth.atDay(1); !date.isAfter(lastDayOfLastMonth); date = date.plusDays(1)) {
-            // 土曜日か日曜日をチェック
-            if (date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY) {
-                // 現在の日付より前かをチェック
-                if (date.isBefore(today) || date.isEqual(today)) {
-                    // フォーマットしてリストに追加
-                    pastWeekends.add(date.format(formatter));
-                }
+        // 先月の初日から今月の末日までループ（今日より後は除外）
+        LocalDate lastDay = currentMonth.atEndOfMonth();
+        for (LocalDate date = currentMonth.minusMonths(1).atDay(1); !date.isAfter(lastDay); date = date.plusDays(1)) {
+            if (date.isAfter(today)) {
+                break;
+            }
+            if (isRaceDayCandidate(date)) {
+                pastWeekends.add(date.format(formatter));
             }
         }
-
-        // 初日から最終日までループ
-        for (LocalDate date = firstDayOfMonth; !date.isAfter(lastDayOfMonth); date = date.plusDays(1)) {
-            // 土曜日か日曜日をチェック
-            if (date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY) {
-                // 現在の日付より前かをチェック
-                if (date.isBefore(today) || date.isEqual(today)) {
-                    // フォーマットしてリストに追加
-                    pastWeekends.add(date.format(formatter));
-                }
-            }
-        }
-
-        //祝日用の日付を追加したい
-        pastWeekends.add("20250915");
-        pastWeekends.add("20251013");
 
         Collections.sort(pastWeekends);
         return pastWeekends;
     }
 
+    // 今日から1週間以内の開催候補日（土日・祝日の月曜）を取得するメソッド
+    public static List<LocalDate> getUpcomingRaceDays() {
+        List<LocalDate> days = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        for (int i = 0; i < 7; i++) {
+            LocalDate date = today.plusDays(i);
+            if (isRaceDayCandidate(date)) {
+                days.add(date);
+            }
+        }
+        return days;
+    }
+
+    // 土日と祝日の月曜（JRAの月曜開催）を開催候補日とみなす
+    public static boolean isRaceDayCandidate(LocalDate date) {
+        DayOfWeek dow = date.getDayOfWeek();
+        if (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY) return true;
+        return dow == DayOfWeek.MONDAY && JapaneseHolidays.isHoliday(date);
+    }
+
+    // yyyyMMdd を「2026/10/12 (月)」の形にする（形式が違う場合はそのまま返す）
+    public static String formatWithDayOfWeek(String dateStr) {
+        if (dateStr == null || dateStr.length() != 8) return dateStr;
+        try {
+            LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
+            return date.format(DateTimeFormatter.ofPattern("yyyy/MM/dd")) + getDayOfWeek(dateStr);
+        } catch (DateTimeParseException e) {
+            return dateStr;
+        }
+    }
 
     public static String getDayOfWeek(String dateStr) {
         try {

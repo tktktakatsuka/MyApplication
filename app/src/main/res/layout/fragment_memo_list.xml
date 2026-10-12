@@ -28,6 +28,17 @@
         android:text="@string/memo_create_message"
         android:textColor="@android:color/white" />
 
+    <TextView
+        android:id="@+id/text_memo_storage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:textColor="#555555"
+        android:textSize="12sp" />
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"

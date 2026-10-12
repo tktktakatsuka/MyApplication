@@ -26,7 +26,6 @@ import com.tktkcompany.kakoRaceKeiba.MainActivity;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentHomeBinding;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentMemoListBinding;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentRaceresultsBinding;
-import com.tktkcompany.kakoRaceKeiba.db.MyDatabaseManager;
 import com.tktkcompany.kakoRaceKeiba.ui.dialog.WebViewDialogFragment;
 import com.tktkcompany.kakoRaceKeiba.ui.home.HorizontalAdapter;
 import com.tktkcompany.kakoRaceKeiba.ui.home.HomeFragment;
@@ -36,7 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public class MemoListFragment extends Fragment {
-    private MyDatabaseManager databaseManager;
+    private MemoRepository memoRepository;
     private List<Memo> memoList = new ArrayList<>();
     private MemoAdapter adapter;
     private FragmentMemoListBinding binding;
@@ -52,20 +51,24 @@ public class MemoListFragment extends Fragment {
         RecyclerView recyclerView = binding.recyclerView;
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // データベースマネージャーのインスタンス作成
-        databaseManager = new MyDatabaseManager(getContext());
-        databaseManager.open();
-        // サンプルデータの取得
-        List<Memo> list = databaseManager.getMemo();
-
-        // サンプルデータ
-        memoList.clear();  // 追加する前にリストをクリア
-        memoList.addAll(list);
+        // ログイン中はクラウド、未ログイン時は端末に保存する
+        memoRepository = new MemoRepository(requireContext());
+        binding.textMemoStorage.setText(memoRepository.isCloud()
+                ? "メモはアカウントに保存されます（機種変更後も引き継げます）"
+                : "メモはこの端末に保存されます。ログインするとアカウントに保存できます");
 
         // アダプターを設定
-        adapter = new MemoAdapter(memoList, databaseManager, memo -> {
+        memoList.clear();
+        adapter = new MemoAdapter(memoList, memoRepository, memo -> {
         });
         recyclerView.setAdapter(adapter);
+
+        memoRepository.load(list -> {
+            if (binding == null) return;
+            memoList.clear();
+            memoList.addAll(list);
+            adapter.notifyDataSetChanged();
+        });
 
         // 新規メモ作成ボタン
         Button createButton = root.findViewById(R.id.button_create_memo);
@@ -81,6 +84,12 @@ public class MemoListFragment extends Fragment {
 
         loadBannerAd();
         return root;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 
     //バナーを表示するメソッド

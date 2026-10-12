@@ -23,10 +23,17 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 import com.tktkcompany.kakoRaceKeiba.R;
+import com.tktkcompany.kakoRaceKeiba.db.FavoriteResultFetcher;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
+import com.tktkcompany.kakoRaceKeiba.db.HorseResult;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class FavoriteHorsesFragment extends Fragment {
 
@@ -35,6 +42,9 @@ public class FavoriteHorsesFragment extends Fragment {
     private ProgressBar progressBar;
     private TextView noDataText;
     private List<String> favoriteHorses = new ArrayList<>();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private String listeningUid;
+    private ValueEventListener favoritesListener;
 
     @Nullable
     @Override
@@ -46,7 +56,7 @@ public class FavoriteHorsesFragment extends Fragment {
         noDataText = root.findViewById(R.id.text_no_data);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new FavoriteHorsesAdapter(favoriteHorses, this::onRemoveClick);
+        adapter = new FavoriteHorsesAdapter(favoriteHorses, this::onRemoveClick, this::onResultClick);
         recyclerView.setAdapter(adapter);
 
         // 戻るボタンの設定
@@ -60,6 +70,21 @@ public class FavoriteHorsesFragment extends Fragment {
         return root;
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        // リアルタイム監視を解除する（画面を離れた後に呼ばれ続けないように）
+        if (listeningUid != null && favoritesListener != null) {
+            FirebaseManager.removeFavoriteHorsesListener(listeningUid, favoritesListener);
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        executor.shutdownNow();
+    }
+
     private void loadFavorites() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
@@ -70,13 +95,13 @@ public class FavoriteHorsesFragment extends Fragment {
 
         progressBar.setVisibility(View.VISIBLE);
         noDataText.setVisibility(View.GONE);
-        
+
         // addValueEventListener に変更してリアルタイム更新を有効にする
-        FirebaseManager.getFavoriteHorses(user.getUid(), new ValueEventListener() {
+        favoritesListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!isAdded()) return;
-                
+
                 favoriteHorses.clear();
                 for (DataSnapshot child : snapshot.getChildren()) {
                     String name = child.getKey();
@@ -84,7 +109,7 @@ public class FavoriteHorsesFragment extends Fragment {
                         favoriteHorses.add(name);
                     }
                 }
-                
+
                 progressBar.setVisibility(View.GONE);
                 if (favoriteHorses.isEmpty()) {
                     noDataText.setVisibility(View.VISIBLE);
@@ -92,7 +117,9 @@ public class FavoriteHorsesFragment extends Fragment {
                 } else {
                     noDataText.setVisibility(View.GONE);
                 }
+                adapter.clearLatestResults();
                 adapter.notifyDataSetChanged();
+                loadLatestResults(new ArrayList<>(favoriteHorses));
             }
 
             @Override
@@ -102,7 +129,39 @@ public class FavoriteHorsesFragment extends Fragment {
                     Log.e("FavoriteHorses", "Load failed: " + error.getMessage());
                 }
             }
+        };
+        listeningUid = user.getUid();
+        FirebaseManager.getFavoriteHorses(listeningUid, favoritesListener);
+    }
+
+    // 各お気に入り馬の直近の結果をバックグラウンドで取得する
+    private void loadLatestResults(List<String> horseKeys) {
+        if (horseKeys.isEmpty() || executor.isShutdown()) return;
+        executor.execute(() -> {
+            Map<String, HorseResult> latest = new HashMap<>();
+            try {
+                Map<String, List<HorseResult>> results = FavoriteResultFetcher.fetchResults(
+                        new HashSet<>(horseKeys), FavoriteResultFetcher.fetchActiveJoNames());
+                for (Map.Entry<String, List<HorseResult>> e : results.entrySet()) {
+                    if (!e.getValue().isEmpty()) latest.put(e.getKey(), e.getValue().get(0));
+                }
+            } catch (Exception e) {
+                Log.w("FavoriteHorses", "Latest results load failed", e);
+            }
+            if (getActivity() == null) return;
+            getActivity().runOnUiThread(() -> {
+                if (isAdded() && getView() != null) adapter.setLatestResults(latest);
+            });
         });
+    }
+
+    // 直近の結果をタップしたら、そのレース結果画面を開く
+    private void onResultClick(HorseResult result) {
+        if (result.kaisaibi == null || result.kaisaijo == null || getView() == null) return;
+        Bundle bundle = new Bundle();
+        bundle.putString("key", result.kaisaibi);
+        bundle.putString("jo", result.kaisaijo);
+        Navigation.findNavController(getView()).navigate(R.id.navigation_raceResults, bundle);
     }
 
     private void onRemoveClick(String horseName) {

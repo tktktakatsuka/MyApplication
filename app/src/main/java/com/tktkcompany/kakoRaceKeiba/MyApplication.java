@@ -7,6 +7,8 @@ import androidx.annotation.NonNull;
 import androidx.work.Configuration;
 import androidx.work.WorkManager;
 
+import com.jakewharton.threetenabp.AndroidThreeTen;
+
 import java.io.File;
 
 public class MyApplication extends Application implements Configuration.Provider {
@@ -16,6 +18,8 @@ public class MyApplication extends Application implements Configuration.Provider
     @Override
     public void onCreate() {
         super.onCreate();
+        // ThreeTenABP の初期化（バックグラウンドのWorkerからも日付処理を使うためここで行う）
+        AndroidThreeTen.init(this);
         initializeWorkManagerWithRecovery();
     }
 

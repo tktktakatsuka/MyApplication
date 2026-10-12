@@ -14,12 +14,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.tktkcompany.kakoRaceKeiba.MainActivity;
 import com.tktkcompany.kakoRaceKeiba.R;
-import com.tktkcompany.kakoRaceKeiba.db.MyDatabaseManager;
 
 public class MemoCreateFragment extends Fragment {
-    private MyDatabaseManager databaseManager;
+    private MemoRepository memoRepository;
 
     @Nullable
     @Override
@@ -34,23 +32,24 @@ public class MemoCreateFragment extends Fragment {
             String title = titleInput.getText().toString();
             String content = contentInput.getText().toString();
 
-            // データベースマネージャーのインスタンス作成
-            databaseManager = new MyDatabaseManager(getContext());
-            // データベースをオープン
-            databaseManager.open();
-            // サンプルデータの挿入
-            databaseManager.raceResultMemoInsertData(title, content);
+            if (title.isEmpty() || content.isEmpty()) {
+                Toast.makeText(getContext(), "タイトルと本文を入力してください", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-            if (!title.isEmpty() && !content.isEmpty()) {
-                // 新しいメモを保存 (簡略化のためメモリ上に保存)
-                Memo newMemo = new Memo(title, content);
+            saveButton.setEnabled(false);
+            memoRepository = new MemoRepository(requireContext());
+            memoRepository.add(title, content, success -> {
+                if (!isAdded()) return;
+                saveButton.setEnabled(true);
+                if (!success) {
+                    Toast.makeText(getContext(), "メモの保存に失敗しました", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 // メモ一覧に戻る
                 NavController navController = Navigation.findNavController(v);
-                Bundle bundle = null;
-                navController.navigate(R.id.action_navigation_memoCreate_to_navigation_memoLists, bundle);
-            } else {
-                Toast.makeText(getContext(), "Both fields are required", Toast.LENGTH_SHORT).show();
-            }
+                navController.popBackStack();
+            });
         });
 
         return view;

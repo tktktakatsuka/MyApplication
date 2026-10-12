@@ -21,16 +21,31 @@
             android:src="@drawable/uma"
             app:tint="@color/green" />
 
-        <TextView
-            android:id="@+id/text_horse_name"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_weight="1"
-            android:text="馬名"
-            android:textColor="@android:color/black"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/text_horse_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="馬名"
+                android:textColor="@android:color/black"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <!-- 直近の結果（タップでそのレース結果へ） -->
+            <TextView
+                android:id="@+id/text_latest_result"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="#555555"
+                android:textSize="13sp" />
+        </LinearLayout>
 
         <ImageButton
             android:id="@+id/btn_delete"
