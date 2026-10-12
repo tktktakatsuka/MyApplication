@@ -147,6 +147,14 @@ public class FirebaseManager {
         mDatabase.child("users").child(uid).child("favoriteHorses").addValueEventListener(listener);
     }
 
+    /**
+     * getFavoriteHorses で登録したリアルタイム監視を解除する
+     */
+    public static void removeFavoriteHorsesListener(String uid, ValueEventListener listener) {
+        if (uid == null || listener == null) return;
+        mDatabase.child("users").child(uid).child("favoriteHorses").removeEventListener(listener);
+    }
+
     public static void raceResultInsertDatatoFirebase(String kaisaibi, String kaisaijo, String raceNo, String tyaku,
                                                String waku, String horseNumber, String horseName, String age, String weight,
                                                String jockey, String popular, String winOdds, String time, String tyakusa,

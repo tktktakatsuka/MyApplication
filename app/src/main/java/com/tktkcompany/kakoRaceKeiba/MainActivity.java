@@ -1,8 +1,9 @@
 package com.tktkcompany.kakoRaceKeiba;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
@@ -12,6 +13,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -44,24 +46,26 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.messaging.FirebaseMessaging;
-import com.jakewharton.threetenabp.AndroidThreeTen;
 import com.tktkcompany.kakoRaceKeiba.databinding.ActivityMainBinding;
 import com.tktkcompany.kakoRaceKeiba.dto.SharedViewModel;
+import com.tktkcompany.kakoRaceKeiba.notification.FavoriteResultWorker;
+import com.tktkcompany.kakoRaceKeiba.notification.NotificationHelper;
 import com.tktkcompany.kakoRaceKeiba.ui.home.HomeFragment;
+import com.tktkcompany.kakoRaceKeiba.ui.memo.MemoRepository;
 
 import static com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
-    private static final String DEFAULT_CHANNEL_ID = "default_channel";
-    private static final String DEFAULT_CHANNEL_NAME = "Default Notifications";
 
     private CredentialManager credentialManager;
     private final FirebaseAuth mAuth = FirebaseAuth.getInstance();
 
     // MainActivity のフィールド
     private ActivityResultLauncher<Intent> googleSignInLauncher;
+    // 通知権限（Android 13以降）のリクエスト用
+    private ActivityResultLauncher<String> notificationPermissionLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,12 +97,14 @@ public class MainActivity extends AppCompatActivity {
                 }
         );
 
+        notificationPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                granted -> Log.d(TAG, "POST_NOTIFICATIONS granted: " + granted)
+        );
+
         // AdMob 初期化（別スレッドで）
         new Thread(() -> MobileAds.initialize(this, initializationStatus -> Log.d(TAG, "AdMob initialized")))
                 .start();
-
-        // ThreeTenABP の初期化
-        AndroidThreeTen.init(this);
 
         ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -118,16 +124,21 @@ public class MainActivity extends AppCompatActivity {
                 R.id.navigation_memoLists,
                 R.id.navigation_memoCreate,
                 R.id.navigation_memoDetail,
-                R.id.navigation_memoEdit,
-                R.id.navigation_chat
+                R.id.navigation_memoEdit
         ).build();
 
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
 
-        // 通知チャンネル作成
-        createNotificationChannel();
+        // 通知チャンネル作成と通知権限のリクエスト
+        NotificationHelper.createChannels(this);
+        if (savedInstanceState == null) {
+            requestNotificationPermissionIfNeeded();
+        }
+
+        // お気に入り馬の結果チェックを定期実行
+        FavoriteResultWorker.schedule(this);
 
         // FCM トークン取得
         FirebaseMessaging.getInstance().getToken()
@@ -141,17 +152,11 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    private void createNotificationChannel() {
-        NotificationChannel channel = new NotificationChannel(
-                DEFAULT_CHANNEL_ID,
-                DEFAULT_CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_DEFAULT
-        );
-        channel.setDescription("This is the default notification channel.");
-
-        NotificationManager notificationManager = getSystemService(NotificationManager.class);
-        if (notificationManager != null) {
-            notificationManager.createNotificationChannel(channel);
+    private void requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
         }
     }
 
@@ -240,6 +245,9 @@ public class MainActivity extends AppCompatActivity {
                         Log.d(TAG, "signInWithCredential:success");
                         if (user != null) {
                             Toast.makeText(this, "ログイン成功: " + user.getDisplayName(), Toast.LENGTH_SHORT).show();
+                            // 端末に保存していたメモをアカウントへ移す
+                            MemoRepository.migrateLocalToCloud(this, user.getUid(), count ->
+                                    Toast.makeText(this, "端末のメモ" + count + "件をアカウントに保存しました", Toast.LENGTH_SHORT).show());
                         }
                     } else {
                         Log.w(TAG, "signInWithCredential:failure", task.getException());

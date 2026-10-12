@@ -156,8 +156,13 @@ public class NotificationsFragment extends Fragment {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!isAdded()) return;
                 
+                // その日に開催がなければ日付見出しも出さない
+                if (!snapshot.hasChildren()) {
+                    progressBar.setVisibility(View.GONE);
+                    return;
+                }
                 boolean isHeaderSet = false;
-                dateText.setText(joName + "   " + date);
+                dateText.setText(joName + "   " + WeekendDays.formatWithDayOfWeek(date));
                 dateText.setPadding(16, 8, 16, 8);
 
                 // レース番号順に表示するために一旦リスト化してソートするのもありだが、
@@ -202,9 +207,9 @@ public class NotificationsFragment extends Fragment {
         row.setBackgroundColor(Color.LTGRAY);
         String[] headers;
         if (category == TrendCategory.HARAIMODOSI) {
-            headers = new String[]{"R", "レース名", "条件", "馬場・天候", "荒れ", "単勝", "馬連", "３連単"};
+            headers = new String[]{"レース", "条件", "馬場・天候", "荒れ", "単勝", "馬連", "３連単"};
         } else {
-            headers = new String[]{"R", "レース名", "条件", "馬場・天候", "馬番", "１着(人気)", "馬番", "２着(人気)", "馬番", "３着(人気)"};
+            headers = new String[]{"レース", "条件", "馬場・天候", "１着(人気)", "２着(人気)", "３着(人気)"};
         }
         for (String h : headers) row.addView(createTextView(h));
         return row;
@@ -220,8 +225,13 @@ public class NotificationsFragment extends Fragment {
         if (!isShiba && !isDart) return;
 
         TableRow row = new TableRow(getContext());
-        row.addView(createTextView(snap.child("raceNum").getValue(String.class)));
-        row.addView(createTextView(snap.child("raceName").getValue(String.class)));
+        // 1行おきに背景色を変えて、横に長い表でも行を追いやすくする
+        if (table.getChildCount() % 2 == 0) {
+            row.setBackgroundColor(Color.parseColor("#F1F8E9"));
+        }
+        // レース番号とレース名を1列にまとめて列数を減らす
+        row.addView(createTextView(joinNonEmpty(snap.child("raceNum").getValue(String.class),
+                snap.child("raceName").getValue(String.class))));
         row.addView(createTextView(distance));
         row.addView(createTextView(snap.child("raceCondition").getValue(String.class)));
 
@@ -241,14 +251,25 @@ public class NotificationsFragment extends Fragment {
                 case BANUSI: k1 = "banusi1"; k2 = "banusi2"; k3 = "banusi3"; break;
                 case SEISAN: k1 = "seisann1"; k2 = "seisann2"; k3 = "seisann3"; break;
             }
-            row.addView(createTextView(snap.child("uma1Ban").getValue(String.class)));
-            row.addView(createTextView(snap.child(k1).getValue(String.class)));
-            row.addView(createTextView(snap.child("uma2Ban").getValue(String.class)));
-            row.addView(createTextView(snap.child(k2).getValue(String.class)));
-            row.addView(createTextView(snap.child("uma3Ban").getValue(String.class)));
-            row.addView(createTextView(snap.child(k3).getValue(String.class)));
+            // 馬番と内容を1つのセルにまとめる（例: 「3番 ○○(1人)」）
+            row.addView(createTextView(joinNonEmpty(withBan(snap.child("uma1Ban").getValue(String.class)),
+                    snap.child(k1).getValue(String.class))));
+            row.addView(createTextView(joinNonEmpty(withBan(snap.child("uma2Ban").getValue(String.class)),
+                    snap.child(k2).getValue(String.class))));
+            row.addView(createTextView(joinNonEmpty(withBan(snap.child("uma3Ban").getValue(String.class)),
+                    snap.child(k3).getValue(String.class))));
         }
         table.addView(row);
+    }
+
+    private static String withBan(String ban) {
+        return ban == null || ban.isEmpty() ? null : ban + "番";
+    }
+
+    private static String joinNonEmpty(String a, String b) {
+        if (a == null || a.isEmpty()) return b != null ? b : "";
+        if (b == null || b.isEmpty()) return a;
+        return a + " " + b;
     }
 
     private TextView createTextView(String text) {

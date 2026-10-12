@@ -15,11 +15,10 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.tktkcompany.kakoRaceKeiba.R;
-import com.tktkcompany.kakoRaceKeiba.db.MyDatabaseManager;
 
 public class MemoEditFragment extends Fragment {
     private Memo memo;
-    private MyDatabaseManager databaseManager;
+    private MemoRepository memoRepository;
     private TextView editTitle, editContent;
 
     @Nullable
@@ -30,8 +29,7 @@ public class MemoEditFragment extends Fragment {
         editContent = view.findViewById(R.id.edit_text_content);
         Button saveButton = view.findViewById(R.id.button_save_memo);
 
-        databaseManager = new MyDatabaseManager(getContext());
-        databaseManager.open();
+        memoRepository = new MemoRepository(requireContext());
 
         if (getArguments() != null) {
             memo = (Memo) getArguments().getSerializable("memo");
@@ -51,11 +49,16 @@ public class MemoEditFragment extends Fragment {
         if (!newTitle.isEmpty()) {
             memo.setTitle(newTitle);
             memo.setContent(newContent);
-            databaseManager.updateMemo(memo);
-            Toast.makeText(getContext(), "メモを更新しました", Toast.LENGTH_SHORT).show();
-
-            // 一覧に戻る
-            Navigation.findNavController(requireView()).popBackStack();
+            memoRepository.update(memo, success -> {
+                if (!isAdded()) return;
+                if (!success) {
+                    Toast.makeText(getContext(), "メモの更新に失敗しました", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Toast.makeText(getContext(), "メモを更新しました", Toast.LENGTH_SHORT).show();
+                // 一覧に戻る（詳細画面は古い内容のままなので飛ばす）
+                Navigation.findNavController(requireView()).popBackStack(R.id.navigation_memoLists, false);
+            });
         } else {
             Toast.makeText(getContext(), "タイトルは必須です", Toast.LENGTH_SHORT).show();
         }

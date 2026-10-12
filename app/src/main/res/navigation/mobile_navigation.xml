@@ -61,14 +61,6 @@
             app:destination="@id/navigation_memoDetail" />
     </fragment>
 
-    <!-- ここから追加 -->
-    <fragment
-        android:id="@+id/navigation_chat"
-        android:name="com.tktkcompany.kakoRaceKeiba.ui.chat.ChatFragment"
-        android:label="AIチャット"
-        tools:layout="@layout/fragment_chat" />
-    <!-- ここまで追加 -->
-
     <fragment
         android:id="@+id/navigation_memoCreate"
         android:name="com.tktkcompany.kakoRaceKeiba.ui.memo.MemoCreateFragment"

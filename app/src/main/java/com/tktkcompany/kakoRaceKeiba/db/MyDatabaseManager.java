@@ -61,44 +61,33 @@ public class MyDatabaseManager {
         database.insert("raceResult", null, values);
     }
 
-    // データをインサートするメソッド
-    public void raceResultMemoInsertData(String title, String comment) {
+    // メモを追加するメソッド（追加した行のrowidを返す）
+    public long insertMemo(String title, String comment) {
         ContentValues values = new ContentValues();
         values.put("title", title);
         values.put("comment", comment);
-
-        // テーブル名は"my_table"、nullColumnHackはnull
-        database.insert("memo", null, values);
+        return database.insert("memo", null, values);
     }
 
-    public void deleteMemo(String title) {
-
-        database.delete("memo", "title=?", new String[]{String.valueOf(title)});
+    // メモを削除するメソッド（rowidで特定する）
+    public void deleteMemo(String id) {
+        database.delete("memo", "rowid=?", new String[]{id});
     }
 
-
-
-    // レース結果を取得するメソッド
+    // メモ一覧を取得するメソッド
     public List<Memo> getMemo() {
-        // SQL SELECT文
-        String[] columns = {"kaisaibi", "horseName", "title", "comment", "babaCondition", "distance", "kaisaijo"};
-
-        Cursor cursor = database.query("memo", columns, null, null, null, null, null);
+        String[] columns = {"rowid", "title", "comment"};
+        Cursor cursor = database.query("memo", columns, null, null, null, null, "rowid");
         List<Memo> list = new ArrayList<Memo>();
-
-        // カーソルが空でないか確認
 
         if (cursor != null && cursor.moveToFirst()) {
             do {
+                String id = String.valueOf(cursor.getLong(0));
                 String title = cursor.getString(cursor.getColumnIndexOrThrow("title"));
                 String comment = cursor.getString(cursor.getColumnIndexOrThrow("comment"));
-                Memo memo = new Memo(title, comment);
-                list.add(memo);
-
-                // HashMapの作成（キー: String, 値: Integer）
+                list.add(new Memo(id, title, comment));
             } while (cursor.moveToNext());
         }
-        // カーソルを閉じる
         if (cursor != null) {
             cursor.close();
         }
@@ -106,16 +95,14 @@ public class MyDatabaseManager {
         return list;
     }
 
+    // メモを更新するメソッド（rowidで特定するので、タイトルを変えても正しく更新される）
     public void updateMemo(Memo memo) {
-
         ContentValues values = new ContentValues();
         values.put("title", memo.getTitle());
         values.put("comment", memo.getContent());
 
-        database.update("memo", values, "title = ?", new String[]{String.valueOf(memo.getTitle())});
+        database.update("memo", values, "rowid = ?", new String[]{memo.getId()});
     }
-
-
 
     // レース結果を取得するメソッド
     public List<String> getRaceResults() {

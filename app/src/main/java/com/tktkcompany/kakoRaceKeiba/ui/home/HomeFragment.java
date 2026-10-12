@@ -34,9 +34,13 @@ import com.tktkcompany.kakoRaceKeiba.dto.SharedViewModel;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.text.TextUtils;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
+
+import org.threeten.bp.LocalDate;
 import org.threeten.bp.format.DateTimeFormatter;
 
 
@@ -103,6 +107,7 @@ public class HomeFragment extends Fragment {
 
         // 🔑 setJoNames 完了後にここが呼ばれる
         sharedViewModel.getJoNames().observe(getViewLifecycleOwner(), joNames -> {
+            updateUpcomingCard(joNames);
             if (joNames == null || joNames.isEmpty()) return;
 
             DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference("raceResult");
@@ -172,6 +177,8 @@ public class HomeFragment extends Fragment {
     public void updateUI(FirebaseUser user) {
         if (binding == null) return; // 画面が破棄された後は何もしない
 
+        updateUpcomingHint(user);
+
         if (user != null) {
             // ログイン中
             binding.layoutUserInfo.setVisibility(View.VISIBLE);
@@ -186,6 +193,32 @@ public class HomeFragment extends Fragment {
         }
     }
 
+
+    // 「今週の開催」カードに開催中の競馬場と次の開催日を表示する
+    private void updateUpcomingCard(List<String> joNames) {
+        if (binding == null) return;
+        List<LocalDate> days = WeekendDays.getUpcomingRaceDays();
+        if (joNames == null || joNames.isEmpty() || days.isEmpty()) {
+            binding.cardUpcoming.setVisibility(View.GONE);
+            return;
+        }
+        DateTimeFormatter md = DateTimeFormatter.ofPattern("M/d");
+        List<String> dayLabels = new ArrayList<>();
+        for (LocalDate d : days) {
+            dayLabels.add(d.format(md) + WeekendDays.getDayOfWeek(d.format(formatter)).trim());
+        }
+        binding.textUpcomingBody.setText("開催中の競馬場: " + TextUtils.join("・", joNames)
+                + "\n次の開催日: " + TextUtils.join("・", dayLabels));
+        binding.cardUpcoming.setVisibility(View.VISIBLE);
+        updateUpcomingHint(mAuth != null ? mAuth.getCurrentUser() : null);
+    }
+
+    private void updateUpcomingHint(FirebaseUser user) {
+        if (binding == null) return;
+        binding.textUpcomingHint.setText(user != null
+                ? "お気に入り馬のレース結果が出たら通知でお知らせします"
+                : "ログインしてお気に入り馬を登録すると、レース結果を通知でお知らせします");
+    }
 
     //バナーを表示するメソッド
     public void loadBannerAd(FragmentHomeBinding binding) {

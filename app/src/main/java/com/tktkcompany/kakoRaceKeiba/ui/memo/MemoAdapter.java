@@ -13,7 +13,6 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.tktkcompany.kakoRaceKeiba.R;
-import com.tktkcompany.kakoRaceKeiba.db.MyDatabaseManager;
 
 import java.util.List;
 
@@ -21,15 +20,15 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.MemoViewHolder
 
     private final List<Memo> memoList;
     private final OnMemoClickListener listener;
-    private final MyDatabaseManager databaseManager;
+    private final MemoRepository memoRepository;
 
     public interface OnMemoClickListener {
         void onMemoClick(Memo memo);
     }
 
-    public MemoAdapter(List<Memo> memoList, MyDatabaseManager databaseManager, OnMemoClickListener listener) {
+    public MemoAdapter(List<Memo> memoList, MemoRepository memoRepository, OnMemoClickListener listener) {
         this.memoList = memoList;
-        this.databaseManager = databaseManager;
+        this.memoRepository = memoRepository;
         this.listener = listener;
     }
 
@@ -74,7 +73,7 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.MemoViewHolder
             deleteButton.setOnClickListener(v -> {
                 int position = getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION) {
-                    databaseManager.deleteMemo(memo.getTitle()); // DBから削除
+                    memoRepository.delete(memo); // 保存先から削除
                     memoList.remove(position); // リストから削除
                     notifyItemRemoved(position); // UI更新
                 }
