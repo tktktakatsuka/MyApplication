@@ -8,6 +8,7 @@ import androidx.work.Configuration;
 import androidx.work.WorkManager;
 
 import com.jakewharton.threetenabp.AndroidThreeTen;
+import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 
 import java.io.File;
 
@@ -20,6 +21,8 @@ public class MyApplication extends Application implements Configuration.Provider
         super.onCreate();
         // ThreeTenABP の初期化（バックグラウンドのWorkerからも日付処理を使うためここで行う）
         AndroidThreeTen.init(this);
+        // Supabase の初期化（バックグラウンドのWorkerからもレース結果を取得するためここで行う）
+        SupabaseManager.init();
         initializeWorkManagerWithRecovery();
     }
 

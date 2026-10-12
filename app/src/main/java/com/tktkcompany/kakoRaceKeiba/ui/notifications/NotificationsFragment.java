@@ -27,11 +27,8 @@ import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.ValueEventListener;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentNotificationsBinding;
-import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
+import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.dto.SharedViewModel;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
@@ -151,13 +148,13 @@ public class NotificationsFragment extends Fragment {
         
         progressBar.setVisibility(View.VISIBLE);
         
-        FirebaseManager.queryDataEqualTo("raceTrends/" + joName, "kaisaibi", date, new ValueEventListener() {
+        SupabaseManager.fetchRaceTrends(date, joName, new SupabaseManager.SupabaseCallback<List<SupabaseManager.RaceTrend>>() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (!isAdded()) return;
-                
+            public void onSuccess(List<SupabaseManager.RaceTrend> trends) {
+                if (!isAdded() || binding == null) return;
+
                 // その日に開催がなければ日付見出しも出さない
-                if (!snapshot.hasChildren()) {
+                if (trends.isEmpty()) {
                     progressBar.setVisibility(View.GONE);
                     return;
                 }
@@ -165,41 +162,38 @@ public class NotificationsFragment extends Fragment {
                 dateText.setText(joName + "   " + WeekendDays.formatWithDayOfWeek(date));
                 dateText.setPadding(16, 8, 16, 8);
 
-                // レース番号順に表示するために一旦リスト化してソートするのもありだが、
-                // 元のコードは1R...12Rのループでメソッドを呼んでいた。
-                // スナップショットを走査して表示する。
-                
-                List<DataSnapshot> sortedRaces = new ArrayList<>();
-                for (DataSnapshot raceSnap : snapshot.getChildren()) {
-                    sortedRaces.add(raceSnap);
-                }
                 // レース番号でソート (1R, 2R... 12R)
-                sortedRaces.sort((o1, o2) -> {
-                    String r1 = o1.child("raceNum").getValue(String.class);
-                    String r2 = o2.child("raceNum").getValue(String.class);
-                    if (r1 == null || r2 == null) return 0;
-                    int n1 = Integer.parseInt(r1.replace("R", ""));
-                    int n2 = Integer.parseInt(r2.replace("R", ""));
-                    return Integer.compare(n1, n2);
-                });
+                List<SupabaseManager.RaceTrend> sortedRaces = new ArrayList<>(trends);
+                sortedRaces.sort((o1, o2) -> Integer.compare(raceNumber(o1), raceNumber(o2)));
 
-                for (DataSnapshot raceSnap : sortedRaces) {
+                for (SupabaseManager.RaceTrend trend : sortedRaces) {
                     if (!isHeaderSet) {
                         table.addView(createHeaderRow(category));
                         isHeaderSet = true;
                     }
-                    addRaceRow(table, raceSnap, category);
+                    addRaceRow(table, trend, category);
                 }
-                
+
                 progressBar.setVisibility(View.GONE);
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("Firebase", error.getMessage());
+            public void onFailure(@NonNull String message) {
+                Log.e("NotificationsFragment", "Supabase load failed: " + message);
                 if (isAdded()) progressBar.setVisibility(View.GONE);
             }
         });
+    }
+
+    // 「11R」のようなレース番号を数値にする（読み取れない場合は末尾に並べる）
+    private static int raceNumber(SupabaseManager.RaceTrend trend) {
+        String raceNum = trend.getRaceNum();
+        if (raceNum == null) return Integer.MAX_VALUE;
+        try {
+            return Integer.parseInt(raceNum.replace("R", "").trim());
+        } catch (NumberFormatException e) {
+            return Integer.MAX_VALUE;
+        }
     }
 
     private TableRow createHeaderRow(TrendCategory category) {
@@ -215,8 +209,8 @@ public class NotificationsFragment extends Fragment {
         return row;
     }
 
-    private void addRaceRow(TableLayout table, DataSnapshot snap, TrendCategory category) {
-        String distance = snap.child("raceDistance").getValue(String.class);
+    private void addRaceRow(TableLayout table, SupabaseManager.RaceTrend trend, TrendCategory category) {
+        String distance = trend.getRaceDistance();
         if (distance == null) return;
 
         boolean isShiba = binding.checkboxShiba.isChecked() && distance.contains("芝");
@@ -230,34 +224,30 @@ public class NotificationsFragment extends Fragment {
             row.setBackgroundColor(Color.parseColor("#F1F8E9"));
         }
         // レース番号とレース名を1列にまとめて列数を減らす
-        row.addView(createTextView(joinNonEmpty(snap.child("raceNum").getValue(String.class),
-                snap.child("raceName").getValue(String.class))));
+        row.addView(createTextView(joinNonEmpty(trend.getRaceNum(), trend.getRaceName())));
         row.addView(createTextView(distance));
-        row.addView(createTextView(snap.child("raceCondition").getValue(String.class)));
+        row.addView(createTextView(trend.getRaceCondition()));
 
         if (category == TrendCategory.HARAIMODOSI) {
-            row.addView(createTextView(snap.child("haraimodosiAre").getValue(String.class)));
-            row.addView(createTextView(snap.child("haraimodosiTansyo").getValue(String.class)));
-            row.addView(createTextView(snap.child("haraimodosiUmaren").getValue(String.class)));
-            row.addView(createTextView(snap.child("haraimodosi3Rentan").getValue(String.class)));
+            row.addView(createTextView(trend.getHaraimodosiAre()));
+            row.addView(createTextView(trend.getHaraimodosiTansyo()));
+            row.addView(createTextView(trend.getHaraimodosiUmaren()));
+            row.addView(createTextView(trend.getHaraimodosi3Rentan()));
         } else {
-            String k1 = "uma1Name", k2 = "uma2Name", k3 = "umaName"; // Default HORSE
+            String v1 = trend.getUma1Name(), v2 = trend.getUma2Name(), v3 = trend.getUmaName(); // Default HORSE
             switch (category) {
-                case KYAKUSITU: k1 = "uma1Kyakusitu"; k2 = "uma2Kyakusitu"; k3 = "uma3Kyakusitu"; break;
-                case JOCKEY: k1 = "uma1Jockey"; k2 = "uma2Jockey"; k3 = "uma3Jockey"; break;
-                case TYOKYOSI: k1 = "uma1tyokyosi"; k2 = "uma2tyokyosi"; k3 = "uma3tyokyosi"; break;
-                case FARTHER: k1 = "uma1father"; k2 = "uma2father"; k3 = "uma3father"; break;
-                case MATHER: k1 = "uma1mather"; k2 = "uma2mather"; k3 = "uma3mather"; break;
-                case BANUSI: k1 = "banusi1"; k2 = "banusi2"; k3 = "banusi3"; break;
-                case SEISAN: k1 = "seisann1"; k2 = "seisann2"; k3 = "seisann3"; break;
+                case KYAKUSITU: v1 = trend.getUma1Kyakusitu(); v2 = trend.getUma2Kyakusitu(); v3 = trend.getUma3Kyakusitu(); break;
+                case JOCKEY: v1 = trend.getUma1Jockey(); v2 = trend.getUma2Jockey(); v3 = trend.getUma3Jockey(); break;
+                case TYOKYOSI: v1 = trend.getUma1tyokyosi(); v2 = trend.getUma2tyokyosi(); v3 = trend.getUma3tyokyosi(); break;
+                case FARTHER: v1 = trend.getUma1father(); v2 = trend.getUma2father(); v3 = trend.getUma3father(); break;
+                case MATHER: v1 = trend.getUma1mather(); v2 = trend.getUma2mather(); v3 = trend.getUma3mather(); break;
+                case BANUSI: v1 = trend.getBanusi1(); v2 = trend.getBanusi2(); v3 = trend.getBanusi3(); break;
+                case SEISAN: v1 = trend.getSeisann1(); v2 = trend.getSeisann2(); v3 = trend.getSeisann3(); break;
             }
             // 馬番と内容を1つのセルにまとめる（例: 「3番 ○○(1人)」）
-            row.addView(createTextView(joinNonEmpty(withBan(snap.child("uma1Ban").getValue(String.class)),
-                    snap.child(k1).getValue(String.class))));
-            row.addView(createTextView(joinNonEmpty(withBan(snap.child("uma2Ban").getValue(String.class)),
-                    snap.child(k2).getValue(String.class))));
-            row.addView(createTextView(joinNonEmpty(withBan(snap.child("uma3Ban").getValue(String.class)),
-                    snap.child(k3).getValue(String.class))));
+            row.addView(createTextView(joinNonEmpty(withBan(trend.getUma1Ban()), v1)));
+            row.addView(createTextView(joinNonEmpty(withBan(trend.getUma2Ban()), v2)));
+            row.addView(createTextView(joinNonEmpty(withBan(trend.getUma3Ban()), v3)));
         }
         table.addView(row);
     }

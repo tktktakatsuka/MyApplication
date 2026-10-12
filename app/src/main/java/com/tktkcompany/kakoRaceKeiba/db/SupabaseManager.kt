@@ -1,0 +1,328 @@
+package com.tktkcompany.kakoRaceKeiba.db
+
+import android.util.Log
+import com.tktkcompany.kakoRaceKeiba.BuildConfig
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Order
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
+object SupabaseManager {
+
+    private const val TAG = "SupabaseManager"
+    private const val BLOCKING_TIMEOUT_MS = 30_000L
+    // 直近の開催日から何日前までを「開催中」とみなすか（土・日・祝月の3日間開催を1つの開催週として扱う）
+    private const val ACTIVE_COURSE_DAYS = 2L
+    private val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+
+    private var client: SupabaseClient? = null
+    private val scope = CoroutineScope(Dispatchers.IO)
+
+    @JvmStatic
+    fun init() {
+        if (client != null) {
+            Log.d(TAG, "Supabase already initialized")
+            return
+        }
+
+        val url = BuildConfig.SUPABASE_URL
+        val key = BuildConfig.SUPABASE_KEY
+
+        Log.d(TAG, "Initializing Supabase...")
+
+        if (url.isEmpty() || url == "null") {
+            Log.e(TAG, "CRITICAL: Supabase URL is empty!")
+            return
+        }
+        if (key.isEmpty() || key == "null") {
+            Log.e(TAG, "CRITICAL: Supabase Key is empty!")
+            return
+        }
+
+        try {
+            client = createSupabaseClient(url, key) {
+                install(Postgrest)
+            }
+            Log.d(TAG, "Supabase initialized successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to initialize Supabase: ${e.message}", e)
+        }
+    }
+
+    @Serializable
+    data class FavoriteHorse(
+        @SerialName("firebase_uid") val firebase_uid: String,
+        @SerialName("horse_name") val horse_name: String
+    )
+
+    @Serializable
+    data class RaceResult(
+        @SerialName("id") val id: Long? = null,
+        @SerialName("kaisaibi") val kaisaibi: String,
+        @SerialName("kaisaijo") val kaisaijo: String,
+        @SerialName("race_no") val raceNo: Int,
+        @SerialName("race_title") val raceTitle: String? = null,
+        @SerialName("rank") val rank: String? = null,
+        @SerialName("waku") val waku: String? = null,
+        @SerialName("horse_number") val horseNumber: String? = null,
+        @SerialName("horse_name") val horseName: String? = null,
+        @SerialName("age") val age: String? = null,
+        @SerialName("weight") val weight: String? = null,
+        @SerialName("jockey") val jockey: String? = null,
+        @SerialName("popular") val popular: String? = null,
+        @SerialName("win_odds") val winOdds: String? = null,
+        @SerialName("time") val time: String? = null,
+        @SerialName("tyakusa") val tyakusa: String? = null,
+        @SerialName("tuukazyun") val tuukazyun: String? = null,
+        @SerialName("nobori") val nobori: String? = null,
+        @SerialName("tyoukyousi") val tyoukyousi: String? = null,
+        @SerialName("horse_weight") val horseWeight: String? = null,
+        @SerialName("hassou_time") val hassouTime: String? = null
+    )
+
+    @Serializable
+    data class RaceTrend(
+        @SerialName("id") val id: Long? = null,
+        @SerialName("kaisaibi") val kaisaibi: String,
+        @SerialName("kaisaijo") val kaisaijo: String,
+        @SerialName("racenum") val raceNum: String? = null,
+        @SerialName("racename") val raceName: String? = null,
+        @SerialName("racedistance") val raceDistance: String? = null,
+        @SerialName("racecondition") val raceCondition: String? = null,
+        @SerialName("pace") val pace: String? = null,
+        @SerialName("uma1ban") val uma1Ban: String? = null,
+        @SerialName("uma1name") val uma1Name: String? = null,
+        @SerialName("uma1jockey") val uma1Jockey: String? = null,
+        @SerialName("uma1kyakusitu") val uma1Kyakusitu: String? = null,
+        @SerialName("uma1tyokyosi") val uma1tyokyosi: String? = null,
+        @SerialName("uma1father") val uma1father: String? = null,
+        @SerialName("uma1mather") val uma1mather: String? = null,
+        @SerialName("uma2ban") val uma2Ban: String? = null,
+        @SerialName("uma2name") val uma2Name: String? = null,
+        @SerialName("uma2jockey") val uma2Jockey: String? = null,
+        @SerialName("uma2kyakusitu") val uma2Kyakusitu: String? = null,
+        @SerialName("uma2tyokyosi") val uma2tyokyosi: String? = null,
+        @SerialName("uma2father") val uma2father: String? = null,
+        @SerialName("uma2mather") val uma2mather: String? = null,
+        @SerialName("uma3ban") val uma3Ban: String? = null,
+        @SerialName("umaname") val umaName: String? = null, // Note: This is the 3rd horse's name
+        @SerialName("uma3jockey") val uma3Jockey: String? = null,
+        @SerialName("uma3kyakusitu") val uma3Kyakusitu: String? = null,
+        @SerialName("uma3tyokyosi") val uma3tyokyosi: String? = null,
+        @SerialName("uma3father") val uma3father: String? = null,
+        @SerialName("uma3mather") val uma3mather: String? = null,
+        @SerialName("banusi1") val banusi1: String? = null,
+        @SerialName("banusi2") val banusi2: String? = null,
+        @SerialName("banusi3") val banusi3: String? = null,
+        @SerialName("seisann1") val seisann1: String? = null,
+        @SerialName("seisann2") val seisann2: String? = null,
+        @SerialName("seisann3") val seisann3: String? = null,
+        @SerialName("haraimodosiare") val haraimodosiAre: String? = null,
+        @SerialName("haraimodositansyo") val haraimodosiTansyo: String? = null,
+        @SerialName("haraimodosiumaren") val haraimodosiUmaren: String? = null,
+        @SerialName("haraimodosi3rentan") val haraimodosi3Rentan: String? = null
+    )
+
+    @JvmStatic
+    fun sanitizeKey(key: String?): String {
+        if (key == null) return ""
+        return key.trim().replace("[.\\$#\\[\\]/]".toRegex(), "")
+    }
+
+    @JvmStatic
+    fun addFavorite(uid: String, horseName: String) {
+        val currentClient = client ?: return
+        val safeName = sanitizeKey(horseName)
+        if (safeName.isEmpty()) return
+        scope.launch {
+            try {
+                currentClient.from("favorite_horses").insert(FavoriteHorse(uid, safeName))
+                Log.d(TAG, "Added favorite: $safeName")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to add favorite", e)
+            }
+        }
+    }
+
+    @JvmStatic
+    fun removeFavorite(uid: String, horseName: String) {
+        val currentClient = client ?: return
+        val safeName = sanitizeKey(horseName)
+        if (safeName.isEmpty()) return
+        scope.launch {
+            try {
+                currentClient.from("favorite_horses").delete {
+                    filter {
+                        eq("firebase_uid", uid)
+                        eq("horse_name", safeName)
+                    }
+                }
+                Log.d(TAG, "Removed favorite: $safeName")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to remove favorite", e)
+            }
+        }
+    }
+
+    @JvmStatic
+    fun fetchFavorites(uid: String, callback: SupabaseCallback<List<String>>) {
+        launchWithCallback("fetch favorites", callback) { currentClient ->
+            val results: List<FavoriteHorse> = currentClient.from("favorite_horses").select {
+                filter { eq("firebase_uid", uid) }
+            }.decodeList()
+            results.map { it.horse_name }
+        }
+    }
+
+    /** 指定した開催日・競馬場の全レース結果を、レース番号・着順の順で取得する */
+    @JvmStatic
+    fun fetchRaceResults(date: String, course: String, callback: SupabaseCallback<List<RaceResult>>) {
+        launchWithCallback("fetch race results", callback) { currentClient ->
+            currentClient.from("race_results").select {
+                filter {
+                    eq("kaisaibi", date)
+                    eq("kaisaijo", course)
+                }
+                order("race_no", Order.ASCENDING)
+                order("id", Order.ASCENDING)
+            }.decodeList<RaceResult>()
+        }
+    }
+
+    /** 指定した競馬場の最新のメインレース(11R)の結果を着順の順で取得する */
+    @JvmStatic
+    fun fetchLatestMainRace(course: String, callback: SupabaseCallback<List<RaceResult>>) {
+        launchWithCallback("fetch latest main race", callback) { currentClient ->
+            val rows = currentClient.from("race_results").select {
+                filter {
+                    eq("kaisaijo", course)
+                    eq("race_no", 11)
+                }
+                order("kaisaibi", Order.DESCENDING)
+                order("id", Order.ASCENDING)
+                limit(30)
+            }.decodeList<RaceResult>()
+            val latestDate = rows.firstOrNull()?.kaisaibi
+            rows.filter { it.kaisaibi == latestDate }
+        }
+    }
+
+    /** 直近の開催週にレースがあった競馬場名を、開催日の新しい順で取得する */
+    @JvmStatic
+    fun fetchActiveCourses(callback: SupabaseCallback<List<String>>) {
+        launchWithCallback("fetch active courses", callback) { currentClient ->
+            queryActiveCourses(currentClient)
+        }
+    }
+
+    /** 指定した競馬場の開催日(yyyyMMdd)を新しい順で取得する */
+    @JvmStatic
+    fun fetchRaceDates(course: String, callback: SupabaseCallback<List<String>>) {
+        launchWithCallback("fetch race dates", callback) { currentClient ->
+            queryRaceDays(currentClient, course).map { it.kaisaibi }.distinct()
+        }
+    }
+
+    @JvmStatic
+    fun fetchRaceTrends(date: String, course: String, callback: SupabaseCallback<List<RaceTrend>>) {
+        launchWithCallback("fetch race trends", callback) { currentClient ->
+            currentClient.from("race_trends").select {
+                filter {
+                    eq("kaisaibi", date)
+                    eq("kaisaijo", course)
+                }
+            }.decodeList<RaceTrend>()
+        }
+    }
+
+    /** fetchActiveCourses の同期版。必ずバックグラウンドスレッドから呼ぶこと。 */
+    @JvmStatic
+    @Throws(Exception::class)
+    fun fetchActiveCoursesBlocking(): List<String> {
+        val currentClient = client ?: throw IllegalStateException("Supabase client not initialized")
+        return runBlocking {
+            withTimeout(BLOCKING_TIMEOUT_MS) { queryActiveCourses(currentClient) }
+        }
+    }
+
+    /**
+     * 指定した馬名の結果を、指定した競馬場から取得する。
+     * 必ずバックグラウンドスレッドから呼ぶこと。
+     */
+    @JvmStatic
+    @Throws(Exception::class)
+    fun fetchResultsForHorsesBlocking(horseNames: Collection<String>, courses: Collection<String>): List<RaceResult> {
+        if (horseNames.isEmpty() || courses.isEmpty()) return emptyList()
+        val currentClient = client ?: throw IllegalStateException("Supabase client not initialized")
+        return runBlocking {
+            withTimeout(BLOCKING_TIMEOUT_MS) {
+                currentClient.from("race_results").select {
+                    filter {
+                        isIn("horse_name", horseNames.toList())
+                        isIn("kaisaijo", courses.toList())
+                    }
+                    order("kaisaibi", Order.DESCENDING)
+                }.decodeList<RaceResult>()
+            }
+        }
+    }
+
+    // 1Rの1着の行を「その日その競馬場で開催があった」印として使う（開催日ごとに1行で済む）
+    private suspend fun queryRaceDays(currentClient: SupabaseClient, course: String?): List<RaceResult> {
+        return currentClient.from("race_results").select(Columns.list("kaisaibi", "kaisaijo", "race_no")) {
+            filter {
+                eq("race_no", 1)
+                eq("rank", "1")
+                if (course != null) eq("kaisaijo", course)
+            }
+            order("kaisaibi", Order.DESCENDING)
+            order("id", Order.ASCENDING)
+            limit(200)
+        }.decodeList<RaceResult>()
+    }
+
+    private suspend fun queryActiveCourses(currentClient: SupabaseClient): List<String> {
+        val raceDays = queryRaceDays(currentClient, null)
+        val latest = raceDays.firstOrNull()?.kaisaibi ?: return emptyList()
+        val since = try {
+            LocalDate.parse(latest, DATE_FORMAT).minusDays(ACTIVE_COURSE_DAYS).format(DATE_FORMAT)
+        } catch (e: Exception) {
+            latest
+        }
+        return raceDays.filter { it.kaisaibi >= since }.map { it.kaisaijo }.distinct()
+    }
+
+    private fun <T> launchWithCallback(
+        what: String,
+        callback: SupabaseCallback<T>,
+        block: suspend (SupabaseClient) -> T
+    ) {
+        val currentClient = client ?: return callback.onFailure("Supabase client not initialized")
+        scope.launch {
+            try {
+                val result = block(currentClient)
+                withContext(Dispatchers.Main) { callback.onSuccess(result) }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to $what", e)
+                withContext(Dispatchers.Main) { callback.onFailure(e.message ?: "Unknown error") }
+            }
+        }
+    }
+
+    interface SupabaseCallback<T> {
+        fun onSuccess(result: T)
+        fun onFailure(message: String)
+    }
+}

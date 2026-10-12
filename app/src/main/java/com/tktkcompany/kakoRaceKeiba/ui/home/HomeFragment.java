@@ -20,15 +20,10 @@ import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.tktkcompany.kakoRaceKeiba.MainActivity;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentHomeBinding;
-import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
+import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.dto.SharedViewModel;
 
 import java.util.ArrayList;
@@ -82,24 +77,17 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        // Firebaseから開催中の競馬場リストを取得
-        FirebaseManager.queryDataAddWhere("racePickUp", "isActive", true, new ValueEventListener() {
+        // Supabaseから開催中の競馬場リストを取得
+        SupabaseManager.fetchActiveCourses(new SupabaseManager.SupabaseCallback<List<String>>() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                List<String> joNames = new ArrayList<>();
-
-                for (DataSnapshot joSnapshot : snapshot.getChildren()) {
-                    String joName = joSnapshot.child("name").getValue(String.class);
-                    if (joName != null) {
-                        joNames.add(joName);
-                    }
-                }
+            public void onSuccess(List<String> joNames) {
+                if (!isAdded()) return;
                 sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
                 sharedViewModel.setJoNames(joNames);
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
+            public void onFailure(@NonNull String message) {
                 Toast.makeText(getContext(), "データの読み込みに失敗しました", Toast.LENGTH_SHORT).show();
             }
         });
@@ -110,36 +98,29 @@ public class HomeFragment extends Fragment {
             updateUpcomingCard(joNames);
             if (joNames == null || joNames.isEmpty()) return;
 
-            DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference("raceResult");
             int limit = Math.min(joNames.size(), 2);
             for (int i = 0; i < limit; i++) {
                 final int index = i;
                 String joName = joNames.get(i);
-                dbRef.child(joName).addListenerForSingleValueEvent(new ValueEventListener() {
+                // 各競馬場の最新のメインレース(11R)の結果を表示する
+                SupabaseManager.fetchLatestMainRace(joName, new SupabaseManager.SupabaseCallback<List<SupabaseManager.RaceResult>>() {
                     @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        for (DataSnapshot raceSnap : snapshot.getChildren()) {
-                            String raceNo = raceSnap.child("raceNo").getValue(String.class);
-                            if (!"11".equals(raceNo)) continue;
-                            String raceDateStr = raceSnap.child("kaisaibi").getValue(String.class);
-                            String raceTitle = raceSnap.child("raceTitle").getValue(String.class);
-                            String kaisaijo = raceSnap.child("kaisaijo").getValue(String.class);
-                            String horseName = raceSnap.child("horseName").getValue(String.class);
-                            String tyaku = raceSnap.child("tyaku").getValue(String.class);
-                            String hassouTime = raceSnap.child("hassouTime").getValue(String.class);
-                            String winOdds = raceSnap.child("winOdds").getValue(String.class);
-
+                    public void onSuccess(List<SupabaseManager.RaceResult> results) {
+                        if (!isAdded() || binding == null) return;
+                        for (SupabaseManager.RaceResult result : results) {
                             if (index == 0) {
-                                raceResultSet(tyaku, raceTitle, kaisaijo, hassouTime, raceDateStr, winOdds, horseName, root);
+                                raceResultSet(result.getRank(), result.getRaceTitle(), result.getKaisaijo(), result.getHassouTime(),
+                                        result.getKaisaibi(), result.getWinOdds(), result.getHorseName(), root);
                             } else if (index == 1) {
-                                raceResultSet2(tyaku, raceTitle, kaisaijo, hassouTime, raceDateStr, winOdds, horseName, root);
+                                raceResultSet2(result.getRank(), result.getRaceTitle(), result.getKaisaijo(), result.getHassouTime(),
+                                        result.getKaisaibi(), result.getWinOdds(), result.getHorseName(), root);
                             }
                         }
                     }
 
                     @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e("Firebase", "Error: " + error.getMessage());
+                    public void onFailure(@NonNull String message) {
+                        Log.e("HomeFragment", "Supabase load failed: " + message);
                     }
                 });
             }

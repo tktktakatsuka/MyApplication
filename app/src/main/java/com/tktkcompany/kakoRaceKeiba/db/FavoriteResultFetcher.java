@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
- * お気に入り馬の結果を、開催中の競馬場の raceResult から探す。
+ * お気に入り馬の結果を、開催中の競馬場のレース結果(Supabase)から探す。
  * Tasks.await を使うため、必ずバックグラウンドスレッドから呼ぶこと。
  */
 public class FavoriteResultFetcher {
@@ -34,21 +34,11 @@ public class FavoriteResultFetcher {
 
     /** 開催中の競馬場名を取得する */
     public static List<String> fetchActiveJoNames() throws Exception {
-        DataSnapshot snapshot = Tasks.await(
-                FirebaseDatabase.getInstance().getReference("racePickUp")
-                        .orderByChild("isActive").equalTo(true).get(),
-                TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        List<String> names = new ArrayList<>();
-        for (DataSnapshot child : snapshot.getChildren()) {
-            String name = child.child("name").getValue(String.class);
-            if (name != null) names.add(name);
-        }
-        return names;
+        return SupabaseManager.fetchActiveCoursesBlocking();
     }
 
     /**
      * 指定した馬（お気に入りのキー）の結果を、開催中の競馬場から集める。
-     * 競馬場ごとに1回だけ読み込み、端末側で絞り込む。
      *
      * @return 馬のキー → 結果のリスト（開催日の新しい順）
      */
@@ -56,30 +46,26 @@ public class FavoriteResultFetcher {
         Map<String, List<HorseResult>> results = new HashMap<>();
         if (horseKeys.isEmpty()) return results;
 
-        DatabaseReference root = FirebaseDatabase.getInstance().getReference("raceResult");
-        for (String joName : joNames) {
-            DataSnapshot snapshot = Tasks.await(root.child(joName).get(), TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            for (DataSnapshot snap : snapshot.getChildren()) {
-                String horseName = snap.child("horseName").getValue(String.class);
-                String horseKey = FirebaseManager.sanitizeKey(horseName);
-                if (!horseKeys.contains(horseKey)) continue;
+        for (SupabaseManager.RaceResult row : SupabaseManager.fetchResultsForHorsesBlocking(horseKeys, joNames)) {
+            String horseName = row.getHorseName();
+            String horseKey = FirebaseManager.sanitizeKey(horseName);
+            if (!horseKeys.contains(horseKey)) continue;
 
-                HorseResult result = new HorseResult(
-                        joName + "/" + snap.getKey(),
-                        horseName,
-                        snap.child("kaisaibi").getValue(String.class),
-                        snap.child("kaisaijo").getValue(String.class),
-                        snap.child("raceNo").getValue(String.class),
-                        snap.child("raceTitle").getValue(String.class),
-                        snap.child("tyaku").getValue(String.class),
-                        snap.child("popular").getValue(String.class));
-                List<HorseResult> list = results.get(horseKey);
-                if (list == null) {
-                    list = new ArrayList<>();
-                    results.put(horseKey, list);
-                }
-                list.add(result);
+            HorseResult result = new HorseResult(
+                    row.getKaisaijo() + "/" + row.getId(),
+                    horseName,
+                    row.getKaisaibi(),
+                    row.getKaisaijo(),
+                    String.valueOf(row.getRaceNo()),
+                    row.getRaceTitle(),
+                    row.getRank(),
+                    row.getPopular());
+            List<HorseResult> list = results.get(horseKey);
+            if (list == null) {
+                list = new ArrayList<>();
+                results.put(horseKey, list);
             }
+            list.add(result);
         }
 
         for (List<HorseResult> list : results.values()) {

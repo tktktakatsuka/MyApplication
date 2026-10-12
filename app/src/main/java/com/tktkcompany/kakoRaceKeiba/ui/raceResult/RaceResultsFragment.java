@@ -17,6 +17,7 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -25,6 +26,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentRaceresultsBinding;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
+import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,13 +60,10 @@ public class RaceResultsFragment extends Fragment {
     private void initViews() {
         for (int i = 1; i <= 12; i++) {
             try {
-                // TableLayout
                 java.lang.reflect.Field tableField = binding.getClass().getDeclaredField("tableLayout" + i);
                 tableLayouts.add((TableLayout) tableField.get(binding));
-                // Title TextView (textDashboard1, 2...)
                 java.lang.reflect.Field titleField = binding.getClass().getDeclaredField("textDashboard" + i);
                 titleTextViews.add((TextView) titleField.get(binding));
-                // HassouTime TextView (textHassouTime1, 2...)
                 java.lang.reflect.Field timeField = binding.getClass().getDeclaredField("textHassouTime" + i);
                 timeTextViews.add((TextView) timeField.get(binding));
             } catch (Exception e) {
@@ -74,69 +73,47 @@ public class RaceResultsFragment extends Fragment {
     }
 
     private void loadRaceResults(String date, String joName) {
-        FirebaseManager.queryDataEqualTo("raceResult/" + joName, "kaisaibi", date, new ValueEventListener() {
+        SupabaseManager.fetchRaceResults(date, joName, new SupabaseManager.SupabaseCallback<List<SupabaseManager.RaceResult>>() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
+            public void onSuccess(List<SupabaseManager.RaceResult> results) {
                 if (!isAdded()) return;
-
-                // レースごとにデータを整理
-                for (DataSnapshot raceSnap : snapshot.getChildren()) {
-                    String raceNoStr = raceSnap.child("raceNo").getValue(String.class);
-                    if (raceNoStr == null) continue;
-                    
-                    try {
-                        int raceNo = Integer.parseInt(raceNoStr);
-                        if (raceNo >= 1 && raceNo <= 12) {
-                            updateRaceUI(raceNo, raceSnap);
-                        }
-                    } catch (NumberFormatException e) {
-                        Log.e("RaceResultsFragment", "Invalid raceNo: " + raceNoStr);
+                for (SupabaseManager.RaceResult result : results) {
+                    int raceNo = result.getRaceNo();
+                    if (raceNo >= 1 && raceNo <= 12) {
+                        updateRaceUI(raceNo, result);
                     }
                 }
             }
-
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("Firebase", error.getMessage());
+            public void onFailure(@NonNull String message) {
+                Log.e("RaceResultsFragment", "Supabase load failed: " + message);
             }
         });
     }
 
-    private void updateRaceUI(int raceNo, DataSnapshot raceSnap) {
+    private void updateRaceUI(int raceNo, SupabaseManager.RaceResult result) {
         int index = raceNo - 1;
         TableLayout table = tableLayouts.get(index);
         TextView titleTv = titleTextViews.get(index);
         TextView timeTv = timeTextViews.get(index);
 
-        // ヘッダーが未追加なら追加
         if (table.getChildCount() == 0) {
-            titleTv.setText(raceNo + "R   " + raceSnap.child("raceTitle").getValue(String.class));
+            titleTv.setText(raceNo + "R   " + (result.getRaceTitle() != null ? result.getRaceTitle() : ""));
             titleTv.setPadding(16, 8, 16, 8);
-
-            String hassouTime = raceSnap.child("hassouTime").getValue(String.class);
-            timeTv.setText(formatHassouTime(hassouTime));
+            timeTv.setText(formatHassouTime(result.getHassouTime()));
             timeTv.setTextSize(12);
             timeTv.setPadding(16, 8, 16, 16);
-
             table.addView(createHeaderRow());
         }
-
-        table.addView(createDataRow(raceSnap));
+        table.addView(createDataRow(result));
     }
 
     private String formatHassouTime(String rawTime) {
         if (rawTime == null) return "";
-        
         int ageIndex = rawTime.indexOf("馬齢");
-        if (ageIndex != -1) {
-            return rawTime.substring(ageIndex);
-        }
-        
+        if (ageIndex != -1) return rawTime.substring(ageIndex);
         int startIndex = rawTime.indexOf("発走");
-        if (startIndex != -1) {
-            return rawTime.substring(0, startIndex + 2);
-        }
-        
+        if (startIndex != -1) return rawTime.substring(0, startIndex + 2);
         return rawTime;
     }
 
@@ -148,16 +125,11 @@ public class RaceResultsFragment extends Fragment {
         return row;
     }
 
-    private TableRow createDataRow(DataSnapshot snap) {
+    private TableRow createDataRow(SupabaseManager.RaceResult result) {
         TableRow row = new TableRow(getContext());
-
-        String horseName = snap.child("horseName").getValue(String.class);
-
-        // お気に入りボタンを最初に追加
+        String horseName = result.getHorseName() != null ? result.getHorseName() : "";
         TextView favTv = createTextView("☆");
         favTv.setOnClickListener(v -> toggleFavorite(row, favTv, horseName));
-
-        // クリック可能であることを示すエフェクト
         favTv.setClickable(true);
         favTv.setFocusable(true);
         if (getContext() != null) {
@@ -166,19 +138,17 @@ public class RaceResultsFragment extends Fragment {
             favTv.setBackgroundResource(outValue.resourceId);
         }
 
-        // 現在の登録状態を確認
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
+            // お気に入りの登録状態はお気に入り一覧と同じFirebaseを参照する
             FirebaseManager.isFavoriteHorse(user.getUid(), horseName, new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        Boolean isFav = snapshot.getValue(Boolean.class);
-                        if (isFav != null && isFav) {
-                            favTv.setText("★");
-                            favTv.setTextColor(Color.parseColor("#FFD700")); // 金色
-                            row.setBackgroundColor(Color.parseColor("#33FFD700")); // 行をハイライト
-                        }
+                    Boolean isFav = snapshot.getValue(Boolean.class);
+                    if (isFav != null && isFav) {
+                        favTv.setText("★");
+                        favTv.setTextColor(Color.parseColor("#FFD700"));
+                        row.setBackgroundColor(Color.parseColor("#33FFD700"));
                     }
                 }
                 @Override public void onCancelled(@NonNull DatabaseError error) {}
@@ -186,11 +156,14 @@ public class RaceResultsFragment extends Fragment {
         }
         row.addView(favTv);
 
-        String[] keys = {"tyaku", "waku", "horseName", "age", "jockey", "popular", "winOdds", "time"};
-        for (String key : keys) {
-            row.addView(createTextView(snap.child(key).getValue(String.class)));
-        }
-
+        row.addView(createTextView(result.getRank()));
+        row.addView(createTextView(result.getWaku()));
+        row.addView(createTextView(result.getHorseName()));
+        row.addView(createTextView(result.getAge()));
+        row.addView(createTextView(result.getJockey()));
+        row.addView(createTextView(result.getPopular()));
+        row.addView(createTextView(result.getWinOdds()));
+        row.addView(createTextView(result.getTime()));
         return row;
     }
 
@@ -202,18 +175,19 @@ public class RaceResultsFragment extends Fragment {
         }
 
         String uid = user.getUid();
-        String safeName = FirebaseManager.sanitizeKey(horseName);
-        
+        String safeName = SupabaseManager.sanitizeKey(horseName);
         if (safeName.isEmpty()) return;
 
         if ("☆".equals(textView.getText().toString())) {
             FirebaseManager.addFavoriteHorse(uid, horseName);
+            SupabaseManager.addFavorite(uid, horseName);
             textView.setText("★");
             textView.setTextColor(Color.parseColor("#FFD700"));
             row.setBackgroundColor(Color.parseColor("#33FFD700"));
             Toast.makeText(getContext(), safeName + "をお気に入りに追加しました", Toast.LENGTH_SHORT).show();
         } else {
             FirebaseManager.removeFavoriteHorse(uid, horseName);
+            SupabaseManager.removeFavorite(uid, horseName);
             textView.setText("☆");
             textView.setTextColor(Color.BLACK);
             row.setBackgroundColor(Color.TRANSPARENT);
