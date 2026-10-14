@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108">
+  <defs>
+    <linearGradient id="turf" x1="0" y1="0" x2="108" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#35A853"/>
+      <stop offset="1" stop-color="#0F5C33"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="30" y1="28" x2="78" y2="78" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE27A"/>
+      <stop offset="1" stop-color="#F0A21B"/>
+    </linearGradient>
+  </defs>
+  <!-- background: turf with mowing stripes -->
+  <rect width="108" height="108" fill="url(#turf)"/>
+  <path d="M0,36 L36,0 L60,0 L0,60 Z M0,84 L84,0 L108,0 L0,108 Z M24,108 L108,24 L108,48 L48,108 Z M72,108 L108,72 L108,96 L96,108 Z" fill="#FFFFFF" fill-opacity="0.06"/>
+  <!-- foreground: horseshoe -->
+  <path d="M38,74 L34,52 A20,20 0 1 1 74,52 L70,74" fill="none" stroke="url(#gold)" stroke-width="9.5" stroke-linejoin="round"/>
+  <g fill="#0F5C33">
+    <circle cx="35.6" cy="61.5" r="1.5"/>
+    <circle cx="35.9" cy="43.5" r="1.5"/>
+    <circle cx="44" cy="34.7" r="1.5"/>
+    <circle cx="64" cy="34.7" r="1.5"/>
+    <circle cx="72.1" cy="43.5" r="1.5"/>
+    <circle cx="72.4" cy="61.5" r="1.5"/>
+  </g>
+  <!-- result bars -->
+  <g fill="#FFFFFF">
+    <rect x="43.5" y="63" width="5.6" height="11" rx="1.4"/>
+    <rect x="51.2" y="56" width="5.6" height="18" rx="1.4"/>
+    <rect x="58.9" y="48.5" width="5.6" height="25.5" rx="1.4"/>
+  </g>
+</svg>
