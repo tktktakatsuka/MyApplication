@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** 今週の出走馬：開催日・競馬場ごとにレースを並べ、タップで出走馬の近走成績へ進む */
 public class EntriesFragment extends Fragment {
@@ -54,7 +55,10 @@ public class EntriesFragment extends Fragment {
                     showEmpty("今週の出走馬はまだ発表されていません。\n出馬表が確定すると、ここに表示されます。");
                     return;
                 }
-                render(entries);
+                FavoriteHorseNames.load(favorites -> {
+                    if (binding == null || !isAdded()) return;
+                    render(entries, favorites);
+                });
             }
 
             @Override
@@ -72,7 +76,7 @@ public class EntriesFragment extends Fragment {
         binding.textEntriesEmpty.setVisibility(View.VISIBLE);
     }
 
-    private void render(List<SupabaseManager.RaceEntry> entries) {
+    private void render(List<SupabaseManager.RaceEntry> entries, Set<String> favorites) {
         // 開催日・競馬場 → レース番号 → 出走馬 の順にまとめる（取得時点で並び替え済み）
         Map<String, Map<Integer, List<SupabaseManager.RaceEntry>>> meetings = new LinkedHashMap<>();
         for (SupabaseManager.RaceEntry entry : entries) {
@@ -113,14 +117,22 @@ public class EntriesFragment extends Fragment {
                 View item = inflater.inflate(R.layout.item_race_day, binding.entriesContainer, false);
                 ((TextView) item.findViewById(R.id.text_race_day_date)).setText(raceNo + "R");
                 boolean beforeDraw = true;
+                int favoriteCount = 0;
                 for (SupabaseManager.RaceEntry e : race.getValue()) {
                     if (e.getHorseNumber() != null) beforeDraw = false;
+                    if (FavoriteHorseNames.contains(favorites, e.getHorseName())) favoriteCount++;
                 }
                 String courseLabel = EntryForm.courseLabel(first.getRaceInfo());
                 String count = (beforeDraw ? "登録" : "") + race.getValue().size() + "頭";
                 ((TextView) item.findViewById(R.id.text_race_day_main)).setText(title);
                 TextView sub = item.findViewById(R.id.text_race_day_sub);
-                sub.setText(courseLabel.isEmpty() ? count : courseLabel + "m・" + count);
+                String subText = courseLabel.isEmpty() ? count : courseLabel + "m・" + count;
+                if (favoriteCount > 0) {
+                    // お気に入り馬が出るレースは目立たせる
+                    subText += "・★お気に入り" + favoriteCount + "頭";
+                    sub.setTextColor(0xFFE65100);
+                }
+                sub.setText(subText);
                 sub.setVisibility(View.VISIBLE);
                 item.setOnClickListener(v -> {
                     Bundle args = new Bundle();

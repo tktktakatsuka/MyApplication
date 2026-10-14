@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    android:id="@+id/card_entry_horse"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -18,6 +20,18 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal">
+
+            <!-- お気に入り（タップで登録・解除） -->
+            <TextView
+                android:id="@+id/text_entry_favorite"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:text="☆"
+                android:textColor="#BDBDBD"
+                android:textSize="22sp" />
 
             <!-- 馬番（背景は枠の色） -->
             <TextView

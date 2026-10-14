@@ -24,6 +24,7 @@ import com.tktkcompany.kakoRaceKeiba.MainActivity;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentHomeBinding;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
+import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
 import com.tktkcompany.kakoRaceKeiba.dto.SharedViewModel;
 
 import java.util.ArrayList;
@@ -215,9 +216,21 @@ public class HomeFragment extends Fragment {
                     courses.add(e.getKaisaijo());
                     races.add(e.getKaisaibi() + e.getKaisaijo() + e.getRaceNo());
                 }
-                binding.textEntriesBody.setText(TextUtils.join("・", days) + "　" + TextUtils.join("・", courses)
-                        + "\n" + races.size() + "レースの出走馬と近走成績をチェック");
+                String body = TextUtils.join("・", days) + "　" + TextUtils.join("・", courses)
+                        + "\n" + races.size() + "レースの出走馬と近走成績をチェック";
+                binding.textEntriesBody.setText(body);
                 binding.cardEntries.setVisibility(View.VISIBLE);
+
+                // お気に入り馬が出走予定なら、その馬名も出す
+                FavoriteHorseNames.load(favorites -> {
+                    if (!isAdded() || binding == null || favorites.isEmpty()) return;
+                    Set<String> favoriteRunners = new LinkedHashSet<>();
+                    for (SupabaseManager.RaceEntry e : entries) {
+                        if (FavoriteHorseNames.contains(favorites, e.getHorseName())) favoriteRunners.add(e.getHorseName());
+                    }
+                    if (favoriteRunners.isEmpty()) return;
+                    binding.textEntriesBody.setText(body + "\n★お気に入り馬が出走予定: " + TextUtils.join("・", favoriteRunners));
+                });
             }
 
             @Override

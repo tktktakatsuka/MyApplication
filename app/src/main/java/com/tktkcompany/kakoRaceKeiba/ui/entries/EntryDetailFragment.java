@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -21,6 +22,8 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.card.MaterialCardView;
+import com.google.firebase.auth.FirebaseAuth;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentEntriesBinding;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
@@ -28,8 +31,10 @@ import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** 1レース分の出走馬と、それぞれの近走成績・予想の手がかりを表示する */
 public class EntryDetailFragment extends Fragment {
@@ -46,6 +51,7 @@ public class EntryDetailFragment extends Fragment {
 
     private FragmentEntriesBinding binding;
     private String raceDate;
+    private Set<String> favorites = new HashSet<>();
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -82,7 +88,11 @@ public class EntryDetailFragment extends Fragment {
                     return;
                 }
                 showHeader(entries);
-                loadPastResults(entries);
+                FavoriteHorseNames.load(loaded -> {
+                    if (binding == null || !isAdded()) return;
+                    favorites = new HashSet<>(loaded);
+                    loadPastResults(entries);
+                });
             }
 
             @Override
@@ -178,9 +188,7 @@ public class EntryDetailFragment extends Fragment {
 
             TextView name = card.findViewById(R.id.text_entry_horse);
             name.setText(entry.getHorseName());
-            if (number.getVisibility() == View.GONE) {
-                ((LinearLayout.LayoutParams) name.getLayoutParams()).setMarginStart(0);
-            }
+            bindFavorite(card, entry.getHorseName());
 
             List<String> right = new ArrayList<>();
             if (entry.getSexAge() != null && !entry.getSexAge().endsWith("0")) right.add(entry.getSexAge());
@@ -209,6 +217,28 @@ public class EntryDetailFragment extends Fragment {
         // 行がフォーカスを取ってスクロール位置がずれないよう、先頭から表示する
         binding.getRoot().post(() -> {
             if (binding != null) binding.getRoot().scrollTo(0, 0);
+        });
+    }
+
+    private void bindFavorite(View card, String horseName) {
+        TextView star = card.findViewById(R.id.text_entry_favorite);
+        View cardView = card.findViewById(R.id.card_entry_horse);
+        Runnable paint = () -> {
+            boolean fav = FavoriteHorseNames.contains(favorites, horseName);
+            star.setText(fav ? "★" : "☆");
+            star.setTextColor(fav ? 0xFFFFB300 : 0xFFBDBDBD);
+            ((MaterialCardView) cardView)
+                    .setCardBackgroundColor(fav ? 0xFFFFF8E1 : 0xFFFFFFFF);
+        };
+        paint.run();
+        star.setOnClickListener(v -> {
+            if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+                Toast.makeText(getContext(), "お気に入り機能を利用するにはログインが必要です", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            boolean added = FavoriteHorseNames.toggle(favorites, horseName);
+            paint.run();
+            Toast.makeText(getContext(), horseName + (added ? "をお気に入りに追加しました" : "をお気に入りから削除しました"), Toast.LENGTH_SHORT).show();
         });
     }
 
