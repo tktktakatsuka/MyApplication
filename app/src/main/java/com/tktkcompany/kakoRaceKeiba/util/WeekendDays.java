@@ -65,6 +65,17 @@ public class WeekendDays {
         }
     }
 
+    // yyyyMMdd を「10/12(月)」の形にする（形式が違う場合はそのまま返す）
+    public static String formatShort(String dateStr) {
+        if (dateStr == null || dateStr.length() != 8) return dateStr;
+        try {
+            LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
+            return date.format(DateTimeFormatter.ofPattern("M/d")) + getDayOfWeek(dateStr).trim();
+        } catch (DateTimeParseException e) {
+            return dateStr;
+        }
+    }
+
     public static String getDayOfWeek(String dateStr) {
         try {
             // 8桁の日付フォーマットを定義

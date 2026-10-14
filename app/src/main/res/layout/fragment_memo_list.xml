@@ -7,17 +7,6 @@
     android:orientation="vertical"
     tools:context="com.tktkcompany.kakoRaceKeiba.ui.memo.MemoListFragment">
 
-    <com.google.android.gms.ads.AdView
-        android:id="@+id/adView"
-        android:layout_width="198dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        app:adSize="BANNER"
-        app:adUnitId="ca-app-pub-4855274440005459/8405629625">
-    </com.google.android.gms.ads.AdView>
-
 
     <Button
         android:id="@+id/button_create_memo"
@@ -42,8 +31,9 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:layout_marginTop="8dp" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -52,7 +42,12 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal" />
 
-
-
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        app:adSize="BANNER"
+        app:adUnitId="ca-app-pub-4855274440005459/8405629625" />
 
 </LinearLayout>

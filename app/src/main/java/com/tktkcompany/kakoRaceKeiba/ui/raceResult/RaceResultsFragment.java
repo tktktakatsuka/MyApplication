@@ -13,6 +13,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.ads.AdListener;
@@ -27,6 +29,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentRaceresultsBinding;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
+import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,11 +53,20 @@ public class RaceResultsFragment extends Fragment {
             String date = args.getString("key");
             String jo = args.getString("jo");
             if (date != null && jo != null) {
+                setScreenTitle(WeekendDays.formatShort(date) + " " + jo + "のレース結果");
                 loadRaceResults(date, jo);
             }
         }
 
         return root;
+    }
+
+    // どの開催日・競馬場の結果かを画面上部のタイトルに出す
+    private void setScreenTitle(String title) {
+        if (getActivity() instanceof AppCompatActivity) {
+            ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+            if (actionBar != null) actionBar.setTitle(title);
+        }
     }
 
     private void initViews() {

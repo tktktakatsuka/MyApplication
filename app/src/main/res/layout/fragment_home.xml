@@ -30,11 +30,30 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <com.google.android.gms.common.SignInButton
-                        android:id="@+id/btn_login"
+                    <LinearLayout
+                        android:id="@+id/layout_login"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_margin="16dp" />
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_login"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Googleでログイン"
+                            android:textAllCaps="false"
+                            android:textColor="@android:color/white"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="ログインすると、お気に入り馬の登録・レース結果の通知・メモの保存ができます"
+                            android:textColor="#555555"
+                            android:textSize="13sp" />
+                    </LinearLayout>
 
                     <LinearLayout
                         android:id="@+id/layout_user_info"
@@ -317,8 +336,6 @@
                 android:layout_marginVertical="16dp"
                 app:adSize="BANNER"
                 app:adUnitId="ca-app-pub-4855274440005459/6616268445" />
-
-            <View android:layout_width="match_parent" android:layout_height="80dp" />
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

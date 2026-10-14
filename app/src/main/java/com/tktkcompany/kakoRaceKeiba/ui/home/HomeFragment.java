@@ -164,12 +164,12 @@ public class HomeFragment extends Fragment {
             // ログイン中
             binding.layoutUserInfo.setVisibility(View.VISIBLE);
             binding.textUserName.setText(user.getDisplayName() + " さんとしてログイン中");
-            binding.btnLogin.setVisibility(View.GONE);
+            binding.layoutLogin.setVisibility(View.GONE);
             binding.btnFavoriteHorses.setVisibility(View.VISIBLE);
         } else {
             // 未ログイン
             binding.layoutUserInfo.setVisibility(View.GONE);
-            binding.btnLogin.setVisibility(View.VISIBLE);
+            binding.layoutLogin.setVisibility(View.VISIBLE);
             binding.btnFavoriteHorses.setVisibility(View.GONE);
         }
     }
@@ -247,7 +247,7 @@ public class HomeFragment extends Fragment {
             binding.textTodayRaceName.setText(raceTitle);
             binding.textTodayRaceLocation.setText(kaisaijo);
             binding.textTodayRaceTime.setText(hassouTime);
-            binding.textTodayRaceNumber.setText(raceDateStr + kaisaijo + "のレース結果");
+            binding.textTodayRaceNumber.setText(WeekendDays.formatShort(raceDateStr) + " " + kaisaijo + "のレース結果");
             binding.textPopularRaceResultMore.setText(kaisaijo + "のレース結果をもっとみる");
             binding.textRaceResult1Odds.setText(winOdds);
             //レースの着順を設定する。
@@ -280,7 +280,7 @@ public class HomeFragment extends Fragment {
             binding.text2TodayRaceName.setText(raceTitle);
             binding.text2TodayRaceLocation.setText(kaisaijo);
             binding.text2TodayRaceTime.setText(hassouTime);
-            binding.text2TodayRaceNumber.setText(raceDateStr + kaisaijo + "のレース結果");
+            binding.text2TodayRaceNumber.setText(WeekendDays.formatShort(raceDateStr) + " " + kaisaijo + "のレース結果");
             binding.text2PopularRaceResultMore.setText(kaisaijo + "のレース結果をもっとみる");
             binding.text2RaceResult1Odds.setText(winOdds);
             //レースの着順を設定する。

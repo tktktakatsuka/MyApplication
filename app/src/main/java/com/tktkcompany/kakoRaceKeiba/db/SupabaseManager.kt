@@ -227,6 +227,24 @@ object SupabaseManager {
         }
     }
 
+    /** 指定した競馬場のメインレース(11R)名を、開催日(yyyyMMdd)をキーにして取得する */
+    @JvmStatic
+    fun fetchMainRaceTitles(course: String, callback: SupabaseCallback<Map<String, String>>) {
+        launchWithCallback("fetch main race titles", callback) { currentClient ->
+            currentClient.from("race_results").select(Columns.list("kaisaibi", "kaisaijo", "race_no", "race_title")) {
+                filter {
+                    eq("kaisaijo", course)
+                    eq("race_no", 11)
+                    eq("rank", "1")
+                }
+                order("kaisaibi", Order.DESCENDING)
+                limit(60)
+            }.decodeList<RaceResult>()
+                .filter { !it.raceTitle.isNullOrBlank() }
+                .associate { it.kaisaibi to it.raceTitle!!.trim() }
+        }
+    }
+
     /** 指定した競馬場の開催日(yyyyMMdd)を新しい順で取得する */
     @JvmStatic
     fun fetchRaceDates(course: String, callback: SupabaseCallback<List<String>>) {
