@@ -3,6 +3,10 @@ package com.tktkcompany.kakoRaceKeiba.ui.entries;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.RelativeSizeSpan;
+import android.text.style.StyleSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import com.google.android.material.chip.ChipGroup;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentEntriesBinding;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
@@ -25,14 +30,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-/** 1レース分の出走馬と、それぞれの近走成績を表示する */
+/** 1レース分の出走馬と、それぞれの近走成績・予想の手がかりを表示する */
 public class EntryDetailFragment extends Fragment {
 
     private static final int RECENT_RUNS = 5;
-    private static final Pattern DISTANCE = Pattern.compile("(芝|ダ|障)\\D{0,2}(\\d{3,4})m");
 
     // 枠番ごとの色（1白 2黒 3赤 4青 5黄 6緑 7橙 8桃）
     private static final int[] WAKU_BACKGROUND = {
@@ -43,6 +45,7 @@ public class EntryDetailFragment extends Fragment {
             0xFF222222, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
 
     private FragmentEntriesBinding binding;
+    private String raceDate;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -52,12 +55,11 @@ public class EntryDetailFragment extends Fragment {
         String date = args != null ? args.getString(EntriesFragment.ARG_DATE) : null;
         String course = args != null ? args.getString(EntriesFragment.ARG_COURSE) : null;
         int raceNo = args != null ? args.getInt(EntriesFragment.ARG_RACE_NO) : 0;
-        String title = args != null ? args.getString(EntriesFragment.ARG_RACE_TITLE, "") : "";
         if (date == null || course == null) return binding.getRoot();
 
+        raceDate = date;
         setScreenTitle(WeekendDays.formatShort(date) + " " + course + raceNo + "R");
-        binding.textEntriesLead.setText(title + "\n各馬の近走" + RECENT_RUNS + "走（新しい順）。タップでそのレースの結果へ");
-        binding.textEntriesLead.setTextSize(14);
+        binding.textEntriesLead.setText(args.getString(EntriesFragment.ARG_RACE_TITLE, ""));
         loadEntries(date, course, raceNo);
         return binding.getRoot();
     }
@@ -79,6 +81,7 @@ public class EntryDetailFragment extends Fragment {
                     showMessage("出走馬のデータがありません");
                     return;
                 }
+                showHeader(entries);
                 loadPastResults(entries);
             }
 
@@ -90,6 +93,44 @@ public class EntryDetailFragment extends Fragment {
                 showMessage("出走馬の読み込みに失敗しました");
             }
         });
+    }
+
+    /** レース名・条件・枠順確定の状況を画面上部に出す */
+    private void showHeader(List<SupabaseManager.RaceEntry> entries) {
+        SupabaseManager.RaceEntry first = entries.get(0);
+        SpannableStringBuilder text = new SpannableStringBuilder();
+        String title = first.getRaceTitle() != null ? first.getRaceTitle() : "";
+        text.append(title, new StyleSpan(Typeface.BOLD), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.setSpan(new RelativeSizeSpan(1.3f), 0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        String conditions = conditions(first.getRaceInfo());
+        if (!conditions.isEmpty()) text.append("\n").append(conditions);
+
+        text.append("\n");
+        if (isBeforeDraw(entries)) {
+            text.append("枠順確定前（特別登録 " + entries.size() + "頭）。出走できる頭数を超える場合は抽選・除外があります");
+        } else {
+            text.append(entries.size() + "頭立て");
+        }
+        text.append("\n各馬の近走" + RECENT_RUNS + "走（新しい順）。行をタップするとそのレースの結果を表示します");
+        binding.textEntriesLead.setText(text);
+        binding.textEntriesLead.setTextColor(0xFF333333);
+    }
+
+    /** 「1勝クラス　(混) 定量 芝2200m 34頭 発走」から頭数と「発走」を除いた条件を返す */
+    static String conditions(String raceInfo) {
+        if (raceInfo == null) return "";
+        return raceInfo.replaceAll("\\s*\\d+頭", "")
+                .replaceAll("\\s*発走.*$", "")
+                .replaceAll("[\\s　]+", " ")
+                .trim();
+    }
+
+    private static boolean isBeforeDraw(List<SupabaseManager.RaceEntry> entries) {
+        for (SupabaseManager.RaceEntry e : entries) {
+            if (e.getHorseNumber() != null) return false;
+        }
+        return true;
     }
 
     private void loadPastResults(List<SupabaseManager.RaceEntry> entries) {
@@ -127,24 +168,76 @@ public class EntryDetailFragment extends Fragment {
             View card = inflater.inflate(R.layout.item_entry_horse, binding.entriesContainer, false);
 
             TextView number = card.findViewById(R.id.text_entry_number);
-            number.setText(entry.getHorseNumber() != null ? entry.getHorseNumber() : "");
-            styleWaku(number, entry.getWaku());
+            if (entry.getHorseNumber() != null) {
+                number.setText(entry.getHorseNumber());
+                styleWaku(number, entry.getWaku());
+            } else {
+                // 枠順確定前は馬番の枠を出さない
+                number.setVisibility(View.GONE);
+            }
 
-            ((TextView) card.findViewById(R.id.text_entry_horse)).setText(entry.getHorseName());
-            String jockey = entry.getJockey() != null ? entry.getJockey() : "";
-            if (entry.getWeight() != null) jockey += " " + entry.getWeight();
-            ((TextView) card.findViewById(R.id.text_entry_jockey)).setText(jockey);
+            TextView name = card.findViewById(R.id.text_entry_horse);
+            name.setText(entry.getHorseName());
+            if (number.getVisibility() == View.GONE) {
+                ((LinearLayout.LayoutParams) name.getLayoutParams()).setMarginStart(0);
+            }
+
+            List<String> right = new ArrayList<>();
+            if (entry.getSexAge() != null && !entry.getSexAge().endsWith("0")) right.add(entry.getSexAge());
+            if (entry.getJockey() != null) right.add(entry.getJockey());
+            if (entry.getWeight() != null) right.add(entry.getWeight());
+            ((TextView) card.findViewById(R.id.text_entry_jockey)).setText(android.text.TextUtils.join(" ", right));
+
+            List<SupabaseManager.RaceResult> runs = results.get(entry.getHorseName());
+            showBadges(card.findViewById(R.id.entry_badges), entry, runs);
 
             LinearLayout pastContainer = card.findViewById(R.id.entry_past_results);
-            List<SupabaseManager.RaceResult> runs = results.get(entry.getHorseName());
             if (runs == null || runs.isEmpty()) {
-                pastContainer.addView(createPastLine("過去の成績データはありません", null, 0xFF999999));
+                TextView none = new TextView(requireContext());
+                none.setText("過去の成績データはありません");
+                none.setTextSize(12);
+                none.setTextColor(0xFF999999);
+                none.setPadding(0, 6, 0, 6);
+                pastContainer.addView(none);
             } else {
                 for (SupabaseManager.RaceResult run : runs) {
-                    pastContainer.addView(createPastRunView(run));
+                    pastContainer.addView(createPastRunView(inflater, pastContainer, run));
                 }
             }
             binding.entriesContainer.addView(card);
+        }
+        // 行がフォーカスを取ってスクロール位置がずれないよう、先頭から表示する
+        binding.getRoot().post(() -> {
+            if (binding != null) binding.getRoot().scrollTo(0, 0);
+        });
+    }
+
+    private void showBadges(ChipGroup group, SupabaseManager.RaceEntry entry, List<SupabaseManager.RaceResult> runs) {
+        List<EntryForm.Run> formRuns = new ArrayList<>();
+        if (runs != null) {
+            for (SupabaseManager.RaceResult r : runs) {
+                formRuns.add(new EntryForm.Run(r.getKaisaibi(), r.getHassouTime(), r.getRank(), r.getJockey()));
+            }
+        }
+        List<String> badges = EntryForm.badges(raceDate, entry.getRaceInfo(), entry.getJockey(), formRuns);
+        if (badges.isEmpty()) {
+            group.setVisibility(View.GONE);
+            return;
+        }
+        float density = getResources().getDisplayMetrics().density;
+        for (String text : badges) {
+            // チップより背の低い枠線つきのラベルにする（1頭あたりの高さを抑えるため）
+            boolean caution = text.equals("休み明け") || text.equals("連闘") || text.equals("乗り替わり") || text.contains("→");
+            TextView badge = new TextView(requireContext());
+            badge.setText(text);
+            badge.setTextSize(11);
+            badge.setTextColor(caution ? 0xFFE65100 : 0xFF2E7D32);
+            badge.setPadding((int) (8 * density), (int) (2 * density), (int) (8 * density), (int) (2 * density));
+            GradientDrawable bg = new GradientDrawable();
+            bg.setCornerRadius(10 * density);
+            bg.setStroke((int) Math.max(1, density), caution ? 0xFFFB8C00 : 0xFF43A047);
+            badge.setBackground(bg);
+            group.addView(badge);
         }
     }
 
@@ -163,51 +256,38 @@ public class EntryDetailFragment extends Fragment {
         view.setTextColor(WAKU_TEXT[index]);
     }
 
-    private View createPastRunView(SupabaseManager.RaceResult run) {
+    private View createPastRunView(LayoutInflater inflater, ViewGroup parent, SupabaseManager.RaceResult run) {
+        View row = inflater.inflate(R.layout.item_past_run, parent, false);
+        String date = WeekendDays.formatShort(run.getKaisaibi());
+        // 「10/12(月)」→「10/12」（列の幅を揃えるため曜日は省く）
+        int paren = date.indexOf('(');
+        ((TextView) row.findViewById(R.id.text_run_date)).setText(paren > 0 ? date.substring(0, paren) : date);
+        ((TextView) row.findViewById(R.id.text_run_course)).setText(run.getKaisaijo());
+        ((TextView) row.findViewById(R.id.text_run_title)).setText(run.getRaceTitle() != null ? run.getRaceTitle().trim() : "");
+        ((TextView) row.findViewById(R.id.text_run_distance)).setText(EntryForm.courseLabel(run.getHassouTime()));
+
         String rank = run.getRank() != null ? run.getRank() : "-";
-        StringBuilder text = new StringBuilder();
-        text.append(WeekendDays.formatShort(run.getKaisaibi())).append(" ").append(run.getKaisaijo());
-        if (run.getRaceTitle() != null) text.append(" ").append(run.getRaceTitle().trim());
-        String distance = extractDistance(run.getHassouTime());
-        if (!distance.isEmpty()) text.append(" ").append(distance);
-        text.append("　").append(rank.matches("\\d+") ? rank + "着" : rank);
-        if (run.getPopular() != null && !run.getPopular().isEmpty()) text.append("（").append(run.getPopular()).append("人気）");
-
-        int color;
-        if ("1".equals(rank)) color = 0xFFC62828;
-        else if ("2".equals(rank) || "3".equals(rank)) color = 0xFF2E7D32;
-        else color = 0xFF333333;
-
-        TextView line = createPastLine(text.toString(), run, color);
-        if ("1".equals(rank) || "2".equals(rank) || "3".equals(rank)) {
-            line.setTypeface(line.getTypeface(), Typeface.BOLD);
+        String result = rank.matches("\\d+") ? rank + "着" : rank;
+        if (run.getPopular() != null && !run.getPopular().isEmpty()) result += " " + run.getPopular() + "人";
+        TextView resultView = row.findViewById(R.id.text_run_result);
+        resultView.setText(result);
+        if ("1".equals(rank)) {
+            resultView.setTextColor(0xFFC62828);
+            resultView.setTypeface(resultView.getTypeface(), Typeface.BOLD);
+        } else if ("2".equals(rank) || "3".equals(rank)) {
+            resultView.setTextColor(0xFF2E7D32);
+            resultView.setTypeface(resultView.getTypeface(), Typeface.BOLD);
+        } else {
+            resultView.setTextColor(0xFF333333);
         }
-        return line;
-    }
 
-    private TextView createPastLine(String text, SupabaseManager.RaceResult run, int color) {
-        TextView line = new TextView(requireContext());
-        line.setText(text);
-        line.setTextSize(13);
-        line.setTextColor(color);
-        line.setMaxLines(1);
-        line.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        line.setPadding(0, 6, 0, 6);
-        if (run != null) {
-            line.setOnClickListener(v -> {
-                Bundle bundle = new Bundle();
-                bundle.putString("key", run.getKaisaibi());
-                bundle.putString("jo", run.getKaisaijo());
-                Navigation.findNavController(v).navigate(R.id.navigation_raceResults, bundle);
-            });
-        }
-        return line;
-    }
-
-    private static String extractDistance(String raceInfo) {
-        if (raceInfo == null) return "";
-        Matcher m = DISTANCE.matcher(raceInfo);
-        return m.find() ? m.group(1) + m.group(2) : "";
+        row.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("key", run.getKaisaibi());
+            bundle.putString("jo", run.getKaisaijo());
+            Navigation.findNavController(v).navigate(R.id.navigation_raceResults, bundle);
+        });
+        return row;
     }
 
     @Override

@@ -26,16 +26,32 @@
             android:textSize="16sp"
             android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/text_race_day_main"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="#333333"
-            android:textSize="15sp" />
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/text_race_day_main"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#333333"
+                android:textSize="15sp" />
+
+            <!-- 補足（距離・頭数など）。使う画面だけ表示する -->
+            <TextView
+                android:id="@+id/text_race_day_sub"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="#777777"
+                android:textSize="12sp"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="wrap_content"

@@ -46,6 +46,15 @@
                 android:textSize="13sp" />
         </LinearLayout>
 
+        <!-- 予想の手がかり（レース間隔・距離変更・乗り替わりなど） -->
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/entry_badges"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:chipSpacingHorizontal="6dp"
+            app:chipSpacingVertical="4dp" />
+
         <!-- 近走成績（コードで追加する） -->
         <LinearLayout
             android:id="@+id/entry_past_results"

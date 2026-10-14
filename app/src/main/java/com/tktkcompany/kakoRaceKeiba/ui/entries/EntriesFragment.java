@@ -112,7 +112,16 @@ public class EntriesFragment extends Fragment {
 
                 View item = inflater.inflate(R.layout.item_race_day, binding.entriesContainer, false);
                 ((TextView) item.findViewById(R.id.text_race_day_date)).setText(raceNo + "R");
-                ((TextView) item.findViewById(R.id.text_race_day_main)).setText(title + "（" + race.getValue().size() + "頭）");
+                boolean beforeDraw = true;
+                for (SupabaseManager.RaceEntry e : race.getValue()) {
+                    if (e.getHorseNumber() != null) beforeDraw = false;
+                }
+                String courseLabel = EntryForm.courseLabel(first.getRaceInfo());
+                String count = (beforeDraw ? "登録" : "") + race.getValue().size() + "頭";
+                ((TextView) item.findViewById(R.id.text_race_day_main)).setText(title);
+                TextView sub = item.findViewById(R.id.text_race_day_sub);
+                sub.setText(courseLabel.isEmpty() ? count : courseLabel + "m・" + count);
+                sub.setVisibility(View.VISIBLE);
                 item.setOnClickListener(v -> {
                     Bundle args = new Bundle();
                     args.putString(ARG_DATE, date);
