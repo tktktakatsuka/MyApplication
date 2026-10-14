@@ -43,6 +43,7 @@ public class NotificationsFragment extends Fragment {
     private List<String> joNameList = new ArrayList<>();
     private List<String> dateList = new ArrayList<>();
     private ProgressBar progressBar;
+    private int refreshGeneration;
 
     private enum TrendCategory {
         HORSE, KYAKUSITU, JOCKEY, TYOKYOSI, FARTHER, MATHER, HARAIMODOSI, BANUSI, SEISAN
@@ -78,6 +79,12 @@ public class NotificationsFragment extends Fragment {
         }
 
         binding.showDialogButton.setOnClickListener(v -> showRaceCourseDialog());
+
+        // 絞り込み条件を変えたらすぐ表に反映する
+        binding.checkboxExample.setOnCheckedChangeListener((buttonView, isChecked) -> refreshData());
+        binding.checkboxShiba.setOnCheckedChangeListener((buttonView, isChecked) -> refreshData());
+        binding.checkboxDart.setOnCheckedChangeListener((buttonView, isChecked) -> refreshData());
+        binding.checkboxHani.setOnCheckedChangeListener((buttonView, isChecked) -> refreshData());
     }
 
     private void setupViewModel() {
@@ -113,7 +120,9 @@ public class NotificationsFragment extends Fragment {
     }
 
     private void refreshData() {
-        if (joNameList.isEmpty()) return;
+        if (binding == null || joNameList.isEmpty()) return;
+        // 取得は非同期なので、後から届いた古い条件の結果を表に混ぜないよう世代で見分ける
+        final int generation = ++refreshGeneration;
 
         // 日付リストの取得とソート
         dateList = WeekendDays.getPastWeekendsInCurrentMonth();
@@ -132,7 +141,7 @@ public class NotificationsFragment extends Fragment {
         
         for (int i = 0; i < Math.min(displayLimit, tableLayouts.size()); i++) {
             String date = dateList.get(i);
-            loadTrendsForDate(date, joNameList.get(0), tableLayouts.get(i), dateTextViews.get(i), category);
+            loadTrendsForDate(generation, date, joNameList.get(0), tableLayouts.get(i), dateTextViews.get(i), category);
         }
     }
 
@@ -141,7 +150,7 @@ public class NotificationsFragment extends Fragment {
         for (TextView tv : dateTextViews) tv.setText("");
     }
 
-    private void loadTrendsForDate(String date, String joName, TableLayout table, TextView dateText, TrendCategory category) {
+    private void loadTrendsForDate(int generation, String date, String joName, TableLayout table, TextView dateText, TrendCategory category) {
         // 全てのRを一括で取得するのは難しい(スキーマ依存)ため、元のロジックを尊重しつつ1R〜12Rをループ
         // ただし、クエリは一回にまとめられるならまとめたい。元のコードは1RごとにqueryDataを呼んでいた。
         // ここでは効率化のため、一回のクエリでその日の全レースを取得し、メモリ上でフィルタリングする。
@@ -151,7 +160,7 @@ public class NotificationsFragment extends Fragment {
         SupabaseManager.fetchRaceTrends(date, joName, new SupabaseManager.SupabaseCallback<List<SupabaseManager.RaceTrend>>() {
             @Override
             public void onSuccess(List<SupabaseManager.RaceTrend> trends) {
-                if (!isAdded() || binding == null) return;
+                if (!isAdded() || binding == null || generation != refreshGeneration) return;
 
                 // その日に開催がなければ日付見出しも出さない
                 if (trends.isEmpty()) {
@@ -180,7 +189,7 @@ public class NotificationsFragment extends Fragment {
             @Override
             public void onFailure(@NonNull String message) {
                 Log.e("NotificationsFragment", "Supabase load failed: " + message);
-                if (isAdded()) progressBar.setVisibility(View.GONE);
+                if (isAdded() && generation == refreshGeneration) progressBar.setVisibility(View.GONE);
             }
         });
     }
