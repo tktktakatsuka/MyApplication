@@ -17,6 +17,9 @@
         <action
             android:id="@+id/action_navigation_home_to_navigation_favorites"
             app:destination="@id/navigation_favorites" />
+        <action
+            android:id="@+id/action_navigation_home_to_navigation_entries"
+            app:destination="@id/navigation_entries" />
     </fragment>
 
 
@@ -97,5 +100,21 @@
         android:label="お気に入り馬"
         tools:layout="@layout/fragment_favorite_horses" />
 
+
+    <fragment
+        android:id="@+id/navigation_entries"
+        android:name="com.tktkcompany.kakoRaceKeiba.ui.entries.EntriesFragment"
+        android:label="今週の出走馬"
+        tools:layout="@layout/fragment_entries">
+        <action
+            android:id="@+id/action_navigation_entries_to_navigation_entryDetail"
+            app:destination="@id/navigation_entryDetail" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_entryDetail"
+        android:name="com.tktkcompany.kakoRaceKeiba.ui.entries.EntryDetailFragment"
+        android:label="出走馬の近走成績"
+        tools:layout="@layout/fragment_entries" />
 
 </navigation>

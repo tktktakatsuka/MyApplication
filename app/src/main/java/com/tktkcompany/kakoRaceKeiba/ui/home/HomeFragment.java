@@ -27,7 +27,9 @@ import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.dto.SharedViewModel;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import android.text.TextUtils;
 import android.widget.TextView;
@@ -63,6 +65,10 @@ public class HomeFragment extends Fragment {
             NavController navController = Navigation.findNavController(v);
             navController.navigate(R.id.action_navigation_home_to_navigation_favorites);
         });
+
+        binding.cardEntries.setOnClickListener(v ->
+                Navigation.findNavController(v).navigate(R.id.action_navigation_home_to_navigation_entries));
+        loadUpcomingEntries();
 
         // ログイン・ログアウトボタンの設定
         binding.btnLogin.setOnClickListener(v -> {
@@ -192,6 +198,33 @@ public class HomeFragment extends Fragment {
                 + "\n次の開催日: " + TextUtils.join("・", dayLabels));
         binding.cardUpcoming.setVisibility(View.VISIBLE);
         updateUpcomingHint(mAuth != null ? mAuth.getCurrentUser() : null);
+    }
+
+    // 出馬表が登録されていれば「今週の出走馬」カードを出す
+    private void loadUpcomingEntries() {
+        String today = LocalDate.now().format(formatter);
+        SupabaseManager.fetchUpcomingEntries(today, new SupabaseManager.SupabaseCallback<List<SupabaseManager.RaceEntry>>() {
+            @Override
+            public void onSuccess(List<SupabaseManager.RaceEntry> entries) {
+                if (!isAdded() || binding == null || entries.isEmpty()) return;
+                Set<String> days = new LinkedHashSet<>();
+                Set<String> courses = new LinkedHashSet<>();
+                Set<String> races = new LinkedHashSet<>();
+                for (SupabaseManager.RaceEntry e : entries) {
+                    days.add(WeekendDays.formatShort(e.getKaisaibi()));
+                    courses.add(e.getKaisaijo());
+                    races.add(e.getKaisaibi() + e.getKaisaijo() + e.getRaceNo());
+                }
+                binding.textEntriesBody.setText(TextUtils.join("・", days) + "　" + TextUtils.join("・", courses)
+                        + "\n" + races.size() + "レースの出走馬と近走成績をチェック");
+                binding.cardEntries.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onFailure(@NonNull String message) {
+                Log.w("HomeFragment", "Entries load failed: " + message);
+            }
+        });
     }
 
     private void updateUpcomingHint(FirebaseUser user) {

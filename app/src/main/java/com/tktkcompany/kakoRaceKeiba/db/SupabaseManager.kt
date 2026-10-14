@@ -135,6 +135,21 @@ object SupabaseManager {
         @SerialName("haraimodosi3rentan") val haraimodosi3Rentan: String? = null
     )
 
+    @Serializable
+    data class RaceEntry(
+        @SerialName("id") val id: Long? = null,
+        @SerialName("kaisaibi") val kaisaibi: String,
+        @SerialName("kaisaijo") val kaisaijo: String,
+        @SerialName("race_no") val raceNo: Int,
+        @SerialName("race_title") val raceTitle: String? = null,
+        @SerialName("race_info") val raceInfo: String? = null,
+        @SerialName("waku") val waku: String? = null,
+        @SerialName("horse_number") val horseNumber: String? = null,
+        @SerialName("horse_name") val horseName: String,
+        @SerialName("jockey") val jockey: String? = null,
+        @SerialName("weight") val weight: String? = null
+    )
+
     @JvmStatic
     fun sanitizeKey(key: String?): String {
         if (key == null) return ""
@@ -242,6 +257,59 @@ object SupabaseManager {
             }.decodeList<RaceResult>()
                 .filter { !it.raceTitle.isNullOrBlank() }
                 .associate { it.kaisaibi to it.raceTitle!!.trim() }
+        }
+    }
+
+    /**
+     * 指定日(yyyyMMdd)以降の出走馬を、開催日・競馬場・レース番号・馬番の順で取得する。
+     * race_entries テーブルがまだ無い場合は空のリストを返す。
+     */
+    @JvmStatic
+    fun fetchUpcomingEntries(fromDate: String, callback: SupabaseCallback<List<RaceEntry>>) {
+        launchWithCallback("fetch upcoming entries", callback) { currentClient ->
+            try {
+                currentClient.from("race_entries").select {
+                    filter { gte("kaisaibi", fromDate) }
+                    order("kaisaibi", Order.ASCENDING)
+                    order("kaisaijo", Order.ASCENDING)
+                    order("race_no", Order.ASCENDING)
+                    limit(1000)
+                }.decodeList<RaceEntry>()
+                    .sortedWith(compareBy({ it.kaisaibi }, { it.kaisaijo }, { it.raceNo }, { it.horseNumber?.toIntOrNull() ?: 99 }))
+            } catch (e: Exception) {
+                Log.w(TAG, "race_entries is not available yet: ${e.message}")
+                emptyList()
+            }
+        }
+    }
+
+    /** 指定したレースの出走馬を馬番順で取得する */
+    @JvmStatic
+    fun fetchRaceEntries(date: String, course: String, raceNo: Int, callback: SupabaseCallback<List<RaceEntry>>) {
+        launchWithCallback("fetch race entries", callback) { currentClient ->
+            currentClient.from("race_entries").select {
+                filter {
+                    eq("kaisaibi", date)
+                    eq("kaisaijo", course)
+                    eq("race_no", raceNo)
+                }
+            }.decodeList<RaceEntry>()
+                .sortedBy { it.horseNumber?.toIntOrNull() ?: 99 }
+        }
+    }
+
+    /** 指定した馬たちの過去成績を新しい順で取得する（1頭あたり最大 perHorse 件） */
+    @JvmStatic
+    fun fetchRecentResultsForHorses(horseNames: List<String>, perHorse: Int, callback: SupabaseCallback<Map<String, List<RaceResult>>>) {
+        launchWithCallback("fetch recent results for horses", callback) { currentClient ->
+            if (horseNames.isEmpty()) return@launchWithCallback emptyMap()
+            currentClient.from("race_results").select {
+                filter { isIn("horse_name", horseNames) }
+                order("kaisaibi", Order.DESCENDING)
+                limit((horseNames.size * perHorse * 3).toLong())
+            }.decodeList<RaceResult>()
+                .groupBy { it.horseName ?: "" }
+                .mapValues { (_, rows) -> rows.distinctBy { it.kaisaibi to it.raceNo }.take(perHorse) }
         }
     }
 
