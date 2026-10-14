@@ -146,8 +146,10 @@ object SupabaseManager {
         @SerialName("waku") val waku: String? = null,
         @SerialName("horse_number") val horseNumber: String? = null,
         @SerialName("horse_name") val horseName: String,
+        @SerialName("sex_age") val sexAge: String? = null,
         @SerialName("jockey") val jockey: String? = null,
-        @SerialName("weight") val weight: String? = null
+        @SerialName("weight") val weight: String? = null,
+        @SerialName("trainer") val trainer: String? = null
     )
 
     @JvmStatic
@@ -262,24 +264,12 @@ object SupabaseManager {
 
     /**
      * 指定日(yyyyMMdd)以降の出走馬を、開催日・競馬場・レース番号・馬番の順で取得する。
-     * race_entries テーブルがまだ無い場合は空のリストを返す。
+     * race_entries テーブルがまだ無い場合は空のリストを返す（デバッグビルドでは仮の出馬表を返す）。
      */
     @JvmStatic
     fun fetchUpcomingEntries(fromDate: String, callback: SupabaseCallback<List<RaceEntry>>) {
         launchWithCallback("fetch upcoming entries", callback) { currentClient ->
-            try {
-                currentClient.from("race_entries").select {
-                    filter { gte("kaisaibi", fromDate) }
-                    order("kaisaibi", Order.ASCENDING)
-                    order("kaisaijo", Order.ASCENDING)
-                    order("race_no", Order.ASCENDING)
-                    limit(1000)
-                }.decodeList<RaceEntry>()
-                    .sortedWith(compareBy({ it.kaisaibi }, { it.kaisaijo }, { it.raceNo }, { it.horseNumber?.toIntOrNull() ?: 99 }))
-            } catch (e: Exception) {
-                Log.w(TAG, "race_entries is not available yet: ${e.message}")
-                emptyList()
-            }
+            queryUpcomingEntries(currentClient, fromDate)
         }
     }
 
@@ -287,15 +277,26 @@ object SupabaseManager {
     @JvmStatic
     fun fetchRaceEntries(date: String, course: String, raceNo: Int, callback: SupabaseCallback<List<RaceEntry>>) {
         launchWithCallback("fetch race entries", callback) { currentClient ->
-            currentClient.from("race_entries").select {
-                filter {
-                    eq("kaisaibi", date)
-                    eq("kaisaijo", course)
-                    eq("race_no", raceNo)
-                }
-            }.decodeList<RaceEntry>()
-                .sortedBy { it.horseNumber?.toIntOrNull() ?: 99 }
+            queryUpcomingEntries(currentClient, date)
+                .filter { it.kaisaibi == date && it.kaisaijo == course && it.raceNo == raceNo }
         }
+    }
+
+    private suspend fun queryUpcomingEntries(currentClient: SupabaseClient, fromDate: String): List<RaceEntry> {
+        val entries = try {
+            currentClient.from("race_entries").select {
+                filter { gte("kaisaibi", fromDate) }
+                order("kaisaibi", Order.ASCENDING)
+                order("kaisaijo", Order.ASCENDING)
+                order("race_no", Order.ASCENDING)
+                limit(1000)
+            }.decodeList<RaceEntry>()
+        } catch (e: Exception) {
+            Log.w(TAG, "race_entries is not available yet: ${e.message}")
+            emptyList()
+        }
+        return entries.ifEmpty { DemoEntries.build(currentClient, fromDate) }
+            .sortedWith(compareBy({ it.kaisaibi }, { it.kaisaijo }, { it.raceNo }, { it.horseNumber?.toIntOrNull() ?: 99 }))
     }
 
     /** 指定した馬たちの過去成績を新しい順で取得する（1頭あたり最大 perHorse 件） */
