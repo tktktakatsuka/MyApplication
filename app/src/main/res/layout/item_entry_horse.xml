@@ -58,7 +58,31 @@
                 android:layout_height="wrap_content"
                 android:textColor="#555555"
                 android:textSize="13sp" />
+
+            <!-- 馬メモ（タップで書く・直す。メモが無い間は薄く表示） -->
+            <TextView
+                android:id="@+id/text_entry_memo"
+                android:layout_width="36dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="メモ"
+                android:gravity="center"
+                android:text="📝"
+                android:textSize="18sp" />
         </LinearLayout>
+
+        <!-- 自分の馬メモ（メモがある時だけ表示。タップで直す） -->
+        <TextView
+            android:id="@+id/text_entry_memo_body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="#FFF59D"
+            android:padding="8dp"
+            android:textColor="#333333"
+            android:textSize="13sp"
+            android:visibility="gone" />
 
         <!-- 予想の手がかり（レース間隔・距離変更・乗り替わりなど） -->
         <com.google.android.material.chip.ChipGroup

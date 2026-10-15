@@ -24,6 +24,7 @@ public class NotificationHelper {
 
     public static final String DEFAULT_CHANNEL_ID = "default_channel";
     public static final String FAVORITE_CHANNEL_ID = "favorite_horse_channel";
+    public static final String ENTRY_CHANNEL_ID = "horse_entry_channel";
 
     public static void createChannels(Context context) {
         NotificationManager manager = context.getSystemService(NotificationManager.class);
@@ -38,6 +39,11 @@ public class NotificationHelper {
                 FAVORITE_CHANNEL_ID, "お気に入り馬の結果", NotificationManager.IMPORTANCE_DEFAULT);
         favoriteChannel.setDescription("お気に入り登録した馬のレース結果");
         manager.createNotificationChannel(favoriteChannel);
+
+        NotificationChannel entryChannel = new NotificationChannel(
+                ENTRY_CHANNEL_ID, "お気に入り馬・メモした馬の出走予定", NotificationManager.IMPORTANCE_DEFAULT);
+        entryChannel.setDescription("出馬表に載ったときにお知らせします");
+        manager.createNotificationChannel(entryChannel);
     }
 
     public static boolean canPostNotifications(Context context) {

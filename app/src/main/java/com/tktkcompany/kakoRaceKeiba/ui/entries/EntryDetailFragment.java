@@ -27,10 +27,13 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentEntriesBinding;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
+import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemoDialog;
+import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemos;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +54,10 @@ public class EntryDetailFragment extends Fragment {
 
     private FragmentEntriesBinding binding;
     private String raceDate;
+    // メモを書いた場面として残す「10/17(土) 京都9R もみじステークス」
+    private String raceLabel;
     private Set<String> favorites = new HashSet<>();
+    private Map<String, HorseMemos.Memo> memos = new HashMap<>();
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -65,7 +71,9 @@ public class EntryDetailFragment extends Fragment {
 
         raceDate = date;
         setScreenTitle(WeekendDays.formatShort(date) + " " + course + raceNo + "R");
-        binding.textEntriesLead.setText(args.getString(EntriesFragment.ARG_RACE_TITLE, ""));
+        String raceTitle = args.getString(EntriesFragment.ARG_RACE_TITLE, "");
+        raceLabel = (WeekendDays.formatShort(date) + " " + course + raceNo + "R " + raceTitle.trim()).trim();
+        binding.textEntriesLead.setText(raceTitle);
         loadEntries(date, course, raceNo);
         return binding.getRoot();
     }
@@ -91,7 +99,11 @@ public class EntryDetailFragment extends Fragment {
                 FavoriteHorseNames.load(loaded -> {
                     if (binding == null || !isAdded()) return;
                     favorites = new HashSet<>(loaded);
-                    loadPastResults(entries);
+                    HorseMemos.load(loadedMemos -> {
+                        if (binding == null || !isAdded()) return;
+                        memos = new HashMap<>(loadedMemos);
+                        loadPastResults(entries);
+                    });
                 });
             }
 
@@ -189,6 +201,7 @@ public class EntryDetailFragment extends Fragment {
             TextView name = card.findViewById(R.id.text_entry_horse);
             name.setText(entry.getHorseName());
             bindFavorite(card, entry.getHorseName());
+            bindMemo(card, entry.getHorseName());
 
             List<String> right = new ArrayList<>();
             if (entry.getSexAge() != null && !entry.getSexAge().endsWith("0")) right.add(entry.getSexAge());
@@ -240,6 +253,26 @@ public class EntryDetailFragment extends Fragment {
             paint.run();
             Toast.makeText(getContext(), horseName + (added ? "をお気に入りに追加しました" : "をお気に入りから削除しました"), Toast.LENGTH_SHORT).show();
         });
+    }
+
+    private void bindMemo(View card, String horseName) {
+        TextView button = card.findViewById(R.id.text_entry_memo);
+        TextView body = card.findViewById(R.id.text_entry_memo_body);
+        Runnable paint = () -> {
+            HorseMemos.Memo memo = HorseMemos.find(memos, horseName);
+            button.setAlpha(memo != null ? 1f : 0.35f);
+            if (memo == null) {
+                body.setVisibility(View.GONE);
+            } else {
+                body.setText("📝 " + memo.text);
+                body.setVisibility(View.VISIBLE);
+            }
+        };
+        paint.run();
+        View.OnClickListener edit = v -> HorseMemoDialog.show(requireContext(), memos, horseName, raceLabel,
+                memo -> paint.run());
+        button.setOnClickListener(edit);
+        body.setOnClickListener(edit);
     }
 
     private void showBadges(ChipGroup group, SupabaseManager.RaceEntry entry, List<SupabaseManager.RaceResult> runs) {

@@ -12,9 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.db.HorseResult;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
-import com.tktkcompany.kakoRaceKeiba.ui.entries.EntryForm;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
-import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 import java.util.HashMap;
 import java.util.List;
@@ -84,7 +82,7 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<FavoriteHorsesAd
             holder.nextEntryView.setVisibility(View.GONE);
             holder.nextEntryView.setOnClickListener(null);
         } else {
-            holder.nextEntryView.setText(nextEntryLabel(next));
+            holder.nextEntryView.setText(FavoriteHorseNames.nextEntryLabel(next));
             holder.nextEntryView.setVisibility(View.VISIBLE);
             holder.nextEntryView.setOnClickListener(v -> entryClickListener.onEntryClick(next));
         }
@@ -103,20 +101,6 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<FavoriteHorsesAd
             holder.latestResultView.setText("直近: " + latest.summary() + " ›");
             holder.latestResultView.setOnClickListener(v -> resultClickListener.onResultClick(latest));
         }
-    }
-
-    // 例: 「★出走予定: 10/18土 東京11R 富士S（芝1600m）5番 ›」
-    private static String nextEntryLabel(SupabaseManager.RaceEntry e) {
-        StringBuilder sb = new StringBuilder("★出走予定: ");
-        sb.append(WeekendDays.formatShort(e.getKaisaibi())).append(' ')
-                .append(e.getKaisaijo()).append(e.getRaceNo()).append('R');
-        String title = e.getRaceTitle();
-        if (title != null && !title.trim().isEmpty()) sb.append(' ').append(title.trim());
-        String course = EntryForm.courseLabel(e.getRaceInfo());
-        if (!course.isEmpty()) sb.append('（').append(course).append("m）");
-        String number = e.getHorseNumber();
-        if (number != null && !number.trim().isEmpty()) sb.append(' ').append(number.trim()).append('番');
-        return sb.append(" ›").toString();
     }
 
     @Override

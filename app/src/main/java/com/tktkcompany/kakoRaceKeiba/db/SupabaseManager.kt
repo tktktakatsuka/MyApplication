@@ -282,7 +282,20 @@ object SupabaseManager {
         }
     }
 
-    private suspend fun queryUpcomingEntries(currentClient: SupabaseClient, fromDate: String): List<RaceEntry> {
+    /**
+     * fetchUpcomingEntries の同期版（通知用）。必ずバックグラウンドスレッドから呼ぶこと。
+     * 実在しない出走を知らせないよう、デバッグ用の仮の出馬表は使わない。
+     */
+    @JvmStatic
+    @Throws(Exception::class)
+    fun fetchUpcomingEntriesBlocking(fromDate: String): List<RaceEntry> {
+        val currentClient = client ?: throw IllegalStateException("Supabase client not initialized")
+        return runBlocking {
+            withTimeout(BLOCKING_TIMEOUT_MS) { queryUpcomingEntries(currentClient, fromDate, allowDemo = false) }
+        }
+    }
+
+    private suspend fun queryUpcomingEntries(currentClient: SupabaseClient, fromDate: String, allowDemo: Boolean = true): List<RaceEntry> {
         val entries = try {
             currentClient.from("race_entries").select {
                 filter { gte("kaisaibi", fromDate) }
@@ -295,7 +308,7 @@ object SupabaseManager {
             Log.w(TAG, "race_entries is not available yet: ${e.message}")
             emptyList()
         }
-        return entries.ifEmpty { DemoEntries.build(currentClient, fromDate) }
+        return entries.ifEmpty { if (allowDemo) DemoEntries.build(currentClient, fromDate) else emptyList() }
             .sortedWith(compareBy({ it.kaisaibi }, { it.kaisaijo }, { it.raceNo }, { it.horseNumber?.toIntOrNull() ?: 99 }))
     }
 

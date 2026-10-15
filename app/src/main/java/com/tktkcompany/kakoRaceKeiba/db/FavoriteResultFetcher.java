@@ -32,6 +32,19 @@ public class FavoriteResultFetcher {
         return keys;
     }
 
+    /** ログインユーザーの馬メモを取得する（印を外した馬名 → メモ本文） */
+    public static Map<String, String> fetchHorseMemos(String uid) throws Exception {
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference()
+                .child("users").child(uid).child("horseMemos");
+        DataSnapshot snapshot = Tasks.await(ref.get(), TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        Map<String, String> memos = new HashMap<>();
+        for (DataSnapshot child : snapshot.getChildren()) {
+            String text = child.child("text").getValue(String.class);
+            if (child.getKey() != null && text != null && !text.trim().isEmpty()) memos.put(child.getKey(), text.trim());
+        }
+        return memos;
+    }
+
     /** 開催中の競馬場名を取得する */
     public static List<String> fetchActiveJoNames() throws Exception {
         return SupabaseManager.fetchActiveCoursesBlocking();

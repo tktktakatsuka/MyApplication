@@ -29,16 +29,22 @@ import com.google.firebase.database.ValueEventListener;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentRaceresultsBinding;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
+import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemoDialog;
+import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemos;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RaceResultsFragment extends Fragment {
     private FragmentRaceresultsBinding binding;
     private final List<TableLayout> tableLayouts = new ArrayList<>();
     private final List<TextView> titleTextViews = new ArrayList<>();
     private final List<TextView> timeTextViews = new ArrayList<>();
+    private String raceDate;
+    private Map<String, HorseMemos.Memo> memos = new HashMap<>();
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -54,7 +60,13 @@ public class RaceResultsFragment extends Fragment {
             String jo = args.getString("jo");
             if (date != null && jo != null) {
                 setScreenTitle(WeekendDays.formatShort(date) + " " + jo + "のレース結果");
-                loadRaceResults(date, jo);
+                raceDate = date;
+                // 各行の📝にメモの有無を出すため、先にメモを読んでおく
+                HorseMemos.load(loaded -> {
+                    if (binding == null || !isAdded()) return;
+                    memos = new HashMap<>(loaded);
+                    loadRaceResults(date, jo);
+                });
             }
         }
 
@@ -132,7 +144,7 @@ public class RaceResultsFragment extends Fragment {
     private TableRow createHeaderRow() {
         TableRow row = new TableRow(getContext());
         row.setBackgroundColor(Color.LTGRAY);
-        String[] headers = {"★", "着", "枠", "馬名", "性齢", "騎手", "人気", "単勝", "タイム"};
+        String[] headers = {"★", "📝", "着", "枠", "馬名", "性齢", "騎手", "人気", "単勝", "タイム"};
         for (String h : headers) row.addView(createTextView(h));
         return row;
     }
@@ -167,6 +179,7 @@ public class RaceResultsFragment extends Fragment {
             });
         }
         row.addView(favTv);
+        row.addView(createMemoView(result, horseName));
 
         row.addView(createTextView(result.getRank()));
         row.addView(createTextView(result.getWaku()));
@@ -177,6 +190,19 @@ public class RaceResultsFragment extends Fragment {
         row.addView(createTextView(result.getWinOdds()));
         row.addView(createTextView(result.getTime()));
         return row;
+    }
+
+    // 📝 をタップするとその馬のメモを書ける。メモがある馬は濃く表示する
+    private TextView createMemoView(SupabaseManager.RaceResult result, String horseName) {
+        TextView memoTv = createTextView("📝");
+        memoTv.setAlpha(HorseMemos.find(memos, horseName) != null ? 1f : 0.35f);
+        String rank = result.getRank() != null ? result.getRank() : "";
+        String title = result.getRaceTitle() != null ? result.getRaceTitle().trim() : "";
+        String from = (WeekendDays.formatShort(raceDate) + " " + result.getKaisaijo() + result.getRaceNo() + "R "
+                + title + " " + (rank.matches("\\d+") ? rank + "着" : rank)).replaceAll("\\s+", " ").trim();
+        memoTv.setOnClickListener(v -> HorseMemoDialog.show(requireContext(), memos, horseName, from,
+                memo -> memoTv.setAlpha(memo != null ? 1f : 0.35f)));
+        return memoTv;
     }
 
     private void toggleFavorite(TableRow row, TextView textView, String horseName) {

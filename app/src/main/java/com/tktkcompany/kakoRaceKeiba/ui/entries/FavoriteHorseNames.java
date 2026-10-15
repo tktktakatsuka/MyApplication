@@ -1,14 +1,20 @@
 package com.tktkcompany.kakoRaceKeiba.ui.entries;
 
+import android.os.Bundle;
+import android.view.View;
+
 import androidx.annotation.NonNull;
+import androidx.navigation.Navigation;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
+import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
+import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -62,6 +68,30 @@ public final class FavoriteHorseNames {
         if (horseName == null) return "";
         String name = horseName.trim().replaceFirst("^[\\(（\\[［][^\\)）\\]］]{1,2}[\\)）\\]］]\\s*", "");
         return FirebaseManager.sanitizeKey(name);
+    }
+
+    /** 例: 「★出走予定: 10/18(土) 東京11R 富士S（芝1600m）5番 ›」 */
+    public static String nextEntryLabel(SupabaseManager.RaceEntry e) {
+        StringBuilder sb = new StringBuilder("★出走予定: ");
+        sb.append(WeekendDays.formatShort(e.getKaisaibi())).append(' ')
+                .append(e.getKaisaijo()).append(e.getRaceNo()).append('R');
+        String title = e.getRaceTitle();
+        if (title != null && !title.trim().isEmpty()) sb.append(' ').append(title.trim());
+        String course = EntryForm.courseLabel(e.getRaceInfo());
+        if (!course.isEmpty()) sb.append('（').append(course).append("m）");
+        String number = e.getHorseNumber();
+        if (number != null && !number.trim().isEmpty()) sb.append(' ').append(number.trim()).append('番');
+        return sb.append(" ›").toString();
+    }
+
+    /** 出走予定のレースの出走表を開く */
+    public static void openEntry(View view, SupabaseManager.RaceEntry entry) {
+        Bundle args = new Bundle();
+        args.putString(EntriesFragment.ARG_DATE, entry.getKaisaibi());
+        args.putString(EntriesFragment.ARG_COURSE, entry.getKaisaijo());
+        args.putInt(EntriesFragment.ARG_RACE_NO, entry.getRaceNo());
+        args.putString(EntriesFragment.ARG_RACE_TITLE, entry.getRaceTitle() != null ? entry.getRaceTitle() : "");
+        Navigation.findNavController(view).navigate(R.id.navigation_entryDetail, args);
     }
 
     /** お気に入りに追加・削除する（Firebase と Supabase の両方）。戻り値は追加後の状態 */

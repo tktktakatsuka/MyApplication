@@ -17,10 +17,13 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.tktkcompany.kakoRaceKeiba.db.FavoriteResultFetcher;
 import com.tktkcompany.kakoRaceKeiba.db.HorseResult;
+import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
+import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
 
 import org.threeten.bp.LocalDate;
 import org.threeten.bp.format.DateTimeFormatter;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +31,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
- * お気に入り馬の新しいレース結果を定期的に確認し、見つかったら通知する。
+ * お気に入り馬の新しいレース結果と、お気に入り馬・メモした馬の出走予定を定期的に確認し、見つかったら通知する。
  */
 public class FavoriteResultWorker extends Worker {
 
@@ -36,6 +39,7 @@ public class FavoriteResultWorker extends Worker {
     private static final String WORK_NAME = "favorite_result_check";
     private static final String PREFS = "favorite_result_worker";
     private static final String KEY_NOTIFIED = "notified_keys_";
+    private static final String KEY_NOTIFIED_ENTRIES = "notified_entries_";
     // 何日前までの結果を通知対象にするか（古い結果をまとめて通知しないため）
     private static final int RECENT_DAYS = 3;
 
@@ -53,8 +57,7 @@ public class FavoriteResultWorker extends Worker {
                 .setConstraints(constraints)
                 .build();
         WorkManager.getInstance(context)
-                .enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request);
-    }
+                .enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request);    }
 
     @NonNull
     @Override
@@ -66,6 +69,12 @@ public class FavoriteResultWorker extends Worker {
 
         try {
             Set<String> favorites = new HashSet<>(FavoriteResultFetcher.fetchFavoriteHorseKeys(user.getUid()));
+            try {
+                notifyUpcomingEntries(context, user.getUid(), favorites);
+            } catch (Exception e) {
+                // 出走予定の確認に失敗しても、結果の確認は続ける（次の定期実行でまた確認する）
+                Log.w(TAG, "出走予定の確認に失敗", e);
+            }
             if (favorites.isEmpty()) return Result.success();
 
             List<String> joNames = FavoriteResultFetcher.fetchActiveJoNames();
@@ -96,5 +105,44 @@ public class FavoriteResultWorker extends Worker {
             Log.w(TAG, "お気に入り馬の結果確認に失敗", e);
             return Result.retry();
         }
+    }
+
+    /**
+     * お気に入り馬・メモした馬が出馬表に載っていたら知らせる。
+     * 同じ出走は1回だけ。何頭もいるときは1つの通知にまとめる。
+     */
+    private void notifyUpcomingEntries(Context context, String uid, Set<String> favoriteKeys) throws Exception {
+        Set<String> favorites = new HashSet<>();
+        for (String key : favoriteKeys) favorites.add(FavoriteHorseNames.normalize(key));
+        Map<String, String> memos = FavoriteResultFetcher.fetchHorseMemos(uid);
+        if (favorites.isEmpty() && memos.isEmpty()) return;
+
+        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        String prefKey = KEY_NOTIFIED_ENTRIES + uid;
+        Set<String> notified = prefs.getStringSet(prefKey, new HashSet<>());
+        // 開催日が過ぎた出走の記録は消す（増え続けないように）。キーは「開催日|…」
+        Set<String> kept = new HashSet<>();
+        for (String key : notified) {
+            if (key.compareTo(today) >= 0) kept.add(key);
+        }
+        List<EntryNotices.Item> fresh = new ArrayList<>();
+
+        for (SupabaseManager.RaceEntry e : SupabaseManager.fetchUpcomingEntriesBlocking(today)) {
+            String key = FavoriteHorseNames.normalize(e.getHorseName());
+            boolean favorite = favorites.contains(key);
+            String memo = memos.get(key);
+            if (!favorite && memo == null) continue;
+            EntryNotices.Item item = new EntryNotices.Item(e.getHorseName(), e.getKaisaibi(), e.getKaisaijo(),
+                    e.getRaceNo(), e.getRaceTitle(), e.getRaceInfo(), favorite, memo);
+            if (kept.add(item.key())) fresh.add(item);
+        }
+
+        if (!fresh.isEmpty()) {
+            NotificationHelper.show(context, NotificationHelper.ENTRY_CHANNEL_ID,
+                    ("entries" + fresh.get(0).key()).hashCode(),
+                    EntryNotices.title(fresh), EntryNotices.body(fresh));
+        }
+        prefs.edit().putStringSet(prefKey, kept).apply();
     }
 }

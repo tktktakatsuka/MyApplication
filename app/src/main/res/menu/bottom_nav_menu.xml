@@ -22,9 +22,9 @@
         app:showAsAction="ifRoom"/>
 
     <item
-        android:id="@+id/navigation_memoLists"
+        android:id="@+id/navigation_horseMemos"
         android:icon="@drawable/ic_racekeikou_black_24dp"
-        android:title="メモ"
+        android:title="馬メモ"
         app:showAsAction="ifRoom"/>
 
 

@@ -25,6 +25,7 @@ import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentHomeBinding;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
+import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemos;
 import com.tktkcompany.kakoRaceKeiba.dto.SharedViewModel;
 
 import java.util.ArrayList;
@@ -221,16 +222,24 @@ public class HomeFragment extends Fragment {
                 binding.textEntriesBody.setText(body);
                 binding.cardEntries.setVisibility(View.VISIBLE);
 
-                // お気に入り馬が出走予定なら、その馬名も出す
-                FavoriteHorseNames.load(favorites -> {
-                    if (!isAdded() || binding == null || favorites.isEmpty()) return;
+                // お気に入り馬・メモした馬が出走予定なら、その馬名も出す
+                FavoriteHorseNames.load(favorites -> HorseMemos.load(memos -> {
+                    if (!isAdded() || binding == null) return;
                     Set<String> favoriteRunners = new LinkedHashSet<>();
+                    Set<String> memoRunners = new LinkedHashSet<>();
                     for (SupabaseManager.RaceEntry e : entries) {
                         if (FavoriteHorseNames.contains(favorites, e.getHorseName())) favoriteRunners.add(e.getHorseName());
+                        if (HorseMemos.find(memos, e.getHorseName()) != null) memoRunners.add(e.getHorseName());
                     }
-                    if (favoriteRunners.isEmpty()) return;
-                    binding.textEntriesBody.setText(body + "\n★お気に入り馬が出走予定: " + TextUtils.join("・", favoriteRunners));
-                });
+                    StringBuilder text = new StringBuilder(body);
+                    if (!favoriteRunners.isEmpty()) {
+                        text.append("\n★お気に入り馬が出走予定: ").append(TextUtils.join("・", favoriteRunners));
+                    }
+                    if (!memoRunners.isEmpty()) {
+                        text.append("\n📝メモした馬が出走予定: ").append(TextUtils.join("・", memoRunners));
+                    }
+                    binding.textEntriesBody.setText(text);
+                }));
             }
 
             @Override
@@ -243,8 +252,8 @@ public class HomeFragment extends Fragment {
     private void updateUpcomingHint(FirebaseUser user) {
         if (binding == null) return;
         binding.textUpcomingHint.setText(user != null
-                ? "お気に入り馬のレース結果が出たら通知でお知らせします"
-                : "ログインしてお気に入り馬を登録すると、レース結果を通知でお知らせします");
+                ? "お気に入り馬・メモした馬の出走予定と、お気に入り馬のレース結果を通知でお知らせします"
+                : "ログインしてお気に入り馬を登録すると、出走予定やレース結果を通知でお知らせします");
     }
 
     //バナーを表示するメソッド

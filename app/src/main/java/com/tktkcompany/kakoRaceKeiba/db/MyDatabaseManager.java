@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.tktkcompany.kakoRaceKeiba.ui.memo.Memo;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,49 +58,6 @@ public class MyDatabaseManager {
         values.put("hassouTime", hassouTime);
         // テーブル名は"my_table"、nullColumnHackはnull
         database.insert("raceResult", null, values);
-    }
-
-    // メモを追加するメソッド（追加した行のrowidを返す）
-    public long insertMemo(String title, String comment) {
-        ContentValues values = new ContentValues();
-        values.put("title", title);
-        values.put("comment", comment);
-        return database.insert("memo", null, values);
-    }
-
-    // メモを削除するメソッド（rowidで特定する）
-    public void deleteMemo(String id) {
-        database.delete("memo", "rowid=?", new String[]{id});
-    }
-
-    // メモ一覧を取得するメソッド
-    public List<Memo> getMemo() {
-        String[] columns = {"rowid", "title", "comment"};
-        Cursor cursor = database.query("memo", columns, null, null, null, null, "rowid");
-        List<Memo> list = new ArrayList<Memo>();
-
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                String id = String.valueOf(cursor.getLong(0));
-                String title = cursor.getString(cursor.getColumnIndexOrThrow("title"));
-                String comment = cursor.getString(cursor.getColumnIndexOrThrow("comment"));
-                list.add(new Memo(id, title, comment));
-            } while (cursor.moveToNext());
-        }
-        if (cursor != null) {
-            cursor.close();
-        }
-
-        return list;
-    }
-
-    // メモを更新するメソッド（rowidで特定するので、タイトルを変えても正しく更新される）
-    public void updateMemo(Memo memo) {
-        ContentValues values = new ContentValues();
-        values.put("title", memo.getTitle());
-        values.put("comment", memo.getContent());
-
-        database.update("memo", values, "rowid = ?", new String[]{memo.getId()});
     }
 
     // レース結果を取得するメソッド

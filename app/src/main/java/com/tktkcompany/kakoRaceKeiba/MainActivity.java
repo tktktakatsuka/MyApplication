@@ -52,7 +52,6 @@ import com.tktkcompany.kakoRaceKeiba.dto.SharedViewModel;
 import com.tktkcompany.kakoRaceKeiba.notification.FavoriteResultWorker;
 import com.tktkcompany.kakoRaceKeiba.notification.NotificationHelper;
 import com.tktkcompany.kakoRaceKeiba.ui.home.HomeFragment;
-import com.tktkcompany.kakoRaceKeiba.ui.memo.MemoRepository;
 
 import static com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL;
 
@@ -122,10 +121,7 @@ public class MainActivity extends AppCompatActivity {
                 R.id.navigation_dashboard,
                 R.id.navigation_notifications,
                 R.id.navigation_raceResults,
-                R.id.navigation_memoLists,
-                R.id.navigation_memoCreate,
-                R.id.navigation_memoDetail,
-                R.id.navigation_memoEdit
+                R.id.navigation_horseMemos
         ).build();
 
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
@@ -264,9 +260,6 @@ public class MainActivity extends AppCompatActivity {
                         Log.d(TAG, "signInWithCredential:success");
                         if (user != null) {
                             Toast.makeText(this, "ログイン成功: " + user.getDisplayName(), Toast.LENGTH_SHORT).show();
-                            // 端末に保存していたメモをアカウントへ移す
-                            MemoRepository.migrateLocalToCloud(this, user.getUid(), count ->
-                                    Toast.makeText(this, "端末のメモ" + count + "件をアカウントに保存しました", Toast.LENGTH_SHORT).show());
                         }
                     } else {
                         Log.w(TAG, "signInWithCredential:failure", task.getException());
