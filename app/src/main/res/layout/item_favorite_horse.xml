@@ -37,6 +37,17 @@
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
+            <!-- 出走予定（出馬表に名前がある時だけ表示。タップでそのレースの出走表へ） -->
+            <TextView
+                android:id="@+id/text_next_entry"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="#E65100"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
             <!-- 直近の結果（タップでそのレース結果へ） -->
             <TextView
                 android:id="@+id/text_latest_result"

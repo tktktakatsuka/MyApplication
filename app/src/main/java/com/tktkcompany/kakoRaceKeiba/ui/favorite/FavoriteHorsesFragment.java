@@ -26,12 +26,19 @@ import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.db.FavoriteResultFetcher;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
 import com.tktkcompany.kakoRaceKeiba.db.HorseResult;
+import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
+import com.tktkcompany.kakoRaceKeiba.ui.entries.EntriesFragment;
+import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
+
+import org.threeten.bp.LocalDate;
+import org.threeten.bp.format.DateTimeFormatter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -56,7 +63,7 @@ public class FavoriteHorsesFragment extends Fragment {
         noDataText = root.findViewById(R.id.text_no_data);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new FavoriteHorsesAdapter(favoriteHorses, this::onRemoveClick, this::onResultClick);
+        adapter = new FavoriteHorsesAdapter(favoriteHorses, this::onRemoveClick, this::onResultClick, this::onEntryClick);
         recyclerView.setAdapter(adapter);
 
         // 戻るボタンの設定
@@ -120,6 +127,7 @@ public class FavoriteHorsesFragment extends Fragment {
                 adapter.clearLatestResults();
                 adapter.notifyDataSetChanged();
                 loadLatestResults(new ArrayList<>(favoriteHorses));
+                loadNextEntries(new ArrayList<>(favoriteHorses));
             }
 
             @Override
@@ -153,6 +161,46 @@ public class FavoriteHorsesFragment extends Fragment {
                 if (isAdded() && getView() != null) adapter.setLatestResults(latest);
             });
         });
+    }
+
+    // 今日以降の出馬表から、各お気に入り馬のいちばん近い出走予定を探す
+    private void loadNextEntries(List<String> horseKeys) {
+        if (horseKeys.isEmpty()) {
+            adapter.setNextEntries(null);
+            return;
+        }
+        Set<String> favorites = new HashSet<>();
+        for (String key : horseKeys) favorites.add(FavoriteHorseNames.normalize(key));
+        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        SupabaseManager.fetchUpcomingEntries(today, new SupabaseManager.SupabaseCallback<List<SupabaseManager.RaceEntry>>() {
+            @Override
+            public void onSuccess(List<SupabaseManager.RaceEntry> entries) {
+                if (!isAdded() || getView() == null) return;
+                // entries は開催日・競馬場・レース番号の順に並んでいるので、最初に見つかったものが次走
+                Map<String, SupabaseManager.RaceEntry> next = new HashMap<>();
+                for (SupabaseManager.RaceEntry e : entries) {
+                    String name = FavoriteHorseNames.normalize(e.getHorseName());
+                    if (favorites.contains(name) && !next.containsKey(name)) next.put(name, e);
+                }
+                adapter.setNextEntries(next);
+            }
+
+            @Override
+            public void onFailure(@NonNull String message) {
+                Log.w("FavoriteHorses", "Upcoming entries load failed: " + message);
+            }
+        });
+    }
+
+    // 出走予定をタップしたら、そのレースの出走表（出走馬と近走成績）を開く
+    private void onEntryClick(SupabaseManager.RaceEntry entry) {
+        if (getView() == null) return;
+        Bundle args = new Bundle();
+        args.putString(EntriesFragment.ARG_DATE, entry.getKaisaibi());
+        args.putString(EntriesFragment.ARG_COURSE, entry.getKaisaijo());
+        args.putInt(EntriesFragment.ARG_RACE_NO, entry.getRaceNo());
+        args.putString(EntriesFragment.ARG_RACE_TITLE, entry.getRaceTitle() != null ? entry.getRaceTitle() : "");
+        Navigation.findNavController(getView()).navigate(R.id.navigation_entryDetail, args);
     }
 
     // 直近の結果をタップしたら、そのレース結果画面を開く
