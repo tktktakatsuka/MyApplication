@@ -21,7 +21,7 @@ android {
         applicationId = "com.tktkcompany.kakoRaceKeiba"
         minSdk = 28
         targetSdk = 35
-        versionCode = 375
+        versionCode = 376
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "SUPABASE_URL", "\"${localProperties.getProperty('SUPABASE_URL', '')}\""
