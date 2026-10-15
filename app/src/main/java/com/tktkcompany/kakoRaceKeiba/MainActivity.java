@@ -28,6 +28,7 @@ import androidx.credentials.exceptions.NoCredentialException;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
+import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
@@ -130,6 +131,17 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
+        // タブを押したら、そのタブの最初の画面を出す。
+        // 標準の動きだと前に開いていた出走表などが復元され、ホームを押してもホームに戻れないため
+        NavOptions tabOptions = new NavOptions.Builder()
+                .setLaunchSingleTop(true)
+                .setPopUpTo(navController.getGraph().getStartDestinationId(), false)
+                .build();
+        binding.navView.setOnItemSelectedListener(item -> {
+            navController.navigate(item.getItemId(), null, tabOptions);
+            return true;
+        });
+        binding.navView.setOnItemReselectedListener(item -> navController.navigate(item.getItemId(), null, tabOptions));
 
         // 通知チャンネル作成と通知権限のリクエスト
         NotificationHelper.createChannels(this);
@@ -150,6 +162,13 @@ public class MainActivity extends AppCompatActivity {
                     String token = task.getResult();
                     Log.d("FCM Token", token);
                 });
+    }
+
+    // アクションバー左の矢印で、ひとつ前の画面に戻る
+    @Override
+    public boolean onSupportNavigateUp() {
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
+        return navController.navigateUp() || super.onSupportNavigateUp();
     }
 
     private void requestNotificationPermissionIfNeeded() {

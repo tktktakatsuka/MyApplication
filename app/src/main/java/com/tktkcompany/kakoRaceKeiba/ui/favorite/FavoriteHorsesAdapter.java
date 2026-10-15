@@ -90,10 +90,13 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<FavoriteHorsesAd
         }
 
         HorseResult latest = latestResults != null ? latestResults.get(name) : null;
+        holder.latestResultView.setVisibility(View.VISIBLE);
         if (latestResults == null) {
             holder.latestResultView.setText("直近の結果を読み込み中…");
             holder.latestResultView.setOnClickListener(null);
         } else if (latest == null) {
+            // 出走予定を出している馬に「出走はありません」と並べると矛盾して見えるので出さない
+            holder.latestResultView.setVisibility(next != null ? View.GONE : View.VISIBLE);
             holder.latestResultView.setText("開催中の競馬場での出走はありません");
             holder.latestResultView.setOnClickListener(null);
         } else {
