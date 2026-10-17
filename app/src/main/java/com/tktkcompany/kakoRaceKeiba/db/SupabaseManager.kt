@@ -367,15 +367,16 @@ object SupabaseManager {
      */
     @JvmStatic
     @Throws(Exception::class)
-    fun fetchResultsForHorsesBlocking(horseNames: Collection<String>, courses: Collection<String>): List<RaceResult> {
-        if (horseNames.isEmpty() || courses.isEmpty()) return emptyList()
+    fun fetchResultsForHorsesBlocking(horseNames: Collection<String>, courses: Collection<String>?): List<RaceResult> {
+        // courses が null ならすべての競馬場から取る（お気に入り馬の前走は、どこで走ったかに関係なく出したい）
+        if (horseNames.isEmpty() || (courses != null && courses.isEmpty())) return emptyList()
         val currentClient = client ?: throw IllegalStateException("Supabase client not initialized")
         return runBlocking {
             withTimeout(BLOCKING_TIMEOUT_MS) {
                 currentClient.from("race_results").select {
                     filter {
                         isIn("horse_name", horseNames.toList())
-                        isIn("kaisaijo", courses.toList())
+                        if (courses != null) isIn("kaisaijo", courses.toList())
                     }
                     order("kaisaibi", Order.DESCENDING)
                 }.decodeList<RaceResult>()

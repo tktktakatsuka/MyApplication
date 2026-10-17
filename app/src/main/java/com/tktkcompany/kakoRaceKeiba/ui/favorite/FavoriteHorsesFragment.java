@@ -12,7 +12,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -69,12 +68,6 @@ public class FavoriteHorsesFragment extends Fragment {
         adapter = new FavoriteHorsesAdapter(favoriteHorses, this::onRemoveClick, this::onResultClick, this::onEntryClick);
         recyclerView.setAdapter(adapter);
 
-        // 戻るボタンの設定
-        root.findViewById(R.id.btn_back).setOnClickListener(v -> {
-            NavController navController = Navigation.findNavController(v);
-            navController.navigateUp(); // または特定のアクションを指定
-        });
-
         loadFavorites();
 
         return root;
@@ -128,7 +121,7 @@ public class FavoriteHorsesFragment extends Fragment {
                     noDataText.setVisibility(View.GONE);
                 }
                 adapter.clearLatestResults();
-                adapter.notifyDataSetChanged();
+                adapter.refresh();
                 loadLatestResults(new ArrayList<>(favoriteHorses));
                 loadNextEntries(new ArrayList<>(favoriteHorses));
             }
@@ -151,8 +144,8 @@ public class FavoriteHorsesFragment extends Fragment {
         executor.execute(() -> {
             Map<String, HorseResult> latest = new HashMap<>();
             try {
-                Map<String, List<HorseResult>> results = FavoriteResultFetcher.fetchResults(
-                        new HashSet<>(horseKeys), FavoriteResultFetcher.fetchActiveJoNames());
+                // 前走はどの競馬場でもよいので、競馬場で絞らずに取る
+                Map<String, List<HorseResult>> results = FavoriteResultFetcher.fetchResults(new HashSet<>(horseKeys), null);
                 for (Map.Entry<String, List<HorseResult>> e : results.entrySet()) {
                     if (!e.getValue().isEmpty()) latest.put(e.getKey(), e.getValue().get(0));
                 }

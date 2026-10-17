@@ -5,6 +5,8 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,18 +53,23 @@ public class FavoriteResultFetcher {
     }
 
     /**
-     * 指定した馬（お気に入りのキー）の結果を、開催中の競馬場から集める。
+     * 指定した馬（お気に入りのキー）の結果を、開催中の競馬場から集める。joNames が null ならすべての競馬場から。
      *
      * @return 馬のキー → 結果のリスト（開催日の新しい順）
      */
-    public static Map<String, List<HorseResult>> fetchResults(Set<String> horseKeys, List<String> joNames) throws Exception {
+    public static Map<String, List<HorseResult>> fetchResults(Set<String> horseKeys, @androidx.annotation.Nullable List<String> joNames) throws Exception {
         Map<String, List<HorseResult>> results = new HashMap<>();
         if (horseKeys.isEmpty()) return results;
 
-        for (SupabaseManager.RaceResult row : SupabaseManager.fetchResultsForHorsesBlocking(horseKeys, joNames)) {
+        // お気に入りのキーには「(外)」などの印が付いたまま保存されているものがあり、結果の馬名（印なし）と
+        // そのままでは一致しない。印を外した名前で探し、元のキーに戻す
+        Map<String, String> keyByName = new HashMap<>();
+        for (String key : horseKeys) keyByName.put(FavoriteHorseNames.normalize(key), key);
+
+        for (SupabaseManager.RaceResult row : SupabaseManager.fetchResultsForHorsesBlocking(keyByName.keySet(), joNames)) {
             String horseName = row.getHorseName();
-            String horseKey = FirebaseManager.sanitizeKey(horseName);
-            if (!horseKeys.contains(horseKey)) continue;
+            String horseKey = keyByName.get(FavoriteHorseNames.normalize(horseName));
+            if (horseKey == null) continue;
 
             HorseResult result = new HorseResult(
                     row.getKaisaijo() + "/" + row.getId(),
