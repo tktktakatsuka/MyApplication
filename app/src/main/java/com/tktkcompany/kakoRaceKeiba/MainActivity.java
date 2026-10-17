@@ -123,10 +123,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
+                // 下のタブの画面だけを最上位にする（ほかの画面には戻る矢印を出す）
                 R.id.navigation_home,
+                R.id.navigation_entries,
                 R.id.navigation_dashboard,
-                R.id.navigation_notifications,
-                R.id.navigation_raceResults,
                 R.id.navigation_horseMemos
         ).build();
 

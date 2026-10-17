@@ -27,6 +27,7 @@ import com.tktkcompany.kakoRaceKeiba.db.FavoriteResultFetcher;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
 import com.tktkcompany.kakoRaceKeiba.db.HorseResult;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
+import com.tktkcompany.kakoRaceKeiba.notification.RaceStartNotices;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.EntriesFragment;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
 import com.tktkcompany.kakoRaceKeiba.ui.raceResult.RaceResultsFragment;
@@ -179,7 +180,11 @@ public class FavoriteHorsesFragment extends Fragment {
                 if (!isAdded() || getView() == null) return;
                 // entries は開催日・競馬場・レース番号の順に並んでいるので、最初に見つかったものが次走
                 Map<String, SupabaseManager.RaceEntry> next = new HashMap<>();
+                org.threeten.bp.LocalDateTime now = org.threeten.bp.LocalDateTime.now();
                 for (SupabaseManager.RaceEntry e : entries) {
+                    // 今日もう発走したレースは「出走予定」にしない
+                    org.threeten.bp.LocalDateTime start = RaceStartNotices.startTime(e.getKaisaibi(), e.getRaceInfo());
+                    if (start != null && start.isBefore(now)) continue;
                     String name = FavoriteHorseNames.normalize(e.getHorseName());
                     if (favorites.contains(name) && !next.containsKey(name)) next.put(name, e);
                 }
@@ -217,13 +222,20 @@ public class FavoriteHorsesFragment extends Fragment {
                 RaceResultsFragment.args(result.kaisaibi, result.kaisaijo, raceNo, result.horseName));
     }
 
+    // 押し間違えで消えないよう、確認してから削除する
     private void onRemoveClick(String horseName) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null) {
-            // データベースから削除。ValueEventListener が自動的にUIを更新するはずだが、
-            // ここでは即時性を高めるために手動でも消しておく
-            FirebaseManager.removeFavoriteHorse(user.getUid(), horseName);
-            Toast.makeText(getContext(), horseName + "を削除しました", Toast.LENGTH_SHORT).show();
-        }
+        if (user == null || getContext() == null) return;
+        String name = FavoriteHorsesAdapter.displayName(horseName);
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setMessage(name + "をお気に入りから外しますか？")
+                .setPositiveButton("外す", (dialog, which) -> {
+                    // 一覧は Firebase の変更を監視しているので、削除すると自動で消える
+                    FirebaseManager.removeFavoriteHorse(user.getUid(), horseName);
+                    SupabaseManager.removeFavorite(user.getUid(), horseName);
+                    Toast.makeText(getContext(), name + "をお気に入りから外しました", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("キャンセル", null)
+                .show();
     }
 }

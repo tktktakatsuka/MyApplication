@@ -103,30 +103,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <Button
-                android:id="@+id/btn_favorite_horses"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="8dp"
-                android:layout_marginBottom="8dp"
-                android:backgroundTint="#FFD700"
-                android:text="お気に入り馬一覧を表示"
-                android:textColor="@android:color/black"
-                android:visibility="gone"
-                app:icon="@android:drawable/btn_star_big_on"
-                app:iconTint="@android:color/black" />
-
-            <Button
-                android:id="@+id/btn_predictions"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="8dp"
-                android:layout_marginBottom="8dp"
-                android:backgroundTint="#1565C0"
-                android:text="◎ 予想の答え合わせ"
-                android:textColor="@android:color/white"
-                android:visibility="gone" />
-
             <!-- 今日の開催（開催日だけ表示。次のレース・お気に入り馬・直前の結果。中身はコードで作る） -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_today"
@@ -163,6 +139,36 @@
                         android:orientation="vertical" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
+            <!-- お気に入り馬・予想の答え合わせ（ログイン中だけ。横に2つ並べる） -->
+            <LinearLayout
+                android:id="@+id/layout_quick_buttons"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="4dp"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <Button
+                    android:id="@+id/btn_favorite_horses"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="4dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="#FFD700"
+                    android:text="★ お気に入り馬"
+                    android:textColor="@android:color/black" />
+
+                <Button
+                    android:id="@+id/btn_predictions"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="4dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="#1565C0"
+                    android:text="◎ 答え合わせ"
+                    android:textColor="@android:color/white" />
+            </LinearLayout>
 
             <!-- 今週の開催 -->
             <com.google.android.material.card.MaterialCardView
@@ -260,6 +266,13 @@
                         android:textSize="24sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
+            <!-- 直近の開催のメインレース結果（開催日は今日の開催カードがあるので隠す） -->
+            <LinearLayout
+                android:id="@+id/layout_last_results"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
             <!-- スロット1 -->
             <androidx.cardview.widget.CardView
@@ -430,6 +443,8 @@
                     <ProgressBar style="@style/Widget.AppCompat.ProgressBar.Horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:progress="100" android:progressTint="#4CAF50" android:scaleY="2" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
 
             <com.google.android.gms.ads.AdView
                 android:id="@+id/adView"

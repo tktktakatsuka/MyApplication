@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 下のタブ。土日に一番使う出走表を2番目に置く。レース傾向は結果のタブから開く -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
@@ -6,28 +7,23 @@
         android:id="@+id/navigation_home"
         android:icon="@drawable/ic_home_black_24dp"
         android:title="ホーム"
-        app:showAsAction="ifRoom"/>
+        app:showAsAction="ifRoom" />
 
-
+    <item
+        android:id="@+id/navigation_entries"
+        android:icon="@drawable/ic_entries_black_24dp"
+        android:title="出走表"
+        app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/navigation_dashboard"
         android:icon="@drawable/ic_raceresult_black_24dp"
-        android:title="レース結果"
-        app:showAsAction="ifRoom"/>
-    <item
-        android:id="@+id/navigation_notifications"
-        android:icon="@drawable/ic_notifications_black_24dp"
-        android:title="レース傾向"
-        app:showAsAction="ifRoom"/>
+        android:title="結果"
+        app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/navigation_horseMemos"
         android:icon="@drawable/ic_racekeikou_black_24dp"
-        android:title="馬メモ"
-        app:showAsAction="ifRoom"/>
-
-
-
-
+        android:title="メモ・予想"
+        app:showAsAction="ifRoom" />
 </menu>

@@ -189,14 +189,28 @@ public class HomeFragment extends Fragment {
             binding.layoutUserInfo.setVisibility(View.VISIBLE);
             binding.textUserName.setText(user.getDisplayName() + " さんとしてログイン中");
             binding.layoutLogin.setVisibility(View.GONE);
-            binding.btnFavoriteHorses.setVisibility(View.VISIBLE);
-            binding.btnPredictions.setVisibility(View.VISIBLE);
+            binding.layoutQuickButtons.setVisibility(View.VISIBLE);
         } else {
             // 未ログイン
             binding.layoutUserInfo.setVisibility(View.GONE);
             binding.layoutLogin.setVisibility(View.VISIBLE);
-            binding.btnFavoriteHorses.setVisibility(View.GONE);
-            binding.btnPredictions.setVisibility(View.GONE);
+            binding.layoutQuickButtons.setVisibility(View.GONE);
+        }
+        placeAuthCard(user != null);
+    }
+
+    /**
+     * ログイン中はログインのカードを一番下（広告の上）に回し、今日の開催を一番上に出す。
+     * 未ログインのときは、ログインを促すため一番上に置く
+     */
+    private void placeAuthCard(boolean signedIn) {
+        ViewGroup parent = (ViewGroup) binding.cardUserAuth.getParent();
+        if (parent == null) return;
+        parent.removeView(binding.cardUserAuth);
+        if (signedIn) {
+            parent.addView(binding.cardUserAuth, parent.indexOfChild(binding.adView));
+        } else {
+            parent.addView(binding.cardUserAuth, 0);
         }
     }
 
@@ -258,6 +272,9 @@ public class HomeFragment extends Fragment {
                     if (!memoRunners.isEmpty()) text.append("\n📝 メモした馬 ").append(runnersLabel(memoRunners));
                     binding.textEntriesBody.setText(text);
                     todayCard.show(entries, favorites);
+                    // 開催日は今日の開催カードで足りるので、前の開催のメインレース結果は隠す
+                    binding.layoutLastResults.setVisibility(
+                            binding.cardToday.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
                 }));
             }
 

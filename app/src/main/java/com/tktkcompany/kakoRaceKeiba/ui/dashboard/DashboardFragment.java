@@ -58,6 +58,8 @@ public class DashboardFragment extends Fragment {
         buttonContainer = binding.buttonContainer;
 
         binding.checkboxDate.setOnCheckedChangeListener((buttonView, isChecked) -> renderAll());
+        binding.textOpenTrends.setOnClickListener(v ->
+                Navigation.findNavController(v).navigate(R.id.navigation_notifications));
 
         SharedViewModel sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
         sharedViewModel.getJoNames().observe(getViewLifecycleOwner(), joNames -> {

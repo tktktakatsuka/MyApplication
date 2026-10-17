@@ -103,6 +103,7 @@ public class EntriesFragment extends Fragment {
 
         LayoutInflater inflater = getLayoutInflater();
         binding.entriesContainer.removeAllViews();
+        View firstNextRace = null;
         for (Map.Entry<String, Map<Integer, List<SupabaseManager.RaceEntry>>> meeting : meetings.entrySet()) {
             String[] key = meeting.getKey().split("\t");
             String date = key[0];
@@ -134,7 +135,10 @@ public class EntriesFragment extends Fragment {
                 }
                 ((TextView) item.findViewById(R.id.text_race_day_date)).setText(number);
                 boolean next = raceNo == nextRaceNo;
-                if (next) highlightNextRace((MaterialCardView) item);
+                if (next) {
+                    highlightNextRace((MaterialCardView) item);
+                    if (firstNextRace == null) firstNextRace = item;
+                }
                 boolean beforeDraw = true;
                 int favoriteCount = 0;
                 for (SupabaseManager.RaceEntry e : race.getValue()) {
@@ -164,6 +168,16 @@ public class EntriesFragment extends Fragment {
                 });
                 binding.entriesContainer.addView(item);
             }
+        }
+        // 開催日は、最初の競馬場の次のレースが画面の上の方に来るようにスクロールする
+        if (firstNextRace != null) {
+            View target = firstNextRace;
+            binding.getRoot().post(() -> {
+                if (binding == null) return;
+                int y = binding.entriesContainer.getTop() + target.getTop()
+                        - (int) (48 * getResources().getDisplayMetrics().density);
+                binding.getRoot().scrollTo(0, Math.max(0, y));
+            });
         }
     }
 

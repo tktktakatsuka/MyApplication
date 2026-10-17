@@ -52,7 +52,32 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<FavoriteHorsesAd
 
     public void setNextEntries(Map<String, SupabaseManager.RaceEntry> nextEntries) {
         this.nextEntries = nextEntries != null ? nextEntries : new HashMap<>();
+        sortByNextEntry();
         notifyDataSetChanged();
+    }
+
+    /** 出走予定のある馬を出走の早い順に上へ、ほかの馬はその下に名前順で並べる */
+    private void sortByNextEntry() {
+        horseNames.sort((a, b) -> {
+            SupabaseManager.RaceEntry ea = nextEntries.get(FavoriteHorseNames.normalize(a));
+            SupabaseManager.RaceEntry eb = nextEntries.get(FavoriteHorseNames.normalize(b));
+            if (ea != null && eb != null) return raceOrder(ea).compareTo(raceOrder(eb));
+            if (ea != null) return -1;
+            if (eb != null) return 1;
+            return displayName(a).compareTo(displayName(b));
+        });
+    }
+
+    private static String raceOrder(SupabaseManager.RaceEntry e) {
+        String info = e.getRaceInfo() != null ? e.getRaceInfo() : "";
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d{1,2}):(\\d{2})発走").matcher(info);
+        String time = m.find() ? String.format("%02d%s", Integer.parseInt(m.group(1)), m.group(2)) : "9999";
+        return e.getKaisaibi() + time;
+    }
+
+    /** 「(外)フロムダスク」→「フロムダスク」 */
+    static String displayName(String name) {
+        return name == null ? "" : name.trim().replaceFirst("^[\\(（\\[［][^\\)）\\]］]{1,2}[\\)）\\]］]\\s*", "");
     }
 
     public void setLatestResults(Map<String, HorseResult> latestResults) {
@@ -74,7 +99,7 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<FavoriteHorsesAd
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         String name = horseNames.get(position);
-        holder.textView.setText(name);
+        holder.textView.setText(displayName(name));
         holder.deleteButton.setOnClickListener(v -> listener.onRemoveClick(name));
 
         SupabaseManager.RaceEntry next = nextEntries.get(FavoriteHorseNames.normalize(name));
@@ -95,7 +120,7 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<FavoriteHorsesAd
         } else if (latest == null) {
             // 出走予定を出している馬に「出走はありません」と並べると矛盾して見えるので出さない
             holder.latestResultView.setVisibility(next != null ? View.GONE : View.VISIBLE);
-            holder.latestResultView.setText("開催中の競馬場での出走はありません");
+            holder.latestResultView.setText("最近の出走はありません");
             holder.latestResultView.setOnClickListener(null);
         } else {
             holder.latestResultView.setText("直近: " + latest.summary() + " ›");
