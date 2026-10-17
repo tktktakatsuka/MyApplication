@@ -28,8 +28,11 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentEntriesBinding;
 import com.tktkcompany.kakoRaceKeiba.db.KeibalabOdds;
+import com.tktkcompany.kakoRaceKeiba.db.KeibalabResults;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.notification.FavoriteResultWorker;
+import com.tktkcompany.kakoRaceKeiba.notification.RaceStartNotices;
+import com.tktkcompany.kakoRaceKeiba.ui.prediction.Predictions;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemoDialog;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemos;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
@@ -71,6 +74,10 @@ public class EntryDetailFragment extends Fragment {
     private Map<String, HorseMemos.Memo> memos = new HashMap<>();
     // 馬番 → オッズを出す欄（オッズは出走表を出したあとに読み込む）
     private final Map<String, TextView> oddsViews = new HashMap<>();
+    // 自分の予想の印（normalize した馬名 → 印）と、印・結果を出す欄
+    private Map<String, String> marks = new HashMap<>();
+    private final Map<String, TextView> markViews = new HashMap<>();
+    private final Map<String, TextView> resultViews = new HashMap<>();
     private static final ExecutorService ODDS_EXECUTOR = Executors.newSingleThreadExecutor();
 
     @Override
@@ -116,7 +123,11 @@ public class EntryDetailFragment extends Fragment {
                     HorseMemos.load(loadedMemos -> {
                         if (binding == null || !isAdded()) return;
                         memos = new HashMap<>(loadedMemos);
-                        loadPastResults(entries);
+                        Predictions.loadRace(date, course, raceNo, loadedMarks -> {
+                            if (binding == null || !isAdded()) return;
+                            marks = loadedMarks;
+                            loadPastResults(entries);
+                        });
                     });
                 });
             }
@@ -201,6 +212,8 @@ public class EntryDetailFragment extends Fragment {
         LayoutInflater inflater = getLayoutInflater();
         binding.entriesContainer.removeAllViews();
         oddsViews.clear();
+        markViews.clear();
+        resultViews.clear();
         for (SupabaseManager.RaceEntry entry : entries) {
             View card = inflater.inflate(R.layout.item_entry_horse, binding.entriesContainer, false);
 
@@ -217,6 +230,8 @@ public class EntryDetailFragment extends Fragment {
             name.setText(entry.getHorseName());
             bindFavorite(card, entry.getHorseName());
             bindMemo(card, entry.getHorseName());
+            bindMark(card, entry);
+            resultViews.put(FavoriteHorseNames.normalize(entry.getHorseName()), card.findViewById(R.id.text_entry_result));
 
             List<String> right = new ArrayList<>();
             if (entry.getSexAge() != null && !entry.getSexAge().endsWith("0")) right.add(entry.getSexAge());
@@ -248,6 +263,74 @@ public class EntryDetailFragment extends Fragment {
             if (binding != null) binding.getRoot().scrollTo(0, 0);
         });
         loadOdds(entries);
+        loadTodayResult(entries.get(0));
+    }
+
+    /** 印をタップするたびに ◎→○→▲→△→なし。◎○▲は1頭だけなので、ほかの馬の印も書き直す */
+    private void bindMark(View card, SupabaseManager.RaceEntry entry) {
+        TextView view = card.findViewById(R.id.text_entry_mark);
+        String key = FavoriteHorseNames.normalize(entry.getHorseName());
+        markViews.put(key, view);
+        paintMark(view, marks.get(key));
+        view.setOnClickListener(v -> {
+            if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+                Toast.makeText(getContext(), "予想の印を付けるにはログインが必要です", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Predictions.setMark(entry.getKaisaibi(), entry.getKaisaijo(), entry.getRaceNo(), entry.getRaceTitle(),
+                    marks, entry.getHorseName(), Predictions.nextMark(marks.get(key)));
+            for (Map.Entry<String, TextView> e : markViews.entrySet()) paintMark(e.getValue(), marks.get(e.getKey()));
+        });
+    }
+
+    private static void paintMark(TextView view, @Nullable String mark) {
+        view.setText(mark != null ? mark : "印");
+        view.setTextSize(mark != null ? 20 : 12);
+        view.setTextColor(mark == null ? 0xFFBDBDBD : "◎".equals(mark) ? 0xFFC62828 : 0xFF1565C0);
+    }
+
+    /**
+     * 今日のレースで発走から時間がたっていれば、keibalab から結果を取って各馬に着順を出す。
+     * 印を付けていれば、◎の着順も画面の上に出す（答え合わせ）
+     */
+    private void loadTodayResult(SupabaseManager.RaceEntry race) {
+        org.threeten.bp.LocalDateTime start = RaceStartNotices.startTime(race.getKaisaibi(), race.getRaceInfo());
+        if (start == null || org.threeten.bp.LocalDateTime.now().isBefore(start.plusMinutes(10))) return;
+        if (!race.getKaisaibi().equals(org.threeten.bp.LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")))) return;
+        ODDS_EXECUTOR.execute(() -> {
+            List<SupabaseManager.RaceResult> rows;
+            try {
+                rows = KeibalabResults.fetchRaceBlocking(race.getKaisaibi(), race.getKaisaijo(), race.getRaceNo());
+            } catch (Exception e) {
+                Log.w("EntryDetailFragment", "結果の取得に失敗", e);
+                return;
+            }
+            if (rows.isEmpty() || getActivity() == null) return;
+            getActivity().runOnUiThread(() -> {
+                if (binding == null || !isAdded()) return;
+                showResult(rows);
+            });
+        });
+    }
+
+    private void showResult(List<SupabaseManager.RaceResult> rows) {
+        String honmeiLine = null;
+        for (SupabaseManager.RaceResult r : rows) {
+            String key = FavoriteHorseNames.normalize(r.getHorseName());
+            TextView view = resultViews.get(key);
+            if (view == null) continue;
+            String rank = r.getRank() != null ? r.getRank() : "-";
+            String label = "結果 " + (rank.matches("\\d+") ? rank + "着" : rank);
+            if (r.getPopular() != null) label += "（" + r.getPopular() + "番人気）";
+            view.setText(label);
+            view.setTextColor("1".equals(rank) ? 0xFFC62828 : ("2".equals(rank) || "3".equals(rank)) ? 0xFF2E7D32 : 0xFF555555);
+            view.setVisibility(View.VISIBLE);
+            if ("◎".equals(marks.get(key))) {
+                honmeiLine = "◎" + r.getHorseName() + "は" + (rank.matches("\\d+") ? rank + "着" : rank)
+                        + ("1".equals(rank) ? "　的中！" : "");
+            }
+        }
+        binding.textEntriesLead.append("\n" + (honmeiLine != null ? honmeiLine : "結果が確定しました"));
     }
 
     /**

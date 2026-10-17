@@ -116,6 +116,17 @@
                 app:icon="@android:drawable/btn_star_big_on"
                 app:iconTint="@android:color/black" />
 
+            <Button
+                android:id="@+id/btn_predictions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="8dp"
+                android:layout_marginBottom="8dp"
+                android:backgroundTint="#1565C0"
+                android:text="◎ 予想の答え合わせ"
+                android:textColor="@android:color/white"
+                android:visibility="gone" />
+
             <!-- 今日の開催（開催日だけ表示。次のレース・お気に入り馬・直前の結果。中身はコードで作る） -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_today"

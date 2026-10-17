@@ -70,6 +70,8 @@ public class HomeFragment extends Fragment {
             navController.navigate(R.id.action_navigation_home_to_navigation_favorites);
         });
 
+        binding.btnPredictions.setOnClickListener(v ->
+                Navigation.findNavController(v).navigate(R.id.navigation_predictions));
         binding.cardEntries.setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.action_navigation_home_to_navigation_entries));
         todayCard = new TodayCard(this, binding.cardToday, binding.todayContainer);
@@ -178,11 +180,13 @@ public class HomeFragment extends Fragment {
             binding.textUserName.setText(user.getDisplayName() + " さんとしてログイン中");
             binding.layoutLogin.setVisibility(View.GONE);
             binding.btnFavoriteHorses.setVisibility(View.VISIBLE);
+            binding.btnPredictions.setVisibility(View.VISIBLE);
         } else {
             // 未ログイン
             binding.layoutUserInfo.setVisibility(View.GONE);
             binding.layoutLogin.setVisibility(View.VISIBLE);
             binding.btnFavoriteHorses.setVisibility(View.GONE);
+            binding.btnPredictions.setVisibility(View.GONE);
         }
     }
 

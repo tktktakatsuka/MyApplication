@@ -61,6 +61,12 @@
 
 
     <fragment
+        android:id="@+id/navigation_predictions"
+        android:name="com.tktkcompany.kakoRaceKeiba.ui.prediction.PredictionsFragment"
+        android:label="予想の答え合わせ"
+        tools:layout="@layout/fragment_entries" />
+
+    <fragment
         android:id="@+id/navigation_entries"
         android:name="com.tktkcompany.kakoRaceKeiba.ui.entries.EntriesFragment"
         android:label="今週の出走馬"

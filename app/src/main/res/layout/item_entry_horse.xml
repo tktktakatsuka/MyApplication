@@ -33,6 +33,18 @@
                 android:textColor="#BDBDBD"
                 android:textSize="22sp" />
 
+            <!-- 自分の予想の印（タップで ◎→○→▲→△→なし。印が無い間は薄く「印」） -->
+            <TextView
+                android:id="@+id/text_entry_mark"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="予想の印"
+                android:gravity="center"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
             <!-- 馬番（背景は枠の色） -->
             <TextView
                 android:id="@+id/text_entry_number"
@@ -82,6 +94,16 @@
             android:padding="8dp"
             android:textColor="#333333"
             android:textSize="13sp"
+            android:visibility="gone" />
+
+        <!-- このレースの結果（確定したら表示） -->
+        <TextView
+            android:id="@+id/text_entry_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textSize="15sp"
+            android:textStyle="bold"
             android:visibility="gone" />
 
         <!-- 単勝・複勝オッズ（取れた時だけ表示） -->
