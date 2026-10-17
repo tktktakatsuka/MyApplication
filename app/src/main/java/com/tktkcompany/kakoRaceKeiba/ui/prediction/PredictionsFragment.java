@@ -18,6 +18,7 @@ import androidx.navigation.Navigation;
 
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentEntriesBinding;
+import com.tktkcompany.kakoRaceKeiba.db.KeibalabPayouts;
 import com.tktkcompany.kakoRaceKeiba.db.KeibalabResults;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.EntriesFragment;
@@ -52,25 +53,101 @@ public class PredictionsFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentEntriesBinding.inflate(inflater, container, false);
         binding.textEntriesLead.setText("出走表で馬の左の「印」をタップすると、◎○▲△の予想を付けられます。レース後にここで答え合わせできます");
-        Predictions.loadAll(races -> {
+        Predictions.loadAll(races -> Bets.loadAll(bets -> {
             if (binding == null || !isAdded()) return;
-            if (races.isEmpty()) {
+            if (races.isEmpty() && bets.isEmpty()) {
                 binding.progressBar.setVisibility(View.GONE);
-                binding.textEntriesEmpty.setText("まだ予想がありません");
+                binding.textEntriesEmpty.setText("まだ予想も買い目の記録もありません");
                 binding.textEntriesEmpty.setVisibility(View.VISIBLE);
                 return;
             }
             EXECUTOR.execute(() -> {
-                Map<String, Map<String, String>> ranks = loadRanks(races);
+                Map<String, Map<String, String>> ranks = races.isEmpty() ? new HashMap<>() : loadRanks(races);
+                List<Bets.Bet> settled = settleFinished(bets);
                 if (getActivity() == null) return;
                 getActivity().runOnUiThread(() -> {
                     if (binding == null || !isAdded()) return;
                     binding.progressBar.setVisibility(View.GONE);
                     render(races, ranks);
+                    renderBets(settled);
                 });
             });
-        });
+        }));
         return binding.getRoot();
+    }
+
+    /** 結果のまだ入っていない買い目のうち、レースが終わっているものの払い戻しを取って入れる（レースごとに1回） */
+    private static List<Bets.Bet> settleFinished(List<Bets.Bet> bets) {
+        String today = LocalDate.now().format(YMD);
+        Map<String, List<KeibalabPayouts.Payout>> cache = new HashMap<>();
+        List<Bets.Bet> result = new java.util.ArrayList<>();
+        for (Bets.Bet b : bets) {
+            if (b.isSettled() || b.date.compareTo(today) > 0) {
+                result.add(b);
+                continue;
+            }
+            String key = raceKey(b.date, b.course, b.raceNo);
+            List<KeibalabPayouts.Payout> payouts = cache.get(key);
+            if (payouts == null) {
+                try {
+                    payouts = KeibalabPayouts.fetchBlocking(b.date, b.course, b.raceNo);
+                } catch (Exception e) {
+                    Log.w(TAG, "払い戻しの取得に失敗", e);
+                    payouts = new java.util.ArrayList<>();
+                }
+                cache.put(key, payouts);
+            }
+            result.addAll(Bets.settle(java.util.Collections.singletonList(b), payouts));
+        }
+        return result;
+    }
+
+    /** 買い目の収支（全体と最新の開催日）と、買い目の一覧 */
+    private void renderBets(List<Bets.Bet> bets) {
+        if (bets.isEmpty()) return;
+        Bets.Summary all = new Bets.Summary();
+        Bets.Summary latest = new Bets.Summary();
+        String latestDate = bets.get(0).date;
+        for (Bets.Bet b : bets) {
+            all.add(b);
+            if (b.date.equals(latestDate)) latest.add(b);
+        }
+        StringBuilder lead = new StringBuilder(binding.textEntriesLead.getText());
+        lead.append("\n\n🎫 買い目の収支");
+        if (latest.count > 0) lead.append("\n").append(WeekendDays.formatShort(latestDate)).append("　").append(latest.label());
+        if (all.count > latest.count) lead.append("\nこれまで　").append(all.label());
+        if (all.count == 0) lead.append("\n結果が出たら、ここに投資・払戻・回収率を出します");
+        binding.textEntriesLead.setText(lead);
+
+        TextView header = new TextView(requireContext());
+        header.setText("🎫 記録した買い目");
+        header.setTextSize(18);
+        header.setTextColor(0xFF333333);
+        header.setTypeface(header.getTypeface(), Typeface.BOLD);
+        header.setPadding(0, 32, 0, 8);
+        binding.entriesContainer.addView(header);
+        for (Bets.Bet b : bets) {
+            TextView row = new TextView(requireContext());
+            SpannableStringBuilder text = new SpannableStringBuilder();
+            text.append(WeekendDays.formatShort(b.date)).append(" ").append(b.course).append(String.valueOf(b.raceNo)).append("R　")
+                    .append(b.label());
+            if (b.isSettled()) {
+                text.append("　");
+                int from = text.length();
+                text.append(b.payout > 0 ? "的中 " + String.format("%,d", b.payout) + "円" : "はずれ");
+                if (b.payout > 0) {
+                    text.setSpan(new ForegroundColorSpan(0xFFC62828), from, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    text.setSpan(new StyleSpan(Typeface.BOLD), from, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            } else {
+                text.append("　結果待ち");
+            }
+            row.setText(text);
+            row.setTextSize(13);
+            row.setTextColor(0xFF333333);
+            row.setPadding(8, 10, 8, 10);
+            binding.entriesContainer.addView(row);
+        }
     }
 
     private static String raceKey(String date, String course, int raceNo) {
@@ -121,6 +198,11 @@ public class PredictionsFragment extends Fragment {
     }
 
     private void render(List<Predictions.Race> races, Map<String, Map<String, String>> ranks) {
+        binding.entriesContainer.removeAllViews();
+        if (races.isEmpty()) {
+            binding.textEntriesLead.setText("出走表で「印」をタップすると◎○▲△の予想を、「🎫 買い目を記録する」で買い目を残せます");
+            return;
+        }
         PredictionStats all = new PredictionStats();
         PredictionStats latest = new PredictionStats();
         String latestDate = races.get(0).date;

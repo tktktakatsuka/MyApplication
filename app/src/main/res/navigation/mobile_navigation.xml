@@ -63,7 +63,7 @@
     <fragment
         android:id="@+id/navigation_predictions"
         android:name="com.tktkcompany.kakoRaceKeiba.ui.prediction.PredictionsFragment"
-        android:label="予想の答え合わせ"
+        android:label="予想・買い目の答え合わせ"
         tools:layout="@layout/fragment_entries" />
 
     <fragment

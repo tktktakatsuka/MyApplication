@@ -29,6 +29,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentRaceresultsBinding;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
+import com.tktkcompany.kakoRaceKeiba.db.KeibalabPayouts;
 import com.tktkcompany.kakoRaceKeiba.db.KeibalabResults;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
@@ -190,9 +191,12 @@ public class RaceResultsFragment extends Fragment {
         if (table.getChildCount() == 0) {
             titleTv.setText(raceNo + "R   " + (result.getRaceTitle() != null ? result.getRaceTitle() : ""));
             titleTv.setPadding(16, 8, 16, 8);
-            timeTv.setText(formatHassouTime(result.getHassouTime()));
+            String info = formatHassouTime(result.getHassouTime());
+            timeTv.setText(info + "\n💴 払い戻しを見る ›");
             timeTv.setTextSize(12);
             timeTv.setPadding(16, 8, 16, 16);
+            // 払い戻しはタップしたときだけ keibalab から取る（12レース分をまとめて取りに行かないため）
+            timeTv.setOnClickListener(v -> loadPayouts(timeTv, info, result.getKaisaibi(), result.getKaisaijo(), raceNo));
             table.addView(createHeaderRow());
         }
         TableRow row = createDataRow(result);
@@ -217,6 +221,41 @@ public class RaceResultsFragment extends Fragment {
         binding.scrollResults.post(() -> {
             if (binding == null) return;
             binding.scrollResults.smoothScrollTo(0, Math.max(0, title.getTop() - 8));
+        });
+    }
+
+    private void loadPayouts(TextView view, String info, String date, String course, int raceNo) {
+        view.setText(info + "\n💴 払い戻しを読み込み中…");
+        view.setOnClickListener(null);
+        LIVE_EXECUTOR.execute(() -> {
+            List<KeibalabPayouts.Payout> payouts;
+            try {
+                payouts = KeibalabPayouts.fetchBlocking(date, course, raceNo);
+            } catch (Exception e) {
+                payouts = new ArrayList<>();
+            }
+            List<KeibalabPayouts.Payout> result = payouts;
+            if (getActivity() == null) return;
+            getActivity().runOnUiThread(() -> {
+                if (binding == null || !isAdded()) return;
+                if (result.isEmpty()) {
+                    view.setText(info + "\n💴 払い戻しを取得できませんでした（タップで再読み込み）");
+                    view.setOnClickListener(v -> loadPayouts(view, info, date, course, raceNo));
+                    return;
+                }
+                StringBuilder sb = new StringBuilder(info).append("\n💴 払い戻し");
+                String lastType = null;
+                for (KeibalabPayouts.Payout p : result) {
+                    if (!p.type.equals(lastType)) {
+                        sb.append("\n").append(p.type).append("　");
+                        lastType = p.type;
+                    } else {
+                        sb.append("　");
+                    }
+                    sb.append(p.numbers).append(" ").append(String.format("%,d", p.yen)).append("円");
+                }
+                view.setText(sb);
+            });
         });
     }
 

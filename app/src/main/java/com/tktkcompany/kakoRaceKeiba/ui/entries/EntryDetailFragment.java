@@ -29,10 +29,13 @@ import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.ads.RecentRunsReward;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentEntriesBinding;
 import com.tktkcompany.kakoRaceKeiba.db.KeibalabOdds;
+import com.tktkcompany.kakoRaceKeiba.db.KeibalabPayouts;
+import com.tktkcompany.kakoRaceKeiba.db.KeibalabRaceCard;
 import com.tktkcompany.kakoRaceKeiba.db.KeibalabResults;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.notification.FavoriteResultWorker;
 import com.tktkcompany.kakoRaceKeiba.notification.RaceStartNotices;
+import com.tktkcompany.kakoRaceKeiba.ui.prediction.Bets;
 import com.tktkcompany.kakoRaceKeiba.ui.prediction.Predictions;
 import com.tktkcompany.kakoRaceKeiba.ui.raceResult.RaceResultsFragment;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemoDialog;
@@ -83,6 +86,13 @@ public class EntryDetailFragment extends Fragment {
     private Map<String, String> marks = new HashMap<>();
     private final Map<String, TextView> markViews = new HashMap<>();
     private final Map<String, TextView> resultViews = new HashMap<>();
+    // 馬番（先頭の0なし）→ 馬のカード（当日の馬体重・取消を出すため）
+    private final Map<String, View> horseCards = new HashMap<>();
+    // このレースの買い目と払い戻し
+    @Nullable private LinearLayout betsSection;
+    @Nullable private SupabaseManager.RaceEntry raceForBets;
+    private List<Bets.Bet> raceBets = new ArrayList<>();
+    private List<KeibalabPayouts.Payout> payouts = new ArrayList<>();
     private static final ExecutorService ODDS_EXECUTOR = Executors.newSingleThreadExecutor();
 
     @Override
@@ -221,6 +231,7 @@ public class EntryDetailFragment extends Fragment {
         oddsViews.clear();
         markViews.clear();
         resultViews.clear();
+        horseCards.clear();
         // 4走以上ある馬が1頭もいなければ、広告を見ても増えないのでボタンを出さない
         boolean anyHidden = false;
         for (List<SupabaseManager.RaceResult> runs : results.values()) {
@@ -229,6 +240,12 @@ public class EntryDetailFragment extends Fragment {
         if (anyHidden || RecentRunsReward.isUnlocked(requireContext())) {
             binding.entriesContainer.addView(createRewardView(entries));
         }
+        // 買い目の記録（このレースの分）と、確定後の払い戻し
+        betsSection = new LinearLayout(requireContext());
+        betsSection.setOrientation(LinearLayout.VERTICAL);
+        binding.entriesContainer.addView(betsSection);
+        raceForBets = entries.get(0);
+        loadBets();
         for (SupabaseManager.RaceEntry entry : entries) {
             View card = inflater.inflate(R.layout.item_entry_horse, binding.entriesContainer, false);
 
@@ -281,14 +298,268 @@ public class EntryDetailFragment extends Fragment {
                 }
             }
             binding.entriesContainer.addView(card);
-            if (entry.getHorseNumber() != null) oddsViews.put(entry.getHorseNumber().trim(), card.findViewById(R.id.text_entry_odds));
+            if (entry.getHorseNumber() != null) {
+                String no = entry.getHorseNumber().trim().replaceFirst("^0+(?=\\d)", "");
+                oddsViews.put(entry.getHorseNumber().trim(), card.findViewById(R.id.text_entry_odds));
+                horseCards.put(no, card);
+            }
         }
         // 行がフォーカスを取ってスクロール位置がずれないよう、先頭から表示する
         binding.getRoot().post(() -> {
             if (binding != null) binding.getRoot().scrollTo(0, 0);
         });
         loadOdds(entries);
+        loadRaceCard(entries);
         loadTodayResult(entries.get(0));
+    }
+
+    /**
+     * 当日の馬体重・出走取消・騎手変更と、天気・馬場を keibalab から取って出す。
+     * 朝の取り込みより後の変更を反映するため、出走表を開くたびに取りに行く。枠順確定前は何もしない
+     */
+    private void loadRaceCard(List<SupabaseManager.RaceEntry> entries) {
+        if (horseCards.isEmpty()) return;
+        SupabaseManager.RaceEntry first = entries.get(0);
+        ODDS_EXECUTOR.execute(() -> {
+            KeibalabRaceCard.Card card;
+            try {
+                card = KeibalabRaceCard.fetchBlocking(first.getKaisaibi(), first.getKaisaijo(), first.getRaceNo());
+            } catch (Exception e) {
+                Log.w("EntryDetailFragment", "当日の出馬表の取得に失敗", e);
+                return;
+            }
+            if (getActivity() == null) return;
+            getActivity().runOnUiThread(() -> {
+                if (binding == null || !isAdded()) return;
+                showRaceCard(entries, card);
+            });
+        });
+    }
+
+    private void showRaceCard(List<SupabaseManager.RaceEntry> entries, KeibalabRaceCard.Card card) {
+        String condition = card.conditionLabel();
+        if (!condition.isEmpty()) binding.textEntriesLead.append("\n" + condition);
+        int scratchedCount = 0;
+        for (SupabaseManager.RaceEntry entry : entries) {
+            if (entry.getHorseNumber() == null) continue;
+            String no = entry.getHorseNumber().trim().replaceFirst("^0+(?=\\d)", "");
+            View view = horseCards.get(no);
+            KeibalabRaceCard.Horse horse = card.horses.get(no);
+            if (view == null || horse == null) continue;
+            TextView today = view.findViewById(R.id.text_entry_today);
+            SpannableStringBuilder text = new SpannableStringBuilder();
+            if (horse.scratched) {
+                scratchedCount++;
+                appendStyled(text, "出走取消・除外", 0xFFC62828);
+                // 取り消された馬は薄く表示し、オッズは出さない
+                view.setAlpha(0.45f);
+                view.findViewById(R.id.text_entry_odds).setVisibility(View.GONE);
+            } else {
+                if (horse.weight != null) {
+                    text.append("馬体重 ");
+                    appendStyled(text, horse.weight, weightColor(horse.weight));
+                }
+                String jockeyBefore = entry.getJockey() != null ? entry.getJockey().trim() : null;
+                if (horse.jockey != null && jockeyBefore != null && !sameJockey(jockeyBefore, horse.jockey)) {
+                    if (text.length() > 0) text.append("　");
+                    appendStyled(text, "騎手変更 " + jockeyBefore + "→" + horse.jockey, 0xFFE65100);
+                }
+            }
+            if (text.length() == 0) continue;
+            today.setText(text);
+            today.setVisibility(View.VISIBLE);
+        }
+        if (scratchedCount > 0) binding.textEntriesLead.append("\n出走取消・除外 " + scratchedCount + "頭");
+    }
+
+    private void loadBets() {
+        if (!Bets.isSignedIn() || raceForBets == null) {
+            renderBets();
+            return;
+        }
+        SupabaseManager.RaceEntry race = raceForBets;
+        Bets.loadAll(all -> {
+            if (binding == null || !isAdded()) return;
+            List<Bets.Bet> mine = new ArrayList<>();
+            for (Bets.Bet b : all) {
+                if (b.sameRace(race.getKaisaibi(), race.getKaisaijo(), race.getRaceNo())) mine.add(b);
+            }
+            raceBets = payouts.isEmpty() ? mine : Bets.settle(mine, payouts);
+            renderBets();
+        });
+    }
+
+    /** 買い目の一覧・記録ボタン・払い戻しの表を出し直す */
+    private void renderBets() {
+        if (betsSection == null || binding == null) return;
+        betsSection.removeAllViews();
+        float density = getResources().getDisplayMetrics().density;
+
+        if (!payouts.isEmpty()) betsSection.addView(createPayoutView(density));
+
+        LinearLayout box = new LinearLayout(requireContext());
+        box.setOrientation(LinearLayout.VERTICAL);
+        int pad = (int) (12 * density);
+        box.setPadding(pad, (int) (8 * density), pad, (int) (8 * density));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(10 * density);
+        bg.setColor(0xFFF5F5F5);
+        box.setBackground(bg);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, 0, 0, (int) (8 * density));
+        box.setLayoutParams(params);
+
+        Bets.Summary summary = new Bets.Summary();
+        for (Bets.Bet b : raceBets) {
+            summary.add(b);
+            TextView row = new TextView(requireContext());
+            SpannableStringBuilder text = new SpannableStringBuilder("🎫 " + b.label());
+            if (b.isSettled()) {
+                text.append("　");
+                if (b.payout > 0) appendStyled(text, "的中 " + String.format("%,d", b.payout) + "円", 0xFFC62828);
+                else text.append("はずれ");
+            }
+            row.setText(text);
+            row.setTextSize(14);
+            row.setTextColor(0xFF333333);
+            row.setPadding(0, (int) (4 * density), 0, (int) (4 * density));
+            row.setOnLongClickListener(v -> {
+                new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                        .setMessage(b.label() + " を消しますか？")
+                        .setPositiveButton("消す", (d, w) -> {
+                            Bets.delete(b);
+                            raceBets.remove(b);
+                            renderBets();
+                        })
+                        .setNegativeButton("キャンセル", null)
+                        .show();
+                return true;
+            });
+            box.addView(row);
+        }
+        if (summary.count > 0) {
+            TextView total = new TextView(requireContext());
+            total.setText(summary.label());
+            total.setTextSize(13);
+            total.setTextColor(0xFF555555);
+            box.addView(total);
+        }
+        TextView add = new TextView(requireContext());
+        add.setText(raceBets.isEmpty() ? "🎫 買い目を記録する（記録だけで、馬券は買いません）" : "＋ 買い目を追加（長押しで消す）");
+        add.setTextSize(14);
+        add.setTextColor(0xFF1565C0);
+        add.setPadding(0, (int) (6 * density), 0, (int) (6 * density));
+        add.setOnClickListener(v -> showAddBetDialog());
+        box.addView(add);
+        betsSection.addView(box);
+    }
+
+    /** 払い戻しの表（券種ごとに1行） */
+    private View createPayoutView(float density) {
+        TextView view = new TextView(requireContext());
+        SpannableStringBuilder text = new SpannableStringBuilder();
+        appendStyled(text, "払い戻し", 0xFF333333);
+        String lastType = null;
+        for (KeibalabPayouts.Payout p : payouts) {
+            if (!p.type.equals(lastType)) {
+                text.append("\n").append(p.type).append("　");
+                lastType = p.type;
+            } else {
+                text.append("　");
+            }
+            text.append(p.numbers).append(" ").append(String.format("%,d", p.yen)).append("円");
+        }
+        view.setText(text);
+        view.setTextSize(13);
+        view.setTextColor(0xFF333333);
+        view.setLineSpacing(0, 1.2f);
+        int pad = (int) (12 * density);
+        view.setPadding(pad, pad, pad, pad);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(10 * density);
+        bg.setColor(0xFFFFFDE7);
+        bg.setStroke((int) Math.max(1, density), 0xFFFBC02D);
+        view.setBackground(bg);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, 0, 0, (int) (8 * density));
+        view.setLayoutParams(params);
+        return view;
+    }
+
+    private void showAddBetDialog() {
+        if (!Bets.isSignedIn()) {
+            Toast.makeText(getContext(), "買い目を記録するにはログインが必要です", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (raceForBets == null) return;
+        float density = getResources().getDisplayMetrics().density;
+        LinearLayout form = new LinearLayout(requireContext());
+        form.setOrientation(LinearLayout.VERTICAL);
+        int pad = (int) (20 * density);
+        form.setPadding(pad, (int) (8 * density), pad, 0);
+
+        android.widget.Spinner type = new android.widget.Spinner(requireContext());
+        type.setAdapter(new android.widget.ArrayAdapter<>(requireContext(),
+                android.R.layout.simple_spinner_dropdown_item, KeibalabPayouts.TYPES));
+        form.addView(type);
+        android.widget.EditText numbers = new android.widget.EditText(requireContext());
+        numbers.setHint("馬番（例: 5-10。枠連は枠番）");
+        numbers.setInputType(android.text.InputType.TYPE_CLASS_PHONE);
+        form.addView(numbers);
+        android.widget.EditText amount = new android.widget.EditText(requireContext());
+        amount.setHint("金額（円）");
+        amount.setText("100");
+        amount.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        form.addView(amount);
+
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("買い目を記録")
+                .setView(form)
+                .setPositiveButton("記録", null)
+                .setNegativeButton("キャンセル", null)
+                .create();
+        dialog.setOnShowListener(d -> dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String t = (String) type.getSelectedItem();
+            String n = numbers.getText().toString().trim();
+            int yen;
+            try {
+                yen = Integer.parseInt(amount.getText().toString().trim());
+            } catch (NumberFormatException e) {
+                yen = 0;
+            }
+            String error = Bets.validate(t, n, yen);
+            if (error != null) {
+                Toast.makeText(getContext(), error, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            SupabaseManager.RaceEntry r = raceForBets;
+            Bets.add(r.getKaisaibi(), r.getKaisaijo(), r.getRaceNo(), r.getRaceTitle(), t, n, yen);
+            dialog.dismiss();
+            loadBets();
+        }));
+        dialog.show();
+    }
+
+    /** 増減が大きい（±10kg以上）ときは目立たせる */
+    private static int weightColor(String weight) {
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\(([+-]?\\d+)\\)").matcher(weight);
+        if (m.find() && Math.abs(Integer.parseInt(m.group(1))) >= 10) return 0xFFC62828;
+        return 0xFF333333;
+    }
+
+    /** 出馬表の騎手名は略称で、取り込み時と同じとは限らないので、片方がもう片方で始まれば同じ騎手とみなす */
+    static boolean sameJockey(String a, String b) {
+        String x = a.replaceAll("[\\s▲△☆★◇]", ""), y = b.replaceAll("[\\s▲△☆★◇]", "");
+        return x.startsWith(y) || y.startsWith(x);
+    }
+
+    private static void appendStyled(SpannableStringBuilder sb, String text, int color) {
+        int from = sb.length();
+        sb.append(text);
+        sb.setSpan(new android.text.style.ForegroundColorSpan(color), from, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        sb.setSpan(new StyleSpan(Typeface.BOLD), from, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
     /**
@@ -371,8 +642,11 @@ public class EntryDetailFragment extends Fragment {
         if (!race.getKaisaibi().equals(org.threeten.bp.LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")))) return;
         ODDS_EXECUTOR.execute(() -> {
             List<SupabaseManager.RaceResult> rows;
+            List<KeibalabPayouts.Payout> fetched;
             try {
                 rows = KeibalabResults.fetchRaceBlocking(race.getKaisaibi(), race.getKaisaijo(), race.getRaceNo());
+                fetched = rows.isEmpty() ? new ArrayList<>()
+                        : KeibalabPayouts.fetchBlocking(race.getKaisaibi(), race.getKaisaijo(), race.getRaceNo());
             } catch (Exception e) {
                 Log.w("EntryDetailFragment", "結果の取得に失敗", e);
                 return;
@@ -381,6 +655,9 @@ public class EntryDetailFragment extends Fragment {
             getActivity().runOnUiThread(() -> {
                 if (binding == null || !isAdded()) return;
                 showResult(rows);
+                payouts = fetched;
+                raceBets = Bets.settle(raceBets, payouts);
+                renderBets();
             });
         });
     }

@@ -96,6 +96,16 @@
             android:textSize="13sp"
             android:visibility="gone" />
 
+        <!-- 当日の情報（馬体重・出走取消・騎手変更）。keibalab から取れたら表示 -->
+        <TextView
+            android:id="@+id/text_entry_today"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:visibility="gone" />
+
         <!-- このレースの結果（確定したら表示） -->
         <TextView
             android:id="@+id/text_entry_result"
