@@ -252,8 +252,8 @@ public class HomeFragment extends Fragment {
     private void updateUpcomingHint(FirebaseUser user) {
         if (binding == null) return;
         binding.textUpcomingHint.setText(user != null
-                ? "お気に入り馬・メモした馬の出走予定と、お気に入り馬のレース結果を通知でお知らせします"
-                : "ログインしてお気に入り馬を登録すると、出走予定やレース結果を通知でお知らせします");
+                ? "お気に入り馬・メモした馬の出走予定と、お気に入り馬の発走30分前・レース結果を通知でお知らせします"
+                : "ログインしてお気に入り馬を登録すると、出走予定・発走前・レース結果を通知でお知らせします");
     }
 
     //バナーを表示するメソッド

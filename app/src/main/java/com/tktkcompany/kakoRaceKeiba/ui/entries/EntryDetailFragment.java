@@ -27,6 +27,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentEntriesBinding;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
+import com.tktkcompany.kakoRaceKeiba.notification.FavoriteResultWorker;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemoDialog;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemos;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
@@ -251,6 +252,8 @@ public class EntryDetailFragment extends Fragment {
             }
             boolean added = FavoriteHorseNames.toggle(favorites, horseName);
             paint.run();
+            // このレースの発走前の通知をすぐ予約する（定期チェックを待つと間に合わないことがある）
+            if (added) FavoriteResultWorker.runOnce(requireContext());
             Toast.makeText(getContext(), horseName + (added ? "をお気に入りに追加しました" : "をお気に入りから削除しました"), Toast.LENGTH_SHORT).show();
         });
     }

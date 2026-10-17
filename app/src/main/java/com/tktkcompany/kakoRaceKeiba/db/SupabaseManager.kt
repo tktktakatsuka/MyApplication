@@ -149,7 +149,11 @@ object SupabaseManager {
         @SerialName("sex_age") val sexAge: String? = null,
         @SerialName("jockey") val jockey: String? = null,
         @SerialName("weight") val weight: String? = null,
-        @SerialName("trainer") val trainer: String? = null
+        @SerialName("trainer") val trainer: String? = null,
+        // 出馬表の取り込み・当日のオッズ更新で入る単勝オッズと人気（列が無い・未取得なら null）
+        @SerialName("win_odds") val winOdds: String? = null,
+        @SerialName("popular") val popular: String? = null,
+        @SerialName("odds_updated_at") val oddsUpdatedAt: String? = null
     )
 
     @JvmStatic

@@ -147,6 +147,10 @@ public class MainActivity extends AppCompatActivity {
 
         // お気に入り馬の結果チェックを定期実行
         FavoriteResultWorker.schedule(this);
+        if (savedInstanceState == null) {
+            // ほかの画面で加えたお気に入りも、発走前の通知を早めに予約しておく
+            FavoriteResultWorker.runOnce(this);
+        }
 
         // FCM トークン取得
         FirebaseMessaging.getInstance().getToken()

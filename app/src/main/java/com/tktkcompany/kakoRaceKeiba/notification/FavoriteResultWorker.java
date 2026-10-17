@@ -7,7 +7,9 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.work.Constraints;
 import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.ExistingWorkPolicy;
 import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
@@ -32,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * お気に入り馬の新しいレース結果と、お気に入り馬・メモした馬の出走予定を定期的に確認し、見つかったら通知する。
+ * お気に入り馬が出るレースは、発走前の通知（{@link RaceStartWorker}）もここで予約する。
  */
 public class FavoriteResultWorker extends Worker {
 
@@ -58,6 +61,20 @@ public class FavoriteResultWorker extends Worker {
                 .build();
         WorkManager.getInstance(context)
                 .enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request);    }
+
+    /**
+     * 定期チェックを待たずに1回確認する。
+     * お気に入りに加えた馬の出走前の通知を、次の定期チェックより前に予約できるようにする。
+     */
+    public static void runOnce(Context context) {
+        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(FavoriteResultWorker.class)
+                // 直前に加えたお気に入りが Firebase に書き込まれるのを少し待つ
+                .setInitialDelay(10, TimeUnit.SECONDS)
+                .setConstraints(new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+                .build();
+        WorkManager.getInstance(context)
+                .enqueueUniqueWork(WORK_NAME + "_now", ExistingWorkPolicy.REPLACE, request);
+    }
 
     @NonNull
     @Override
@@ -127,12 +144,17 @@ public class FavoriteResultWorker extends Worker {
             if (key.compareTo(today) >= 0) kept.add(key);
         }
         List<EntryNotices.Item> fresh = new ArrayList<>();
+        Set<String> scheduledRaces = new HashSet<>();
 
         for (SupabaseManager.RaceEntry e : SupabaseManager.fetchUpcomingEntriesBlocking(today)) {
             String key = FavoriteHorseNames.normalize(e.getHorseName());
             boolean favorite = favorites.contains(key);
             String memo = memos.get(key);
             if (!favorite && memo == null) continue;
+            // お気に入り馬が出るレースは、発走前の通知も予約する（1レースにつき1回）
+            if (favorite && scheduledRaces.add(e.getKaisaibi() + "|" + e.getKaisaijo() + "|" + e.getRaceNo())) {
+                RaceStartWorker.schedule(context, e);
+            }
             EntryNotices.Item item = new EntryNotices.Item(e.getHorseName(), e.getKaisaibi(), e.getKaisaijo(),
                     e.getRaceNo(), e.getRaceTitle(), e.getRaceInfo(), favorite, memo);
             if (kept.add(item.key())) fresh.add(item);

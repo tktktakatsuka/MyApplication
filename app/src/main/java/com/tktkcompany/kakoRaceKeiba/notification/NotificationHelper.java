@@ -25,6 +25,7 @@ public class NotificationHelper {
     public static final String DEFAULT_CHANNEL_ID = "default_channel";
     public static final String FAVORITE_CHANNEL_ID = "favorite_horse_channel";
     public static final String ENTRY_CHANNEL_ID = "horse_entry_channel";
+    public static final String RACE_START_CHANNEL_ID = "race_start_channel";
 
     public static void createChannels(Context context) {
         NotificationManager manager = context.getSystemService(NotificationManager.class);
@@ -44,6 +45,12 @@ public class NotificationHelper {
                 ENTRY_CHANNEL_ID, "お気に入り馬・メモした馬の出走予定", NotificationManager.IMPORTANCE_DEFAULT);
         entryChannel.setDescription("出馬表に載ったときにお知らせします");
         manager.createNotificationChannel(entryChannel);
+
+        // 発走直前に気づけるよう、ほかの通知より目立たせる
+        NotificationChannel raceStartChannel = new NotificationChannel(
+                RACE_START_CHANNEL_ID, "お気に入り馬の出走前", NotificationManager.IMPORTANCE_HIGH);
+        raceStartChannel.setDescription("お気に入り馬が出るレースの発走30分前にお知らせします");
+        manager.createNotificationChannel(raceStartChannel);
     }
 
     public static boolean canPostNotifications(Context context) {
