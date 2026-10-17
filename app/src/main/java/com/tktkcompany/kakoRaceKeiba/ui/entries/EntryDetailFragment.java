@@ -26,6 +26,7 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.tktkcompany.kakoRaceKeiba.R;
+import com.tktkcompany.kakoRaceKeiba.ads.RecentRunsReward;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentEntriesBinding;
 import com.tktkcompany.kakoRaceKeiba.db.KeibalabOdds;
 import com.tktkcompany.kakoRaceKeiba.db.KeibalabResults;
@@ -57,7 +58,8 @@ import java.util.concurrent.Executors;
 /** 1レース分の出走馬と、それぞれの近走成績・予想の手がかりを表示する */
 public class EntryDetailFragment extends Fragment {
 
-    private static final int RECENT_RUNS = 5;
+    // 近走を10走まで広げるリワード広告（画面を開いたときに読み込んでおく）
+    private final RecentRunsReward reward = new RecentRunsReward();
 
     // 枠番ごとの色（1白 2黒 3赤 4青 5黄 6緑 7橙 8桃）
     private static final int[] WAKU_BACKGROUND = {
@@ -97,6 +99,7 @@ public class EntryDetailFragment extends Fragment {
         raceLabel = (WeekendDays.formatShort(date) + " " + course + raceNo + "R " + raceTitle.trim()).trim();
         binding.textEntriesLead.setText(raceTitle);
         loadEntries(date, course, raceNo);
+        reward.preload(requireContext());
         return binding.getRoot();
     }
 
@@ -160,7 +163,7 @@ public class EntryDetailFragment extends Fragment {
         } else {
             text.append(entries.size() + "頭立て");
         }
-        text.append("\n各馬の近走" + RECENT_RUNS + "走（新しい順）。行をタップするとそのレースの結果を表示します");
+        text.append("\n各馬の近走" + RecentRunsReward.runs(requireContext()) + "走（新しい順）。行をタップするとそのレースの結果を表示します");
         binding.textEntriesLead.setText(text);
         binding.textEntriesLead.setTextColor(0xFF333333);
     }
@@ -185,7 +188,7 @@ public class EntryDetailFragment extends Fragment {
         List<String> names = new ArrayList<>();
         for (SupabaseManager.RaceEntry entry : entries) names.add(entry.getHorseName());
 
-        SupabaseManager.fetchRecentResultsForHorses(names, RECENT_RUNS, new SupabaseManager.SupabaseCallback<Map<String, List<SupabaseManager.RaceResult>>>() {
+        SupabaseManager.fetchRecentResultsForHorses(names, RecentRunsReward.runs(requireContext()), new SupabaseManager.SupabaseCallback<Map<String, List<SupabaseManager.RaceResult>>>() {
             @Override
             public void onSuccess(Map<String, List<SupabaseManager.RaceResult>> results) {
                 if (binding == null || !isAdded()) return;
@@ -215,6 +218,7 @@ public class EntryDetailFragment extends Fragment {
         oddsViews.clear();
         markViews.clear();
         resultViews.clear();
+        binding.entriesContainer.addView(createRewardView(entries));
         for (SupabaseManager.RaceEntry entry : entries) {
             View card = inflater.inflate(R.layout.item_entry_horse, binding.entriesContainer, false);
 
@@ -265,6 +269,53 @@ public class EntryDetailFragment extends Fragment {
         });
         loadOdds(entries);
         loadTodayResult(entries.get(0));
+    }
+
+    /**
+     * 出走馬の一覧の上に出す、近走を10走まで広げるボタン（リワード広告）。
+     * 今日すでに見ていれば、10走を表示中であることだけ出す
+     */
+    private View createRewardView(List<SupabaseManager.RaceEntry> entries) {
+        float density = getResources().getDisplayMetrics().density;
+        TextView view = new TextView(requireContext());
+        int pad = (int) (12 * density);
+        view.setPadding(pad, pad, pad, pad);
+        view.setTextSize(14);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, (int) (4 * density), 0, (int) (8 * density));
+        view.setLayoutParams(params);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(10 * density);
+        if (RecentRunsReward.isUnlocked(requireContext())) {
+            view.setText("✓ 今日は近走を" + RecentRunsReward.REWARDED_RUNS + "走まで表示しています");
+            view.setTextColor(0xFF2E7D32);
+            bg.setColor(0xFFE8F5E9);
+        } else {
+            view.setText("▶ 広告を見て近走を" + RecentRunsReward.REWARDED_RUNS + "走まで表示（今日いっぱい）");
+            view.setTextColor(0xFF0D47A1);
+            view.setTypeface(view.getTypeface(), Typeface.BOLD);
+            bg.setColor(0xFFE3F2FD);
+            bg.setStroke((int) Math.max(1, density), 0xFF1565C0);
+            view.setOnClickListener(v -> reward.show(requireActivity(), new RecentRunsReward.Listener() {
+                @Override
+                public void onRewarded() {
+                    if (binding == null || !isAdded()) return;
+                    Toast.makeText(getContext(), "今日いっぱい、近走を" + RecentRunsReward.REWARDED_RUNS + "走まで表示します",
+                            Toast.LENGTH_SHORT).show();
+                    showHeader(entries);
+                    binding.progressBar.setVisibility(View.VISIBLE);
+                    loadPastResults(entries);
+                }
+
+                @Override
+                public void onNotShown(String message) {
+                    if (isAdded()) Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                }
+            }));
+        }
+        view.setBackground(bg);
+        return view;
     }
 
     /** 印をタップするたびに ◎→○→▲→△→なし。◎○▲は1頭だけなので、ほかの馬の印も書き直す */
