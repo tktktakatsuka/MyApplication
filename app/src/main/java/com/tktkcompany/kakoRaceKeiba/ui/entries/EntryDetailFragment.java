@@ -60,6 +60,8 @@ public class EntryDetailFragment extends Fragment {
 
     // 近走を10走まで広げるリワード広告（画面を開いたときに読み込んでおく）
     private final RecentRunsReward reward = new RecentRunsReward();
+    // 読み込んだ近走（10走分）。広告を見たあとに読み直さずに表示を広げるため
+    private Map<String, List<SupabaseManager.RaceResult>> lastResults = new HashMap<>();
 
     // 枠番ごとの色（1白 2黒 3赤 4青 5黄 6緑 7橙 8桃）
     private static final int[] WAKU_BACKGROUND = {
@@ -188,7 +190,7 @@ public class EntryDetailFragment extends Fragment {
         List<String> names = new ArrayList<>();
         for (SupabaseManager.RaceEntry entry : entries) names.add(entry.getHorseName());
 
-        SupabaseManager.fetchRecentResultsForHorses(names, RecentRunsReward.runs(requireContext()), new SupabaseManager.SupabaseCallback<Map<String, List<SupabaseManager.RaceResult>>>() {
+        SupabaseManager.fetchRecentResultsForHorses(names, RecentRunsReward.REWARDED_RUNS, new SupabaseManager.SupabaseCallback<Map<String, List<SupabaseManager.RaceResult>>>() {
             @Override
             public void onSuccess(Map<String, List<SupabaseManager.RaceResult>> results) {
                 if (binding == null || !isAdded()) return;
@@ -213,12 +215,20 @@ public class EntryDetailFragment extends Fragment {
     }
 
     private void render(List<SupabaseManager.RaceEntry> entries, Map<String, List<SupabaseManager.RaceResult>> results) {
+        lastResults = results;
         LayoutInflater inflater = getLayoutInflater();
         binding.entriesContainer.removeAllViews();
         oddsViews.clear();
         markViews.clear();
         resultViews.clear();
-        binding.entriesContainer.addView(createRewardView(entries));
+        // 4走以上ある馬が1頭もいなければ、広告を見ても増えないのでボタンを出さない
+        boolean anyHidden = false;
+        for (List<SupabaseManager.RaceResult> runs : results.values()) {
+            if (runs.size() > RecentRunsReward.NORMAL_RUNS) anyHidden = true;
+        }
+        if (anyHidden || RecentRunsReward.isUnlocked(requireContext())) {
+            binding.entriesContainer.addView(createRewardView(entries));
+        }
         for (SupabaseManager.RaceEntry entry : entries) {
             View card = inflater.inflate(R.layout.item_entry_horse, binding.entriesContainer, false);
 
@@ -256,8 +266,18 @@ public class EntryDetailFragment extends Fragment {
                 none.setPadding(0, 6, 0, 6);
                 pastContainer.addView(none);
             } else {
-                for (SupabaseManager.RaceResult run : runs) {
+                // 印の計算には取れた分を全部使い、表示はふだん3走（広告を見たら10走）にする
+                int shown = Math.min(runs.size(), RecentRunsReward.runs(requireContext()));
+                for (SupabaseManager.RaceResult run : runs.subList(0, shown)) {
                     pastContainer.addView(createPastRunView(inflater, pastContainer, run));
+                }
+                if (runs.size() > shown) {
+                    TextView more = new TextView(requireContext());
+                    more.setText("ほか" + (runs.size() - shown) + "走（上のボタンから広告を見ると表示）");
+                    more.setTextSize(12);
+                    more.setTextColor(0xFF1565C0);
+                    more.setPadding(0, 6, 0, 6);
+                    pastContainer.addView(more);
                 }
             }
             binding.entriesContainer.addView(card);
@@ -303,9 +323,9 @@ public class EntryDetailFragment extends Fragment {
                     if (binding == null || !isAdded()) return;
                     Toast.makeText(getContext(), "今日いっぱい、近走を" + RecentRunsReward.REWARDED_RUNS + "走まで表示します",
                             Toast.LENGTH_SHORT).show();
+                    // 10走分はもう読んであるので、表示だけ広げる
                     showHeader(entries);
-                    binding.progressBar.setVisibility(View.VISIBLE);
-                    loadPastResults(entries);
+                    render(entries, lastResults);
                 }
 
                 @Override

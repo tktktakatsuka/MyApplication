@@ -12,6 +12,7 @@ import com.google.android.gms.ads.FullScreenContentCallback;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
+import com.tktkcompany.kakoRaceKeiba.BuildConfig;
 
 import org.threeten.bp.LocalDate;
 import org.threeten.bp.format.DateTimeFormatter;
@@ -23,11 +24,13 @@ import org.threeten.bp.format.DateTimeFormatter;
 public final class RecentRunsReward {
 
     /** ふだんの近走の数と、広告を見たあとの数 */
-    public static final int NORMAL_RUNS = 5;
+    public static final int NORMAL_RUNS = 3;
     public static final int REWARDED_RUNS = 10;
 
-    // TODO: 本番のリワード広告ユニットを作ったら差し替える。今は Google のテスト用の広告ユニット
-    private static final String AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917";
+    // 本番の広告ユニット（出走表近走_リワード）。debug 版では本番の広告を出さないよう Google のテスト用を使う
+    private static final String AD_UNIT_ID = BuildConfig.DEBUG
+            ? "ca-app-pub-3940256099942544/5224354917"
+            : "ca-app-pub-4855274440005459/7569100804";
     private static final String PREFS = "rewards";
     private static final String KEY_UNLOCKED_DATE = "recent_runs_unlocked_date";
     private static final String TAG = "RecentRunsReward";
