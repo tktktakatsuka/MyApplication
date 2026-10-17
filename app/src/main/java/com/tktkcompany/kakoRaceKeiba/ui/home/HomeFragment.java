@@ -36,7 +36,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import android.graphics.Typeface;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.style.RelativeSizeSpan;
+import android.text.style.StyleSpan;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -55,6 +60,8 @@ public class HomeFragment extends Fragment {
     private boolean exeSetRaceResult;
     // 「今日の開催」カード（開催日だけ表示）
     private TodayCard todayCard;
+    // 「今週の開催」に出馬表の開催日・競馬場を出したか（出していれば開催中の競馬場の一覧で上書きしない）
+    private boolean entriesSummaryShown;
     // yyyyMMdd形式用
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
@@ -207,8 +214,10 @@ public class HomeFragment extends Fragment {
         for (LocalDate d : days) {
             dayLabels.add(d.format(md) + WeekendDays.getDayOfWeek(d.format(formatter)).trim());
         }
-        binding.textUpcomingBody.setText("開催中の競馬場: " + TextUtils.join("・", joNames)
-                + "\n次の開催日: " + TextUtils.join("・", dayLabels));
+        // 出馬表が読めたら、そちらの開催日・競馬場で書き直す（新潟などの開催も入るため）
+        if (!entriesSummaryShown) {
+            binding.textUpcomingBody.setText(TextUtils.join("・", dayLabels) + "　" + TextUtils.join("・", joNames));
+        }
         binding.cardUpcoming.setVisibility(View.VISIBLE);
         updateUpcomingHint(mAuth != null ? mAuth.getCurrentUser() : null);
     }
@@ -228,8 +237,9 @@ public class HomeFragment extends Fragment {
                     courses.add(e.getKaisaijo());
                     races.add(e.getKaisaibi() + e.getKaisaijo() + e.getRaceNo());
                 }
-                String body = TextUtils.join("・", days) + "　" + TextUtils.join("・", courses)
-                        + "\n" + races.size() + "レースの出走馬と近走成績をチェック";
+                binding.textUpcomingBody.setText(TextUtils.join("・", days) + "　" + TextUtils.join("・", courses));
+                entriesSummaryShown = true;
+                String body = races.size() + "レースの出走馬と近走成績";
                 binding.textEntriesBody.setText(body);
                 binding.cardEntries.setVisibility(View.VISIBLE);
 
@@ -242,13 +252,10 @@ public class HomeFragment extends Fragment {
                         if (FavoriteHorseNames.contains(favorites, e.getHorseName())) favoriteRunners.add(e.getHorseName());
                         if (HorseMemos.find(memos, e.getHorseName()) != null) memoRunners.add(e.getHorseName());
                     }
+                    // 馬名を全部並べると長くなるので、頭数と最初の2頭だけ出す
                     StringBuilder text = new StringBuilder(body);
-                    if (!favoriteRunners.isEmpty()) {
-                        text.append("\n★お気に入り馬が出走予定: ").append(TextUtils.join("・", favoriteRunners));
-                    }
-                    if (!memoRunners.isEmpty()) {
-                        text.append("\n📝メモした馬が出走予定: ").append(TextUtils.join("・", memoRunners));
-                    }
+                    if (!favoriteRunners.isEmpty()) text.append("\n★ お気に入り ").append(runnersLabel(favoriteRunners));
+                    if (!memoRunners.isEmpty()) text.append("\n📝 メモした馬 ").append(runnersLabel(memoRunners));
                     binding.textEntriesBody.setText(text);
                     todayCard.show(entries, favorites);
                 }));
@@ -261,20 +268,36 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    private void updateUpcomingHint(FirebaseUser user) {
-        if (binding == null) return;
-        binding.textUpcomingHint.setText((user != null
-                ? "お気に入り馬・メモした馬の出走予定と、お気に入り馬の発走30分前・レース結果（確定後すぐ）を通知でお知らせします"
-                : "ログインしてお気に入り馬を登録すると、出走予定・発走前・レース結果を通知でお知らせします")
-                + "\n通知の設定 ›");
-        binding.textUpcomingHint.setOnClickListener(v -> showNotificationSettings());
+    /** 1頭なら馬名、何頭もいれば「7頭（バルチックアンバー ほか）」 */
+    static String runnersLabel(Set<String> names) {
+        List<String> list = new ArrayList<>(names);
+        if (list.size() == 1) return list.get(0);
+        return list.size() + "頭（" + list.get(0) + " ほか）";
     }
 
-    /** 通知の設定（今は重賞の発走前の通知のオン・オフだけ） */
-    private void showNotificationSettings() {
+    private void updateUpcomingHint(FirebaseUser user) {
+        if (binding == null) return;
+        binding.textUpcomingHint.setText("🔔 通知の設定 ›");
+        binding.textUpcomingHint.setOnClickListener(v -> showNotificationSettings(user != null));
+    }
+
+    /** 通知の説明と設定（今は重賞の発走前の通知のオン・オフだけ） */
+    private void showNotificationSettings(boolean signedIn) {
         boolean[] checked = {GradedRaceWorker.isEnabled(requireContext())};
+        float density = getResources().getDisplayMetrics().density;
+        TextView title = new TextView(requireContext());
+        int pad = (int) (20 * density);
+        title.setPadding(pad, pad, pad, (int) (8 * density));
+        SpannableStringBuilder text = new SpannableStringBuilder("通知の設定");
+        text.setSpan(new StyleSpan(Typeface.BOLD), 0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.setSpan(new RelativeSizeSpan(1.3f), 0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.append("\n\n").append(signedIn
+                ? "お気に入り馬・メモした馬の出走予定、お気に入り馬の発走30分前と結果（確定後すぐ）をお知らせします。"
+                : "ログインしてお気に入り馬を登録すると、出走予定・発走前・結果もお知らせします。");
+        title.setText(text);
+        title.setTextColor(0xFF333333);
         new AlertDialog.Builder(requireContext())
-                .setTitle("通知の設定")
+                .setCustomTitle(title)
                 .setMultiChoiceItems(new String[]{"重賞の発走30分前に上位人気とオッズを知らせる"}, checked,
                         (dialog, which, isChecked) -> checked[which] = isChecked)
                 .setPositiveButton("保存", (dialog, which) -> {
