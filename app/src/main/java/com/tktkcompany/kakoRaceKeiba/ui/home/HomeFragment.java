@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -24,6 +25,8 @@ import com.tktkcompany.kakoRaceKeiba.MainActivity;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentHomeBinding;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
+import com.tktkcompany.kakoRaceKeiba.notification.FavoriteResultWorker;
+import com.tktkcompany.kakoRaceKeiba.notification.GradedRaceWorker;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemos;
 import com.tktkcompany.kakoRaceKeiba.dto.SharedViewModel;
@@ -260,9 +263,27 @@ public class HomeFragment extends Fragment {
 
     private void updateUpcomingHint(FirebaseUser user) {
         if (binding == null) return;
-        binding.textUpcomingHint.setText(user != null
-                ? "お気に入り馬・メモした馬の出走予定と、お気に入り馬の発走30分前・レース結果を通知でお知らせします"
-                : "ログインしてお気に入り馬を登録すると、出走予定・発走前・レース結果を通知でお知らせします");
+        binding.textUpcomingHint.setText((user != null
+                ? "お気に入り馬・メモした馬の出走予定と、お気に入り馬の発走30分前・レース結果（確定後すぐ）を通知でお知らせします"
+                : "ログインしてお気に入り馬を登録すると、出走予定・発走前・レース結果を通知でお知らせします")
+                + "\n通知の設定 ›");
+        binding.textUpcomingHint.setOnClickListener(v -> showNotificationSettings());
+    }
+
+    /** 通知の設定（今は重賞の発走前の通知のオン・オフだけ） */
+    private void showNotificationSettings() {
+        boolean[] checked = {GradedRaceWorker.isEnabled(requireContext())};
+        new AlertDialog.Builder(requireContext())
+                .setTitle("通知の設定")
+                .setMultiChoiceItems(new String[]{"重賞の発走30分前に上位人気とオッズを知らせる"}, checked,
+                        (dialog, which, isChecked) -> checked[which] = isChecked)
+                .setPositiveButton("保存", (dialog, which) -> {
+                    GradedRaceWorker.setEnabled(requireContext(), checked[0]);
+                    // オンにしたら、次の定期チェックを待たずに予約する
+                    if (checked[0]) FavoriteResultWorker.runOnce(requireContext());
+                })
+                .setNegativeButton("キャンセル", null)
+                .show();
     }
 
     //バナーを表示するメソッド

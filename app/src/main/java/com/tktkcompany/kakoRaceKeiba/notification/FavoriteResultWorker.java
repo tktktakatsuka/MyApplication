@@ -79,15 +79,25 @@ public class FavoriteResultWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) return Result.success();
         Context context = getApplicationContext();
         if (!NotificationHelper.canPostNotifications(context)) return Result.success();
+
+        // 重賞の発走前の通知は、ログインしていなくても予約する
+        List<SupabaseManager.RaceEntry> upcoming = null;
+        try {
+            upcoming = SupabaseManager.fetchUpcomingEntriesBlocking(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
+            GradedRaceWorker.scheduleAll(context, upcoming);
+        } catch (Exception e) {
+            Log.w(TAG, "出馬表の取得に失敗", e);
+        }
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return Result.success();
 
         try {
             Set<String> favorites = new HashSet<>(FavoriteResultFetcher.fetchFavoriteHorseKeys(user.getUid()));
             try {
-                notifyUpcomingEntries(context, user.getUid(), favorites);
+                if (upcoming != null) notifyUpcomingEntries(context, user.getUid(), favorites, upcoming);
             } catch (Exception e) {
                 // 出走予定の確認に失敗しても、結果の確認は続ける（次の定期実行でまた確認する）
                 Log.w(TAG, "出走予定の確認に失敗", e);
@@ -139,7 +149,8 @@ public class FavoriteResultWorker extends Worker {
      * お気に入り馬・メモした馬が出馬表に載っていたら知らせる。
      * 同じ出走は1回だけ。何頭もいるときは1つの通知にまとめる。
      */
-    private void notifyUpcomingEntries(Context context, String uid, Set<String> favoriteKeys) throws Exception {
+    private void notifyUpcomingEntries(Context context, String uid, Set<String> favoriteKeys,
+                                       List<SupabaseManager.RaceEntry> upcoming) throws Exception {
         Set<String> favorites = new HashSet<>();
         for (String key : favoriteKeys) favorites.add(FavoriteHorseNames.normalize(key));
         Map<String, String> memos = FavoriteResultFetcher.fetchHorseMemos(uid);
@@ -157,7 +168,7 @@ public class FavoriteResultWorker extends Worker {
         List<EntryNotices.Item> fresh = new ArrayList<>();
         Set<String> scheduledRaces = new HashSet<>();
 
-        for (SupabaseManager.RaceEntry e : SupabaseManager.fetchUpcomingEntriesBlocking(today)) {
+        for (SupabaseManager.RaceEntry e : upcoming) {
             String key = FavoriteHorseNames.normalize(e.getHorseName());
             boolean favorite = favorites.contains(key);
             String memo = memos.get(key);
