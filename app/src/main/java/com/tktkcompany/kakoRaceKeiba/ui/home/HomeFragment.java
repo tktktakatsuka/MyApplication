@@ -223,10 +223,9 @@ public class HomeFragment extends Fragment {
             binding.cardUpcoming.setVisibility(View.GONE);
             return;
         }
-        DateTimeFormatter md = DateTimeFormatter.ofPattern("M/d");
         List<String> dayLabels = new ArrayList<>();
         for (LocalDate d : days) {
-            dayLabels.add(d.format(md) + WeekendDays.getDayOfWeek(d.format(formatter)).trim());
+            dayLabels.add(WeekendDays.formatShort(d.format(formatter)));
         }
         // 出馬表が読めたら、そちらの開催日・競馬場で書き直す（新潟などの開催も入るため）
         if (!entriesSummaryShown) {

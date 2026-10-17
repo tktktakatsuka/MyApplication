@@ -17,20 +17,20 @@ public class EntryNoticesTest {
     @Test
     public void singleFavorite() {
         assertEquals("★アンムートが出走予定", EntryNotices.title(Collections.singletonList(FAVORITE)));
-        assertEquals("10/17(土) 京都9R もみじステークス（芝1400m）", EntryNotices.body(Collections.singletonList(FAVORITE)));
+        assertEquals("2026年10月17日(土) 京都9R もみじステークス（芝1400m）", EntryNotices.body(Collections.singletonList(FAVORITE)));
     }
 
     @Test
     public void singleMemoShowsTheMemo() {
         assertEquals("📝セタキトが出走予定", EntryNotices.title(Collections.singletonList(MEMO)));
-        assertEquals("10/18(日) 東京11R（ダ1600m）\n📝 4角で詰まった。次走は買い",
+        assertEquals("2026年10月18日(日) 東京11R（ダ1600m）\n📝 4角で詰まった。次走は買い",
                 EntryNotices.body(Collections.singletonList(MEMO)));
     }
 
     @Test
     public void severalHorsesAreListedOnePerLine() {
         assertEquals("お気に入り・メモした馬が2頭出走予定", EntryNotices.title(Arrays.asList(FAVORITE, MEMO)));
-        assertEquals("★アンムート　10/17(土) 京都9R もみじステークス\n📝セタキト　10/18(日) 東京11R",
+        assertEquals("★アンムート　2026年10月17日(土) 京都9R もみじステークス\n📝セタキト　2026年10月18日(日) 東京11R",
                 EntryNotices.body(Arrays.asList(FAVORITE, MEMO)));
     }
 

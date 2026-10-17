@@ -12,6 +12,9 @@ import java.util.List;
 
 public class WeekendDays {
 
+    // アプリ全体の日付の表示形式（例: 2026年10月12日）
+    public static final String DATE_PATTERN = "yyyy年MM月dd日";
+
     // 先月と今月の開催候補日（土日・祝日の月曜）のうち、今日以前の日付を取得するメソッド
     public static List<String> getPastWeekendsInCurrentMonth() {
         List<String> pastWeekends = new ArrayList<>();
@@ -54,23 +57,23 @@ public class WeekendDays {
         return dow == DayOfWeek.MONDAY && JapaneseHolidays.isHoliday(date);
     }
 
-    // yyyyMMdd を「2026/10/12 (月)」の形にする（形式が違う場合はそのまま返す）
+    // yyyyMMdd を「2026年10月12日 (月)」の形にする（形式が違う場合はそのまま返す）
     public static String formatWithDayOfWeek(String dateStr) {
         if (dateStr == null || dateStr.length() != 8) return dateStr;
         try {
             LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
-            return date.format(DateTimeFormatter.ofPattern("yyyy/MM/dd")) + getDayOfWeek(dateStr);
+            return date.format(DateTimeFormatter.ofPattern(DATE_PATTERN)) + getDayOfWeek(dateStr);
         } catch (DateTimeParseException e) {
             return dateStr;
         }
     }
 
-    // yyyyMMdd を「10/12(月)」の形にする（形式が違う場合はそのまま返す）
+    // yyyyMMdd を「2026年10月12日(月)」の形にする（形式が違う場合はそのまま返す）
     public static String formatShort(String dateStr) {
         if (dateStr == null || dateStr.length() != 8) return dateStr;
         try {
             LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
-            return date.format(DateTimeFormatter.ofPattern("M/d")) + getDayOfWeek(dateStr).trim();
+            return date.format(DateTimeFormatter.ofPattern(DATE_PATTERN)) + getDayOfWeek(dateStr).trim();
         } catch (DateTimeParseException e) {
             return dateStr;
         }

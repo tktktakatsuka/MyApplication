@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.tktkcompany.kakoRaceKeiba.R;
+import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
 
@@ -135,7 +136,7 @@ public class HorseMemoListFragment extends Fragment {
     private static String metaLabel(HorseMemos.Memo memo) {
         StringBuilder sb = new StringBuilder();
         if (memo.updatedAt > 0) {
-            sb.append(new SimpleDateFormat("M/d", Locale.JAPAN).format(new Date(memo.updatedAt))).append(" 更新");
+            sb.append(new SimpleDateFormat(WeekendDays.DATE_PATTERN, Locale.JAPAN).format(new Date(memo.updatedAt))).append(" 更新");
         }
         if (memo.from != null && !memo.from.isEmpty()) {
             if (sb.length() > 0) sb.append("・");

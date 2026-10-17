@@ -566,7 +566,7 @@ public class EntryDetailFragment extends Fragment {
     private View createPastRunView(LayoutInflater inflater, ViewGroup parent, SupabaseManager.RaceResult run) {
         View row = inflater.inflate(R.layout.item_past_run, parent, false);
         String date = WeekendDays.formatShort(run.getKaisaibi());
-        // 「10/12(月)」→「10/12」（列の幅を揃えるため曜日は省く）
+        // 「2026年10月12日(月)」→「2026年10月12日」（列の幅を揃えるため曜日は省く）
         int paren = date.indexOf('(');
         ((TextView) row.findViewById(R.id.text_run_date)).setText(paren > 0 ? date.substring(0, paren) : date);
         ((TextView) row.findViewById(R.id.text_run_course)).setText(run.getKaisaijo());

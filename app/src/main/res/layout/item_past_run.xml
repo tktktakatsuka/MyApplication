@@ -10,10 +10,11 @@
 
     <TextView
         android:id="@+id/text_run_date"
-        android:layout_width="44dp"
+        android:layout_width="94dp"
         android:layout_height="wrap_content"
+        android:maxLines="1"
         android:textColor="#666666"
-        android:textSize="12sp" />
+        android:textSize="11sp" />
 
     <TextView
         android:id="@+id/text_run_course"
