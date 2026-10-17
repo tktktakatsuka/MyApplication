@@ -1,6 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.ui.home;
 
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -8,7 +9,9 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -116,11 +119,8 @@ class TodayCard {
         for (SupabaseManager.RaceEntry e : favoriteRuns) {
             LocalDateTime start = start(e);
             if (start == null || !start.isAfter(now)) continue;
-            SpannableStringBuilder text = new SpannableStringBuilder();
-            appendColored(text, "★ " + e.getHorseName(), 0xFFE65100, true);
-            text.append("  ").append(e.getKaisaijo()).append(String.valueOf(e.getRaceNo())).append("R ")
-                    .append(start.format(HM)).append("発走（").append(remaining(now, start)).append("）");
-            addLine(text, v -> openEntry(e));
+            addRow("★", 0xFFE65100, e.getHorseName() + "　" + e.getKaisaijo() + e.getRaceNo() + "R " + start.format(HM),
+                    remaining(now, start), null, v -> openEntry(e));
             break;
         }
 
@@ -138,30 +138,24 @@ class TodayCard {
                 }
             }
 
-            SpannableStringBuilder head = new SpannableStringBuilder();
-            appendColored(head, jo, 0xFF2E7D32, true);
-            if (next != null) {
-                LocalDateTime start = start(next);
-                head.append("  次は ").append(String.valueOf(next.getRaceNo())).append("R ").append(shortTitle(next))
-                        .append("\n").append(start.format(HM)).append("発走（");
-                appendColored(head, remaining(now, start), 0xFFC62828, true);
-                head.append("）");
-                SupabaseManager.RaceEntry target = next;
-                addLine(head, v -> openEntry(target));
-            } else {
-                head.append("  今日のレースは終わりました");
-                addLine(head, v -> openResults(jo));
-            }
-
+            CharSequence result = null;
             if (lastFinished != null) {
                 String key = lastFinished.getRaceNo() + "R";
-                CharSequence result = latestResultText.get(jo);
                 if (!key.equals(latestResultKey.get(jo))) {
                     latestResultKey.put(jo, key);
                     latestResultText.remove(jo);
                     loadLatestResult(jo, lastFinished.getRaceNo());
                 }
-                if (result != null) addLine(result, v -> openResults(jo));
+                result = latestResultText.get(jo);
+            }
+
+            if (next != null) {
+                LocalDateTime start = start(next);
+                SupabaseManager.RaceEntry target = next;
+                addRow(jo, 0xFF2E7D32, next.getRaceNo() + "R " + start.format(HM) + "発走", remaining(now, start), result,
+                        v -> openEntry(target));
+            } else {
+                addRow(jo, 0xFF2E7D32, "全レース終了", null, result, v -> openResults(jo));
             }
         }
         // 残り時間を1分ごとに書き直す
@@ -183,17 +177,15 @@ class TodayCard {
                 handler.post(() -> latestResultKey.remove(jo));
                 return;
             }
+            // 「6R 1着 チュウワアーチ（1人気）」。勝ち馬だけにして1行に収める
             SpannableStringBuilder text = new SpannableStringBuilder();
-            text.append("　結果 ").append(String.valueOf(raceNo)).append("R: ");
-            int shown = 0;
             for (SupabaseManager.RaceResult r : rows) {
-                if (shown >= 3) break;
-                if (r.getRank() == null || !r.getRank().matches("\\d+")) continue;
-                if (shown > 0) text.append(" ");
-                appendColored(text, r.getRank() + "着", "1".equals(r.getRank()) ? 0xFFC62828 : 0xFF2E7D32, true);
-                text.append(r.getHorseName() != null ? r.getHorseName() : "");
-                if (r.getPopular() != null) text.append("(").append(r.getPopular()).append("人)");
-                shown++;
+                if (!"1".equals(r.getRank())) continue;
+                text.append(String.valueOf(raceNo)).append("R ");
+                appendColored(text, "1着", 0xFFC62828, true);
+                text.append(" ").append(r.getHorseName() != null ? r.getHorseName() : "");
+                if (r.getPopular() != null) text.append("（").append(r.getPopular()).append("人気）");
+                break;
             }
             handler.post(() -> {
                 latestResultText.put(jo, text);
@@ -202,15 +194,64 @@ class TodayCard {
         });
     }
 
-    private void addLine(CharSequence text, View.OnClickListener onClick) {
-        TextView tv = new TextView(fragment.requireContext());
-        tv.setText(text);
-        tv.setTextSize(14);
-        tv.setTextColor(0xFF222222);
-        int pad = (int) (6 * fragment.getResources().getDisplayMetrics().density);
-        tv.setPadding(0, pad, 0, pad);
-        tv.setOnClickListener(onClick);
-        container.addView(tv);
+    /**
+     * 1行: 左に見出し（競馬場名か★）、真ん中に「7R 13:15発走」、右に残り時間。
+     * 下に小さく直前のレースの勝ち馬（あれば）
+     */
+    private void addRow(String label, int labelColor, String main, @Nullable String countdown,
+                        @Nullable CharSequence sub, View.OnClickListener onClick) {
+        float density = fragment.getResources().getDisplayMetrics().density;
+        LinearLayout block = new LinearLayout(fragment.requireContext());
+        block.setOrientation(LinearLayout.VERTICAL);
+        block.setPadding(0, (int) (6 * density), 0, (int) (6 * density));
+        block.setOnClickListener(onClick);
+
+        LinearLayout row = new LinearLayout(fragment.requireContext());
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView head = new TextView(fragment.requireContext());
+        head.setText(label);
+        head.setTextSize(15);
+        head.setTextColor(labelColor);
+        head.setTypeface(head.getTypeface(), Typeface.BOLD);
+        head.setMinWidth((int) (48 * density));
+        row.addView(head);
+
+        TextView body = new TextView(fragment.requireContext());
+        body.setText(main);
+        body.setTextSize(15);
+        body.setTextColor(0xFF222222);
+        body.setMaxLines(1);
+        body.setEllipsize(TextUtils.TruncateAt.END);
+        row.addView(body, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+        if (countdown != null) {
+            TextView badge = new TextView(fragment.requireContext());
+            badge.setText(countdown);
+            badge.setTextSize(13);
+            badge.setTextColor(0xFFC62828);
+            badge.setTypeface(badge.getTypeface(), Typeface.BOLD);
+            badge.setPadding((int) (8 * density), (int) (2 * density), (int) (8 * density), (int) (2 * density));
+            GradientDrawable bg = new GradientDrawable();
+            bg.setCornerRadius(10 * density);
+            bg.setColor(0xFFFFEBEE);
+            badge.setBackground(bg);
+            row.addView(badge);
+        }
+        block.addView(row);
+
+        if (sub != null && sub.length() > 0) {
+            TextView small = new TextView(fragment.requireContext());
+            small.setText(sub);
+            small.setTextSize(12);
+            small.setTextColor(0xFF666666);
+            small.setMaxLines(1);
+            small.setEllipsize(TextUtils.TruncateAt.END);
+            small.setPadding((int) (48 * density), (int) (2 * density), 0, 0);
+            block.addView(small);
+        }
+        container.addView(block);
     }
 
     private void openEntry(SupabaseManager.RaceEntry e) {
@@ -229,12 +270,6 @@ class TodayCard {
     @Nullable
     private static LocalDateTime start(SupabaseManager.RaceEntry e) {
         return RaceStartNotices.startTime(e.getKaisaibi(), e.getRaceInfo());
-    }
-
-    /** 「サラ系2歳未勝利」→「2歳未勝利」。特別戦はそのまま */
-    private static String shortTitle(SupabaseManager.RaceEntry e) {
-        String t = e.getRaceTitle() != null ? e.getRaceTitle().trim() : "";
-        return t.replaceFirst("^サラ系", "");
     }
 
     /** 「あと12分」「あと1時間5分」 */
