@@ -272,7 +272,8 @@
                 android:id="@+id/layout_last_results"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:visibility="gone">
 
             <!-- スロット1 -->
             <androidx.cardview.widget.CardView

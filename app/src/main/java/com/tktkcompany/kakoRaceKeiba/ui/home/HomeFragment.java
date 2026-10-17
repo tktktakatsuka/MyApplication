@@ -241,7 +241,12 @@ public class HomeFragment extends Fragment {
         SupabaseManager.fetchUpcomingEntries(today, new SupabaseManager.SupabaseCallback<List<SupabaseManager.RaceEntry>>() {
             @Override
             public void onSuccess(List<SupabaseManager.RaceEntry> entries) {
-                if (!isAdded() || binding == null || entries.isEmpty()) return;
+                if (!isAdded() || binding == null) return;
+                if (entries.isEmpty()) {
+                    // 出馬表がまだ無い週は開催日ではないので、前の開催の結果を出す
+                    binding.layoutLastResults.setVisibility(View.VISIBLE);
+                    return;
+                }
                 Set<String> days = new LinkedHashSet<>();
                 Set<String> courses = new LinkedHashSet<>();
                 Set<String> races = new LinkedHashSet<>();
@@ -271,7 +276,8 @@ public class HomeFragment extends Fragment {
                     if (!memoRunners.isEmpty()) text.append("\n📝 メモした馬 ").append(runnersLabel(memoRunners));
                     binding.textEntriesBody.setText(text);
                     todayCard.show(entries, favorites);
-                    // 開催日は今日の開催カードで足りるので、前の開催のメインレース結果は隠す
+                    // 開催日は今日の開催カードで足りるので、前の開催のメインレース結果は出さない
+                    // （最初は隠しておき、開催日でないと分かってから出す。先に出すと開催日に一瞬見えるため）
                     binding.layoutLastResults.setVisibility(
                             binding.cardToday.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
                 }));
@@ -280,6 +286,7 @@ public class HomeFragment extends Fragment {
             @Override
             public void onFailure(@NonNull String message) {
                 Log.w("HomeFragment", "Entries load failed: " + message);
+                if (isAdded() && binding != null) binding.layoutLastResults.setVisibility(View.VISIBLE);
             }
         });
     }
