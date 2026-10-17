@@ -37,6 +37,7 @@ import com.tktkcompany.kakoRaceKeiba.notification.FavoriteResultWorker;
 import com.tktkcompany.kakoRaceKeiba.notification.RaceStartNotices;
 import com.tktkcompany.kakoRaceKeiba.ui.prediction.Bets;
 import com.tktkcompany.kakoRaceKeiba.ui.prediction.Predictions;
+import com.tktkcompany.kakoRaceKeiba.ui.raceResult.PayoutTable;
 import com.tktkcompany.kakoRaceKeiba.ui.raceResult.RaceResultsFragment;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemoDialog;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemos;
@@ -457,30 +458,7 @@ public class EntryDetailFragment extends Fragment {
 
     /** 払い戻しの表（券種ごとに1行） */
     private View createPayoutView(float density) {
-        TextView view = new TextView(requireContext());
-        SpannableStringBuilder text = new SpannableStringBuilder();
-        appendStyled(text, "払い戻し", 0xFF333333);
-        String lastType = null;
-        for (KeibalabPayouts.Payout p : payouts) {
-            if (!p.type.equals(lastType)) {
-                text.append("\n").append(p.type).append("　");
-                lastType = p.type;
-            } else {
-                text.append("　");
-            }
-            text.append(p.numbers).append(" ").append(String.format("%,d", p.yen)).append("円");
-        }
-        view.setText(text);
-        view.setTextSize(13);
-        view.setTextColor(0xFF333333);
-        view.setLineSpacing(0, 1.2f);
-        int pad = (int) (12 * density);
-        view.setPadding(pad, pad, pad, pad);
-        GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(10 * density);
-        bg.setColor(0xFFFFFDE7);
-        bg.setStroke((int) Math.max(1, density), 0xFFFBC02D);
-        view.setBackground(bg);
+        View view = PayoutTable.create(requireContext(), payouts);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMargins(0, 0, 0, (int) (8 * density));

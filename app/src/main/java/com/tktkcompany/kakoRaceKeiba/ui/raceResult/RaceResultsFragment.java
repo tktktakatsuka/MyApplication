@@ -243,18 +243,15 @@ public class RaceResultsFragment extends Fragment {
                     view.setOnClickListener(v -> loadPayouts(view, info, date, course, raceNo));
                     return;
                 }
-                StringBuilder sb = new StringBuilder(info).append("\n💴 払い戻し");
-                String lastType = null;
-                for (KeibalabPayouts.Payout p : result) {
-                    if (!p.type.equals(lastType)) {
-                        sb.append("\n").append(p.type).append("　");
-                        lastType = p.type;
-                    } else {
-                        sb.append("　");
-                    }
-                    sb.append(p.numbers).append(" ").append(String.format("%,d", p.yen)).append("円");
-                }
-                view.setText(sb);
+                // 発走情報の下に払い戻しの表を差し込む
+                view.setText(info);
+                android.view.ViewGroup parent = (android.view.ViewGroup) view.getParent();
+                View table = PayoutTable.create(requireContext(), result);
+                android.widget.LinearLayout.LayoutParams params = new android.widget.LinearLayout.LayoutParams(
+                        android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+                int margin = (int) (8 * getResources().getDisplayMetrics().density);
+                params.setMargins(margin, 0, margin, margin);
+                parent.addView(table, parent.indexOfChild(view) + 1, params);
             });
         });
     }
