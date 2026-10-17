@@ -16,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -26,11 +27,18 @@ import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentEntriesBinding;
+import com.tktkcompany.kakoRaceKeiba.db.KeibalabOdds;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.notification.FavoriteResultWorker;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemoDialog;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemos;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
+
+import org.threeten.bp.DateTimeException;
+import org.threeten.bp.LocalTime;
+import org.threeten.bp.OffsetDateTime;
+import org.threeten.bp.ZoneId;
+import org.threeten.bp.format.DateTimeFormatter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,6 +47,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /** 1レース分の出走馬と、それぞれの近走成績・予想の手がかりを表示する */
 public class EntryDetailFragment extends Fragment {
@@ -59,6 +69,9 @@ public class EntryDetailFragment extends Fragment {
     private String raceLabel;
     private Set<String> favorites = new HashSet<>();
     private Map<String, HorseMemos.Memo> memos = new HashMap<>();
+    // 馬番 → オッズを出す欄（オッズは出走表を出したあとに読み込む）
+    private final Map<String, TextView> oddsViews = new HashMap<>();
+    private static final ExecutorService ODDS_EXECUTOR = Executors.newSingleThreadExecutor();
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -187,6 +200,7 @@ public class EntryDetailFragment extends Fragment {
     private void render(List<SupabaseManager.RaceEntry> entries, Map<String, List<SupabaseManager.RaceResult>> results) {
         LayoutInflater inflater = getLayoutInflater();
         binding.entriesContainer.removeAllViews();
+        oddsViews.clear();
         for (SupabaseManager.RaceEntry entry : entries) {
             View card = inflater.inflate(R.layout.item_entry_horse, binding.entriesContainer, false);
 
@@ -227,11 +241,83 @@ public class EntryDetailFragment extends Fragment {
                 }
             }
             binding.entriesContainer.addView(card);
+            if (entry.getHorseNumber() != null) oddsViews.put(entry.getHorseNumber().trim(), card.findViewById(R.id.text_entry_odds));
         }
         // 行がフォーカスを取ってスクロール位置がずれないよう、先頭から表示する
         binding.getRoot().post(() -> {
             if (binding != null) binding.getRoot().scrollTo(0, 0);
         });
+        loadOdds(entries);
+    }
+
+    /**
+     * 今の単勝・複勝オッズを keibalab から取って各馬に出す。
+     * 取れなければ、取り込み済みの単勝オッズ（当日のバッチで更新）を出す。枠順確定前は何もしない
+     */
+    private void loadOdds(List<SupabaseManager.RaceEntry> entries) {
+        if (oddsViews.isEmpty()) return;
+        SupabaseManager.RaceEntry first = entries.get(0);
+        ODDS_EXECUTOR.execute(() -> {
+            Map<String, KeibalabOdds.HorseOdds> live = Collections.emptyMap();
+            try {
+                live = KeibalabOdds.fetchOddsTableBlocking(first.getKaisaibi(), first.getKaisaijo(), first.getRaceNo());
+            } catch (Exception e) {
+                Log.w("EntryDetailFragment", "オッズの取得に失敗（取り込み済みのオッズを出す）", e);
+            }
+            Map<String, KeibalabOdds.HorseOdds> odds = live;
+            String time = LocalTime.now().format(DateTimeFormatter.ofPattern("H:mm"));
+            if (getActivity() == null) return;
+            getActivity().runOnUiThread(() -> {
+                if (binding == null || !isAdded()) return;
+                showOdds(entries, odds, time);
+            });
+        });
+    }
+
+    private void showOdds(List<SupabaseManager.RaceEntry> entries, Map<String, KeibalabOdds.HorseOdds> live, String liveTime) {
+        String shownTime = null;
+        for (SupabaseManager.RaceEntry entry : entries) {
+            if (entry.getHorseNumber() == null) continue;
+            String number = entry.getHorseNumber().trim();
+            TextView view = oddsViews.get(number);
+            if (view == null) continue;
+            KeibalabOdds.HorseOdds odds = live.get(number.replaceFirst("^0+(?=\\d)", ""));
+            String time = liveTime;
+            if (odds == null && entry.getWinOdds() != null) {
+                odds = new KeibalabOdds.HorseOdds(entry.getWinOdds(), null, null, parseIntOrNull(entry.getPopular()));
+                time = storedTime(entry.getOddsUpdatedAt());
+            }
+            String label = odds != null ? odds.label() : "";
+            if (label.isEmpty()) continue;
+            view.setText(label);
+            view.setVisibility(View.VISIBLE);
+            if (shownTime == null) shownTime = time;
+        }
+        if (shownTime != null) {
+            binding.textEntriesLead.append("\nオッズは" + shownTime + "時点（開き直すと更新します）");
+        }
+    }
+
+    @Nullable
+    private static Integer parseIntOrNull(@Nullable String s) {
+        if (s == null) return null;
+        try {
+            return Integer.parseInt(s.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** 取り込んだ時刻（"2026-10-17T04:15:00+00:00"）を端末の時刻の "13:15" にする。読めなければ null */
+    @Nullable
+    private static String storedTime(@Nullable String timestamp) {
+        if (timestamp == null) return null;
+        try {
+            return OffsetDateTime.parse(timestamp).atZoneSameInstant(ZoneId.systemDefault())
+                    .format(DateTimeFormatter.ofPattern("H:mm"));
+        } catch (DateTimeException e) {
+            return null;
+        }
     }
 
     private void bindFavorite(View card, String horseName) {

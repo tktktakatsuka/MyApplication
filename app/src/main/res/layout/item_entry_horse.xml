@@ -84,6 +84,17 @@
             android:textSize="13sp"
             android:visibility="gone" />
 
+        <!-- 単勝・複勝オッズ（取れた時だけ表示） -->
+        <TextView
+            android:id="@+id/text_entry_odds"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="#BF360C"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
         <!-- 予想の手がかり（レース間隔・距離変更・乗り替わりなど） -->
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/entry_badges"

@@ -2,6 +2,10 @@ package com.tktkcompany.kakoRaceKeiba.ui.entries;
 
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,12 +16,15 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import com.google.android.material.card.MaterialCardView;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentEntriesBinding;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
+import com.tktkcompany.kakoRaceKeiba.notification.RaceStartNotices;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 import org.threeten.bp.LocalDate;
+import org.threeten.bp.LocalDateTime;
 import org.threeten.bp.format.DateTimeFormatter;
 
 import java.util.ArrayList;
@@ -108,6 +115,7 @@ public class EntriesFragment extends Fragment {
             header.setTypeface(header.getTypeface(), Typeface.BOLD);
             header.setPadding(0, 32, 0, 8);
             binding.entriesContainer.addView(header);
+            int nextRaceNo = nextRaceNo(date, meeting.getValue());
 
             for (Map.Entry<Integer, List<SupabaseManager.RaceEntry>> race : meeting.getValue().entrySet()) {
                 int raceNo = race.getKey();
@@ -115,7 +123,18 @@ public class EntriesFragment extends Fragment {
                 String title = first.getRaceTitle() != null ? first.getRaceTitle() : "";
 
                 View item = inflater.inflate(R.layout.item_race_day, binding.entriesContainer, false);
-                ((TextView) item.findViewById(R.id.text_race_day_date)).setText(raceNo + "R");
+                // 「7R」の下に小さく発走時刻
+                LocalDateTime start = RaceStartNotices.startTime(date, first.getRaceInfo());
+                SpannableStringBuilder number = new SpannableStringBuilder(raceNo + "R");
+                if (start != null) {
+                    int from = number.length();
+                    number.append("\n").append(start.format(DateTimeFormatter.ofPattern("H:mm"))).append("発走");
+                    number.setSpan(new RelativeSizeSpan(0.75f), from, number.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    number.setSpan(new ForegroundColorSpan(0xFF666666), from, number.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                ((TextView) item.findViewById(R.id.text_race_day_date)).setText(number);
+                boolean next = raceNo == nextRaceNo;
+                if (next) highlightNextRace((MaterialCardView) item);
                 boolean beforeDraw = true;
                 int favoriteCount = 0;
                 for (SupabaseManager.RaceEntry e : race.getValue()) {
@@ -127,6 +146,7 @@ public class EntriesFragment extends Fragment {
                 ((TextView) item.findViewById(R.id.text_race_day_main)).setText(title);
                 TextView sub = item.findViewById(R.id.text_race_day_sub);
                 String subText = courseLabel.isEmpty() ? count : courseLabel + "m・" + count;
+                if (next) subText = "▶ 次のレース・" + subText;
                 if (favoriteCount > 0) {
                     // お気に入り馬が出るレースは目立たせる
                     subText += "・★お気に入り" + favoriteCount + "頭";
@@ -145,6 +165,25 @@ public class EntriesFragment extends Fragment {
                 binding.entriesContainer.addView(item);
             }
         }
+    }
+
+    /** 今日の開催なら、まだ発走していない最初のレース番号。今日でない・全レース発走済みなら -1 */
+    static int nextRaceNo(String date, Map<Integer, List<SupabaseManager.RaceEntry>> races) {
+        LocalDateTime now = LocalDateTime.now();
+        if (!date.equals(now.toLocalDate().format(DateTimeFormatter.ofPattern("yyyyMMdd")))) return -1;
+        for (Map.Entry<Integer, List<SupabaseManager.RaceEntry>> race : races.entrySet()) {
+            LocalDateTime start = RaceStartNotices.startTime(date, race.getValue().get(0).getRaceInfo());
+            if (start != null && start.isAfter(now)) return race.getKey();
+        }
+        return -1;
+    }
+
+    /** 次のレースは緑の枠と背景で目立たせる */
+    private void highlightNextRace(MaterialCardView card) {
+        float density = getResources().getDisplayMetrics().density;
+        card.setCardBackgroundColor(0xFFE8F5E9);
+        card.setStrokeColor(0xFF43A047);
+        card.setStrokeWidth((int) (2 * density));
     }
 
     @Override
