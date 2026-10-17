@@ -22,6 +22,7 @@ import com.tktkcompany.kakoRaceKeiba.db.KeibalabResults;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.EntriesFragment;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
+import com.tktkcompany.kakoRaceKeiba.ui.raceResult.RaceResultsFragment;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 import org.threeten.bp.LocalDate;
@@ -206,9 +207,9 @@ public class PredictionsFragment extends Fragment {
             args.putString(EntriesFragment.ARG_RACE_TITLE, race.title != null ? race.title : "");
             Navigation.findNavController(v).navigate(R.id.navigation_entryDetail, args);
         } else {
-            args.putString("key", race.date);
-            args.putString("jo", race.course);
-            Navigation.findNavController(v).navigate(R.id.navigation_raceResults, args);
+            // そのレースまでスクロールし、◎の馬の行に色を付けて開く
+            Navigation.findNavController(v).navigate(R.id.navigation_raceResults,
+                    RaceResultsFragment.args(race.date, race.course, race.raceNo, race.honmei()));
         }
     }
 

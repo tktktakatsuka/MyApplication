@@ -13,6 +13,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -30,6 +31,7 @@ import com.tktkcompany.kakoRaceKeiba.databinding.FragmentRaceresultsBinding;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
 import com.tktkcompany.kakoRaceKeiba.db.KeibalabResults;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
+import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemoDialog;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemos;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
@@ -47,7 +49,25 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class RaceResultsFragment extends Fragment {
+    // 開いたときにスクロールするレースと、色を付ける馬（どちらも省略できる）
+    private static final String ARG_RACE_NO = "raceNo";
+    private static final String ARG_HORSE = "horse";
+    private static final int TARGET_ROW_COLOR = 0xFFFFE082;
+
+    /** その日・競馬場の結果を開き、raceNo のレースまでスクロールして horse の行に色を付けるための引数 */
+    public static Bundle args(String date, String jo, int raceNo, @Nullable String horse) {
+        Bundle bundle = new Bundle();
+        bundle.putString("key", date);
+        bundle.putString("jo", jo);
+        bundle.putInt(ARG_RACE_NO, raceNo);
+        if (horse != null) bundle.putString(ARG_HORSE, horse);
+        return bundle;
+    }
+
     private FragmentRaceresultsBinding binding;
+    private int targetRaceNo;
+    @Nullable private String targetHorse;
+    private boolean scrolledToTarget;
     private final List<TableLayout> tableLayouts = new ArrayList<>();
     private final List<TextView> titleTextViews = new ArrayList<>();
     private final List<TextView> timeTextViews = new ArrayList<>();
@@ -67,6 +87,8 @@ public class RaceResultsFragment extends Fragment {
         if (args != null) {
             String date = args.getString("key");
             String jo = args.getString("jo");
+            targetRaceNo = args.getInt(ARG_RACE_NO, 0);
+            targetHorse = args.getString(ARG_HORSE);
             if (date != null && jo != null) {
                 setScreenTitle(WeekendDays.formatShort(date) + " " + jo + "のレース結果");
                 raceDate = date;
@@ -171,7 +193,29 @@ public class RaceResultsFragment extends Fragment {
             timeTv.setPadding(16, 8, 16, 16);
             table.addView(createHeaderRow());
         }
-        table.addView(createDataRow(result));
+        TableRow row = createDataRow(result);
+        if (raceNo == targetRaceNo && targetHorse != null && result.getHorseName() != null
+                && FavoriteHorseNames.normalize(result.getHorseName()).equals(FavoriteHorseNames.normalize(targetHorse))) {
+            // 出走表などから開いた馬の行は色を付けて目立たせる（お気に入りの色より優先する）
+            row.setTag(TARGET_ROW);
+            row.setBackgroundColor(TARGET_ROW_COLOR);
+        }
+        table.addView(row);
+        if (raceNo == targetRaceNo) scrollToTarget();
+    }
+
+    private static final String TARGET_ROW = "target";
+
+    /** 目的のレースの見出しが画面の上に来るようにスクロールする（最初の1回だけ） */
+    private void scrollToTarget() {
+        if (scrolledToTarget || binding == null || targetRaceNo < 1 || targetRaceNo > titleTextViews.size()) return;
+        scrolledToTarget = true;
+        TextView title = titleTextViews.get(targetRaceNo - 1);
+        // 表が並び終わって高さが決まってからスクロールする
+        binding.scrollResults.post(() -> {
+            if (binding == null) return;
+            binding.scrollResults.smoothScrollTo(0, Math.max(0, title.getTop() - 8));
+        });
     }
 
     private String formatHassouTime(String rawTime) {
@@ -214,7 +258,7 @@ public class RaceResultsFragment extends Fragment {
                     if (isFav != null && isFav) {
                         favTv.setText("★");
                         favTv.setTextColor(Color.parseColor("#FFD700"));
-                        row.setBackgroundColor(Color.parseColor("#33FFD700"));
+                        if (!TARGET_ROW.equals(row.getTag())) row.setBackgroundColor(Color.parseColor("#33FFD700"));
                     }
                 }
                 @Override public void onCancelled(@NonNull DatabaseError error) {}

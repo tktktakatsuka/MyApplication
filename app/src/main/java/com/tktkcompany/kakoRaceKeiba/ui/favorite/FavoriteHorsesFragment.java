@@ -29,6 +29,7 @@ import com.tktkcompany.kakoRaceKeiba.db.HorseResult;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.EntriesFragment;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
+import com.tktkcompany.kakoRaceKeiba.ui.raceResult.RaceResultsFragment;
 
 import org.threeten.bp.LocalDate;
 import org.threeten.bp.format.DateTimeFormatter;
@@ -206,10 +207,14 @@ public class FavoriteHorsesFragment extends Fragment {
     // 直近の結果をタップしたら、そのレース結果画面を開く
     private void onResultClick(HorseResult result) {
         if (result.kaisaibi == null || result.kaisaijo == null || getView() == null) return;
-        Bundle bundle = new Bundle();
-        bundle.putString("key", result.kaisaibi);
-        bundle.putString("jo", result.kaisaijo);
-        Navigation.findNavController(getView()).navigate(R.id.navigation_raceResults, bundle);
+        int raceNo;
+        try {
+            raceNo = Integer.parseInt(result.raceNo.trim());
+        } catch (RuntimeException e) {
+            raceNo = 0;
+        }
+        Navigation.findNavController(getView()).navigate(R.id.navigation_raceResults,
+                RaceResultsFragment.args(result.kaisaibi, result.kaisaijo, raceNo, result.horseName));
     }
 
     private void onRemoveClick(String horseName) {

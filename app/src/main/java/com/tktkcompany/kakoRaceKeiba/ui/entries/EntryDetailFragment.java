@@ -33,6 +33,7 @@ import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.notification.FavoriteResultWorker;
 import com.tktkcompany.kakoRaceKeiba.notification.RaceStartNotices;
 import com.tktkcompany.kakoRaceKeiba.ui.prediction.Predictions;
+import com.tktkcompany.kakoRaceKeiba.ui.raceResult.RaceResultsFragment;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemoDialog;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemos;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
@@ -516,12 +517,9 @@ public class EntryDetailFragment extends Fragment {
             resultView.setTextColor(0xFF333333);
         }
 
-        row.setOnClickListener(v -> {
-            Bundle bundle = new Bundle();
-            bundle.putString("key", run.getKaisaibi());
-            bundle.putString("jo", run.getKaisaijo());
-            Navigation.findNavController(v).navigate(R.id.navigation_raceResults, bundle);
-        });
+        // その日の結果画面を、このレースまでスクロールしてこの馬の行に色を付けた状態で開く
+        row.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.navigation_raceResults,
+                RaceResultsFragment.args(run.getKaisaibi(), run.getKaisaijo(), run.getRaceNo(), run.getHorseName())));
         return row;
     }
 
