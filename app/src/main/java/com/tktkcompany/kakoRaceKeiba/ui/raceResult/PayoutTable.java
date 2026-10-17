@@ -9,6 +9,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.tktkcompany.kakoRaceKeiba.db.KeibalabPayouts;
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -51,13 +52,25 @@ public final class PayoutTable {
         bg.setStroke((int) Math.max(1, density), 0xFFFBC02D);
         table.setBackground(bg);
 
+        // 見出しを押すと表を閉じる・開く
         TextView title = new TextView(context);
-        title.setText("💴 払い戻し");
         title.setTextSize(15);
         title.setTextColor(0xFF333333);
         title.setTypeface(title.getTypeface(), Typeface.BOLD);
         title.setPadding(0, 0, 0, (int) (6 * density));
         table.addView(title);
+        LinearLayout body = new LinearLayout(context);
+        body.setOrientation(LinearLayout.VERTICAL);
+        table.addView(body);
+        Runnable paintTitle = () -> title.setText(body.getVisibility() == View.VISIBLE
+                ? "💴 " + Lang.t("払い戻し", "Payouts") + "　▲ " + Lang.t("閉じる", "Hide")
+                : "💴 " + Lang.t("払い戻し", "Payouts") + "　▼ " + Lang.t("開く", "Show"));
+        paintTitle.run();
+        title.setOnClickListener(v -> {
+            body.setVisibility(body.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+            title.setPadding(0, 0, 0, body.getVisibility() == View.VISIBLE ? (int) (6 * density) : 0);
+            paintTitle.run();
+        });
 
         // 券種ごとにまとめる（表示順は TYPES のとおり）
         Map<String, List<KeibalabPayouts.Payout>> byType = new LinkedHashMap<>();
@@ -78,7 +91,7 @@ public final class PayoutTable {
             striped = !striped;
 
             TextView label = new TextView(context);
-            label.setText(e.getKey());
+            label.setText(Lang.betType(e.getKey()));
             label.setTextSize(12);
             label.setTextColor(0xFFFFFFFF);
             label.setTypeface(label.getTypeface(), Typeface.BOLD);
@@ -87,7 +100,7 @@ public final class PayoutTable {
             chip.setCornerRadius(6 * density);
             chip.setColor(typeColor(e.getKey()));
             label.setBackground(chip);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams((int) (58 * density), LinearLayout.LayoutParams.WRAP_CONTENT);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams((int) (72 * density), LinearLayout.LayoutParams.WRAP_CONTENT);
             lp.gravity = Gravity.TOP;
             label.setLayoutParams(lp);
             label.setPadding(0, (int) (3 * density), 0, (int) (3 * density));
@@ -111,7 +124,7 @@ public final class PayoutTable {
                 row.addView(numbers);
 
                 TextView yen = new TextView(context);
-                yen.setText(String.format("%,d円", p.yen));
+                yen.setText(Lang.yen(p.yen));
                 yen.setTextSize(15);
                 yen.setGravity(Gravity.END);
                 // 万馬券は目立たせる
@@ -121,7 +134,7 @@ public final class PayoutTable {
                 lines.addView(row);
             }
             group.addView(lines);
-            table.addView(group);
+            body.addView(group);
         }
         return table;
     }

@@ -1,6 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.ui.raceResult;
 
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.util.Log;
@@ -35,6 +36,7 @@ import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemoDialog;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemos;
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 import org.threeten.bp.LocalDate;
@@ -200,6 +202,8 @@ public class RaceResultsFragment extends Fragment {
             table.addView(createHeaderRow());
         }
         TableRow row = createDataRow(result);
+        // 1行おきに薄い色を付けて、横に長い表でも行を追いやすくする
+        row.setBackgroundColor(stripeColor(table.getChildCount()));
         if (raceNo == targetRaceNo && targetHorse != null && result.getHorseName() != null
                 && FavoriteHorseNames.normalize(result.getHorseName()).equals(FavoriteHorseNames.normalize(targetHorse))) {
             // 出走表などから開いた馬の行は色を付けて目立たせる（お気に入りの色より優先する）
@@ -265,18 +269,78 @@ public class RaceResultsFragment extends Fragment {
         return rawTime;
     }
 
+    // 枠番ごとの色（1白 2黒 3赤 4青 5黄 6緑 7橙 8桃）。出走表と同じ
+    private static final int[] WAKU_BACKGROUND = {
+            0xFFFFFFFF, 0xFF222222, 0xFFE53935, 0xFF1E88E5,
+            0xFFFDD835, 0xFF43A047, 0xFFFB8C00, 0xFFF06292};
+    private static final int[] WAKU_TEXT = {
+            0xFF222222, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+            0xFF222222, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
+    private static final int HEADER_COLOR = 0xFF388E3C;
+
+    /** 見出しの次の行（1着）を白、次を薄い灰色…と交互にする */
+    private static int stripeColor(int indexInTable) {
+        return indexInTable % 2 == 1 ? 0xFFFFFFFF : 0xFFF5F5F5;
+    }
+
     private TableRow createHeaderRow() {
         TableRow row = new TableRow(getContext());
-        row.setBackgroundColor(Color.LTGRAY);
-        String[] headers = {"★", "📝", "着", "枠", "馬名", "性齢", "騎手", "人気", "単勝", "タイム"};
-        for (String h : headers) row.addView(createTextView(h));
+        row.setBackgroundColor(HEADER_COLOR);
+        String[] headers = {"★", "📝", Lang.t("着", "Pos"), Lang.t("枠", "Gate"), Lang.t("馬名", "Horse"),
+                Lang.t("性齢", "Sex/Age"), Lang.t("騎手", "Jockey"), Lang.t("人気", "Fav"), Lang.t("単勝", "Odds"),
+                Lang.t("タイム", "Time")};
+        for (String h : headers) {
+            TextView tv = createTextView(h);
+            tv.setTextColor(Color.WHITE);
+            tv.setTypeface(tv.getTypeface(), Typeface.BOLD);
+            row.addView(tv);
+        }
         return row;
+    }
+
+    /** 着順のセル。1着は赤、2・3着は緑の太字 */
+    private TextView createRankView(@Nullable String rank) {
+        TextView tv = createTextView(rank);
+        tv.setGravity(android.view.Gravity.CENTER);
+        if ("1".equals(rank)) {
+            tv.setTextColor(0xFFC62828);
+            tv.setTypeface(tv.getTypeface(), Typeface.BOLD);
+        } else if ("2".equals(rank) || "3".equals(rank)) {
+            tv.setTextColor(0xFF2E7D32);
+            tv.setTypeface(tv.getTypeface(), Typeface.BOLD);
+        } else if (rank != null && !rank.matches("\\d+")) {
+            // 取消・中止など
+            tv.setTextColor(0xFF9E9E9E);
+            tv.setText(Lang.rank(rank));
+        }
+        return tv;
+    }
+
+    /** 枠番のセルは枠の色で塗る */
+    private TextView createWakuView(@Nullable String waku) {
+        TextView tv = createTextView(waku);
+        tv.setGravity(android.view.Gravity.CENTER);
+        int index;
+        try {
+            index = Integer.parseInt(waku != null ? waku.trim() : "") - 1;
+        } catch (NumberFormatException e) {
+            return tv;
+        }
+        if (index < 0 || index >= WAKU_BACKGROUND.length) return tv;
+        GradientDrawable gd = new GradientDrawable();
+        gd.setColor(WAKU_BACKGROUND[index]);
+        gd.setStroke(2, 0xFFE0E0E0);
+        tv.setBackground(gd);
+        tv.setTextColor(WAKU_TEXT[index]);
+        tv.setTypeface(tv.getTypeface(), Typeface.BOLD);
+        return tv;
     }
 
     private TableRow createDataRow(SupabaseManager.RaceResult result) {
         TableRow row = new TableRow(getContext());
         String horseName = result.getHorseName() != null ? result.getHorseName() : "";
         TextView favTv = createTextView("☆");
+        favTv.setTextColor(0xFF9E9E9E);
         favTv.setOnClickListener(v -> toggleFavorite(row, favTv, horseName));
         favTv.setClickable(true);
         favTv.setFocusable(true);
@@ -305,13 +369,25 @@ public class RaceResultsFragment extends Fragment {
         row.addView(favTv);
         row.addView(createMemoView(result, horseName));
 
-        row.addView(createTextView(result.getRank()));
-        row.addView(createTextView(result.getWaku()));
-        row.addView(createTextView(result.getHorseName()));
+        row.addView(createRankView(result.getRank()));
+        row.addView(createWakuView(result.getWaku()));
+        TextView name = createTextView(result.getHorseName());
+        name.setTextColor(0xFF111111);
+        name.setTypeface(name.getTypeface(), Typeface.BOLD);
+        row.addView(name);
         row.addView(createTextView(result.getAge()));
         row.addView(createTextView(result.getJockey()));
-        row.addView(createTextView(result.getPopular()));
-        row.addView(createTextView(result.getWinOdds()));
+        TextView popular = createTextView(result.getPopular());
+        popular.setGravity(android.view.Gravity.CENTER);
+        // 1番人気は目立たせる
+        if ("1".equals(result.getPopular())) {
+            popular.setTextColor(0xFFC62828);
+            popular.setTypeface(popular.getTypeface(), Typeface.BOLD);
+        }
+        row.addView(popular);
+        TextView odds = createTextView(result.getWinOdds());
+        odds.setGravity(android.view.Gravity.END);
+        row.addView(odds);
         row.addView(createTextView(result.getTime()));
         return row;
     }
@@ -351,18 +427,22 @@ public class RaceResultsFragment extends Fragment {
             FirebaseManager.removeFavoriteHorse(uid, horseName);
             SupabaseManager.removeFavorite(uid, horseName);
             textView.setText("☆");
-            textView.setTextColor(Color.BLACK);
-            row.setBackgroundColor(Color.TRANSPARENT);
+            textView.setTextColor(0xFF9E9E9E);
+            TableLayout table = (TableLayout) row.getParent();
+            row.setBackgroundColor(TARGET_ROW.equals(row.getTag()) ? TARGET_ROW_COLOR
+                    : stripeColor(table != null ? table.indexOfChild(row) : 1));
             Toast.makeText(getContext(), safeName + "をお気に入りから削除しました", Toast.LENGTH_SHORT).show();
         }
     }
 
+    // 罫線は薄い灰色にして、文字の方を目立たせる
     private TextView createTextView(String text) {
         TextView tv = new TextView(getContext());
         tv.setText(text != null ? text : "");
-        tv.setPadding(16, 8, 16, 8);
+        tv.setPadding(16, 10, 16, 10);
+        tv.setTextColor(0xFF333333);
         GradientDrawable gd = new GradientDrawable();
-        gd.setStroke(2, Color.BLACK);
+        gd.setStroke(2, 0xFFE0E0E0);
         tv.setBackground(gd);
         return tv;
     }
