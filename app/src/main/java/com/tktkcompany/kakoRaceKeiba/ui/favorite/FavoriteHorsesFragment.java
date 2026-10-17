@@ -26,6 +26,7 @@ import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.db.FavoriteResultFetcher;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
 import com.tktkcompany.kakoRaceKeiba.db.HorseResult;
+import com.tktkcompany.kakoRaceKeiba.db.KeibalabResults;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.notification.RaceStartNotices;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.EntriesFragment;
@@ -180,15 +181,21 @@ public class FavoriteHorsesFragment extends Fragment {
                 if (!isAdded() || getView() == null) return;
                 // entries は開催日・競馬場・レース番号の順に並んでいるので、最初に見つかったものが次走
                 Map<String, SupabaseManager.RaceEntry> next = new HashMap<>();
+                List<SupabaseManager.RaceEntry> finishedToday = new ArrayList<>();
                 org.threeten.bp.LocalDateTime now = org.threeten.bp.LocalDateTime.now();
                 for (SupabaseManager.RaceEntry e : entries) {
-                    // 今日もう発走したレースは「出走予定」にしない
+                    // 今日もう発走したレースは「出走予定」にせず、確定していそうなら速報の着順を取りに行く
                     org.threeten.bp.LocalDateTime start = RaceStartNotices.startTime(e.getKaisaibi(), e.getRaceInfo());
-                    if (start != null && start.isBefore(now)) continue;
+                    if (start != null && start.isBefore(now)) {
+                        if (favorites.contains(FavoriteHorseNames.normalize(e.getHorseName()))
+                                && start.plusMinutes(10).isBefore(now)) finishedToday.add(e);
+                        continue;
+                    }
                     String name = FavoriteHorseNames.normalize(e.getHorseName());
                     if (favorites.contains(name) && !next.containsKey(name)) next.put(name, e);
                 }
                 adapter.setNextEntries(next);
+                loadLiveResults(horseKeys, finishedToday);
             }
 
             @Override
@@ -220,6 +227,41 @@ public class FavoriteHorsesFragment extends Fragment {
         }
         Navigation.findNavController(getView()).navigate(R.id.navigation_raceResults,
                 RaceResultsFragment.args(result.kaisaibi, result.kaisaijo, raceNo, result.horseName));
+    }
+
+    /**
+     * 今日走り終えたお気に入り馬の着順を keibalab から取る（夜の取り込みを待たずに出すため）。
+     * 同じレースに何頭いても1回だけ取りに行く
+     */
+    private void loadLiveResults(List<String> horseKeys, List<SupabaseManager.RaceEntry> finished) {
+        if (finished.isEmpty() || executor.isShutdown()) return;
+        Map<String, String> keyByName = new HashMap<>();
+        for (String key : horseKeys) keyByName.put(FavoriteHorseNames.normalize(key), key);
+        executor.execute(() -> {
+            Map<String, HorseResult> live = new HashMap<>();
+            Set<String> fetched = new HashSet<>();
+            for (SupabaseManager.RaceEntry race : finished) {
+                if (!fetched.add(race.getKaisaibi() + race.getKaisaijo() + race.getRaceNo())) continue;
+                List<SupabaseManager.RaceResult> rows;
+                try {
+                    rows = KeibalabResults.fetchRaceBlocking(race.getKaisaibi(), race.getKaisaijo(), race.getRaceNo());
+                } catch (Exception e) {
+                    Log.w("FavoriteHorses", "速報の取得に失敗", e);
+                    continue;
+                }
+                for (SupabaseManager.RaceResult r : rows) {
+                    String key = keyByName.get(FavoriteHorseNames.normalize(r.getHorseName()));
+                    if (key == null) continue;
+                    live.put(key, new HorseResult("live/" + r.getKaisaibi() + r.getKaisaijo() + r.getRaceNo(),
+                            r.getHorseName(), r.getKaisaibi(), r.getKaisaijo(), String.valueOf(r.getRaceNo()),
+                            r.getRaceTitle(), r.getRank(), r.getPopular()));
+                }
+            }
+            if (live.isEmpty() || getActivity() == null) return;
+            getActivity().runOnUiThread(() -> {
+                if (isAdded() && getView() != null) adapter.setLiveResults(live);
+            });
+        });
     }
 
     // 押し間違えで消えないよう、確認してから削除する

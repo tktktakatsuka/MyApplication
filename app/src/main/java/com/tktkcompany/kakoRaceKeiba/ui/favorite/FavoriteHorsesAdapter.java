@@ -28,6 +28,8 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<FavoriteHorsesAd
     private Map<String, HorseResult> latestResults;
     // 馬名（印を外した名前）→ いちばん近い出走予定。出走予定がない馬は入っていない
     private Map<String, SupabaseManager.RaceEntry> nextEntries = new HashMap<>();
+    // お気に入りのキー → 今日のレースの速報（keibalab から）
+    private Map<String, HorseResult> liveResults = new HashMap<>();
 
     public interface OnRemoveClickListener {
         void onRemoveClick(String horseName);
@@ -56,7 +58,7 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<FavoriteHorsesAd
         notifyDataSetChanged();
     }
 
-    /** 出走予定のある馬を出走の早い順に上へ、ほかの馬はその下に名前順で並べる */
+    /** 出走予定のある馬を出走の早い順に上へ、次に今日走り終えた馬、ほかの馬はその下に名前順で並べる */
     private void sortByNextEntry() {
         horseNames.sort((a, b) -> {
             SupabaseManager.RaceEntry ea = nextEntries.get(FavoriteHorseNames.normalize(a));
@@ -64,6 +66,8 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<FavoriteHorsesAd
             if (ea != null && eb != null) return raceOrder(ea).compareTo(raceOrder(eb));
             if (ea != null) return -1;
             if (eb != null) return 1;
+            boolean la = liveResults.containsKey(a), lb = liveResults.containsKey(b);
+            if (la != lb) return la ? -1 : 1;
             return displayName(a).compareTo(displayName(b));
         });
     }
@@ -73,6 +77,10 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<FavoriteHorsesAd
         java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d{1,2}):(\\d{2})発走").matcher(info);
         String time = m.find() ? String.format("%02d%s", Integer.parseInt(m.group(1)), m.group(2)) : "9999";
         return e.getKaisaibi() + time;
+    }
+
+    private static String nz(String s) {
+        return s != null ? s : "";
     }
 
     /** 「(外)フロムダスク」→「フロムダスク」 */
@@ -87,6 +95,13 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<FavoriteHorsesAd
 
     public void clearLatestResults() {
         this.latestResults = null;
+    }
+
+    /** 今日のレースの速報（お気に入りのキー → 結果）。夜の取り込み前でも着順を出すため */
+    public void setLiveResults(Map<String, HorseResult> liveResults) {
+        this.liveResults = liveResults != null ? liveResults : new HashMap<>();
+        sortByNextEntry();
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -113,8 +128,14 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<FavoriteHorsesAd
         }
 
         HorseResult latest = latestResults != null ? latestResults.get(name) : null;
+        // 今日の速報があり、取り込み済みの結果より新しければ速報を出す
+        HorseResult live = liveResults.get(name);
+        boolean isLive = live != null && (latest == null || nz(live.kaisaibi).compareTo(nz(latest.kaisaibi)) > 0);
         holder.latestResultView.setVisibility(View.VISIBLE);
-        if (latestResults == null) {
+        if (isLive) {
+            holder.latestResultView.setText("速報: " + live.summary() + " ›");
+            holder.latestResultView.setOnClickListener(v -> resultClickListener.onResultClick(live));
+        } else if (latestResults == null) {
             holder.latestResultView.setText("直近の結果を読み込み中…");
             holder.latestResultView.setOnClickListener(null);
         } else if (latest == null) {
