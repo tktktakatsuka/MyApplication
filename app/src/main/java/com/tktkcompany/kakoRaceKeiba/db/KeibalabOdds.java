@@ -30,7 +30,7 @@ public final class KeibalabOdds {
     private static final String URL_FORMAT =
             "https://ipat-f.keibalab.jp/jquery/odds.html?kind=tan&opdt=%s&rcoursecd=%s&rno=%02d&device=pc";
     // スマホの User-Agent だとスマホ版のページに転送され、単勝・複勝の表が無いので PC 版として取得する
-    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
+    static final String USER_AGENT ="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
     private static final int TIMEOUT_MS = 10_000;
 
     /** 競馬場名 → keibalab の競馬場コード */
@@ -77,6 +77,12 @@ public final class KeibalabOdds {
     }
 
     private KeibalabOdds() {
+    }
+
+    /** 競馬場名 → keibalab の競馬場コード（"京都" → "08"）。JRA 以外なら null */
+    @Nullable
+    static String courseCode(String course) {
+        return COURSE_CODES.get(course);
     }
 
     /**

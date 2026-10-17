@@ -23,12 +23,17 @@ import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.dto.SharedViewModel;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
+import org.threeten.bp.LocalDate;
+import org.threeten.bp.format.DateTimeFormatter;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class DashboardFragment extends Fragment {
 
@@ -39,6 +44,9 @@ public class DashboardFragment extends Fragment {
     // 競馬場ごとの開催日とメインレース名（並び替えのたびに再取得しないよう保持する）
     private final Map<String, List<String>> raceDatesByCourse = new LinkedHashMap<>();
     private final Map<String, Map<String, String>> mainRacesByCourse = new HashMap<>();
+    // 今日開催している競馬場（出馬表から）。結果は夜まで取り込まれないので、別に足して速報を見られるようにする
+    private final Set<String> todayCourses = new LinkedHashSet<>();
+    private final Map<String, String> todayMainRaces = new HashMap<>();
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -58,8 +66,35 @@ public class DashboardFragment extends Fragment {
             executeQueriesForAllLocations(datelist, joNames);
         });
 
+        loadTodayCourses();
         loadBannerAd();
         return root;
+    }
+
+    private static String today() {
+        return LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+    }
+
+    private void loadTodayCourses() {
+        String today = today();
+        SupabaseManager.fetchUpcomingEntries(today, new SupabaseManager.SupabaseCallback<List<SupabaseManager.RaceEntry>>() {
+            @Override
+            public void onSuccess(List<SupabaseManager.RaceEntry> entries) {
+                if (binding == null || !isAdded()) return;
+                for (SupabaseManager.RaceEntry e : entries) {
+                    if (!today.equals(e.getKaisaibi())) continue;
+                    todayCourses.add(e.getKaisaijo());
+                    if (e.getRaceNo() == 11 && e.getRaceTitle() != null) todayMainRaces.put(e.getKaisaijo(), e.getRaceTitle().trim());
+                }
+                progressBar.setVisibility(View.GONE);
+                renderAll();
+            }
+
+            @Override
+            public void onFailure(@NonNull String message) {
+                Log.w("DashboardFragment", "Today's courses load failed: " + message);
+            }
+        });
     }
 
     private Bundle setKeyjoNameString(String date, String jo) {
@@ -126,7 +161,24 @@ public class DashboardFragment extends Fragment {
         if (binding == null || !isAdded()) return;
         buttonContainer.removeAllViews();
         LayoutInflater inflater = getLayoutInflater();
+        // 今日開催している競馬場は、取り込み前でも今日の日付を足す（結果画面が keibalab から速報を取る）
+        Map<String, List<String>> courses = new LinkedHashMap<>();
+        for (String course : todayCourses) courses.put(course, new ArrayList<>());
         for (Map.Entry<String, List<String>> entry : raceDatesByCourse.entrySet()) {
+            if (entry.getValue() == null) continue;
+            List<String> dates = courses.get(entry.getKey());
+            if (dates == null) {
+                dates = new ArrayList<>();
+                courses.put(entry.getKey(), dates);
+            }
+            dates.addAll(entry.getValue());
+        }
+        String today = today();
+        for (String course : todayCourses) {
+            List<String> dates = courses.get(course);
+            if (!dates.contains(today)) dates.add(today);
+        }
+        for (Map.Entry<String, List<String>> entry : courses.entrySet()) {
             String joName = entry.getKey();
             List<String> dates = entry.getValue();
             if (dates == null || dates.isEmpty()) continue;
@@ -149,6 +201,7 @@ public class DashboardFragment extends Fragment {
             Map<String, String> titles = mainRacesByCourse.get(joName);
             for (String date : sortedDates) {
                 String mainRace = titles != null ? titles.get(date) : null;
+                if (mainRace == null && date.equals(today)) mainRace = todayMainRaces.get(joName);
                 buttonContainer.addView(createRaceDayItem(inflater, joName, date, mainRace));
             }
         }
@@ -157,6 +210,12 @@ public class DashboardFragment extends Fragment {
     private View createRaceDayItem(LayoutInflater inflater, String joName, String date, String mainRace) {
         View item = inflater.inflate(R.layout.item_race_day, buttonContainer, false);
         ((TextView) item.findViewById(R.id.text_race_day_date)).setText(WeekendDays.formatShort(date));
+        if (date.equals(today())) {
+            TextView sub = item.findViewById(R.id.text_race_day_sub);
+            sub.setText("今日・確定したレースから速報で表示");
+            sub.setTextColor(0xFFE65100);
+            sub.setVisibility(View.VISIBLE);
+        }
         ((TextView) item.findViewById(R.id.text_race_day_main)).setText(mainRace != null ? "11R " + mainRace : "");
         item.setOnClickListener(v -> {
             NavController navController = Navigation.findNavController(v);

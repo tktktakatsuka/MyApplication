@@ -28,15 +28,23 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentRaceresultsBinding;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
+import com.tktkcompany.kakoRaceKeiba.db.KeibalabResults;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemoDialog;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemos;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
+import org.threeten.bp.LocalDate;
+import org.threeten.bp.format.DateTimeFormatter;
+
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class RaceResultsFragment extends Fragment {
     private FragmentRaceresultsBinding binding;
@@ -45,6 +53,7 @@ public class RaceResultsFragment extends Fragment {
     private final List<TextView> timeTextViews = new ArrayList<>();
     private String raceDate;
     private Map<String, HorseMemos.Memo> memos = new HashMap<>();
+    private static final ExecutorService LIVE_EXECUTOR = Executors.newSingleThreadExecutor();
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -100,17 +109,50 @@ public class RaceResultsFragment extends Fragment {
         SupabaseManager.fetchRaceResults(date, joName, new SupabaseManager.SupabaseCallback<List<SupabaseManager.RaceResult>>() {
             @Override
             public void onSuccess(List<SupabaseManager.RaceResult> results) {
-                if (!isAdded()) return;
+                if (binding == null || !isAdded()) return;
+                Set<Integer> loaded = new HashSet<>();
                 for (SupabaseManager.RaceResult result : results) {
                     int raceNo = result.getRaceNo();
                     if (raceNo >= 1 && raceNo <= 12) {
                         updateRaceUI(raceNo, result);
+                        loaded.add(raceNo);
                     }
                 }
+                loadTodayResultsLive(date, joName, loaded);
             }
             @Override
             public void onFailure(@NonNull String message) {
                 Log.e("RaceResultsFragment", "Supabase load failed: " + message);
+                if (binding == null || !isAdded()) return;
+                loadTodayResultsLive(date, joName, new HashSet<>());
+            }
+        });
+    }
+
+    /**
+     * 今日の開催は、夜の取り込みを待たずに keibalab から確定したレースの結果を取って出す。
+     * レースは番号順に行われるので、結果がまだ無いレースが見つかったらそこで止める
+     */
+    private void loadTodayResultsLive(String date, String joName, Set<Integer> alreadyShown) {
+        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        if (!today.equals(date)) return;
+        LIVE_EXECUTOR.execute(() -> {
+            for (int raceNo = 1; raceNo <= 12; raceNo++) {
+                if (alreadyShown.contains(raceNo)) continue;
+                List<SupabaseManager.RaceResult> rows;
+                try {
+                    rows = KeibalabResults.fetchRaceBlocking(date, joName, raceNo);
+                } catch (Exception e) {
+                    Log.w("RaceResultsFragment", "当日の結果の取得に失敗: " + raceNo + "R", e);
+                    return;
+                }
+                if (rows.isEmpty()) return;
+                int no = raceNo;
+                if (getActivity() == null) return;
+                getActivity().runOnUiThread(() -> {
+                    if (binding == null || !isAdded()) return;
+                    for (SupabaseManager.RaceResult row : rows) updateRaceUI(no, row);
+                });
             }
         });
     }
