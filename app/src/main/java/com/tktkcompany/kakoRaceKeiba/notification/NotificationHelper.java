@@ -8,6 +8,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Bundle;
+
+import androidx.annotation.Nullable;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -26,6 +29,8 @@ public class NotificationHelper {
     public static final String FAVORITE_CHANNEL_ID = "favorite_horse_channel";
     public static final String ENTRY_CHANNEL_ID = "horse_entry_channel";
     public static final String RACE_START_CHANNEL_ID = "race_start_channel";
+    public static final String LIVE_RESULT_CHANNEL_ID = "live_result_channel";
+    public static final String GRADED_RACE_CHANNEL_ID = "graded_race_channel";
 
     public static void createChannels(Context context) {
         NotificationManager manager = context.getSystemService(NotificationManager.class);
@@ -45,6 +50,16 @@ public class NotificationHelper {
                 ENTRY_CHANNEL_ID, "お気に入り馬・メモした馬の出走予定", NotificationManager.IMPORTANCE_DEFAULT);
         entryChannel.setDescription("出馬表に載ったときにお知らせします");
         manager.createNotificationChannel(entryChannel);
+
+        NotificationChannel liveResultChannel = new NotificationChannel(
+                LIVE_RESULT_CHANNEL_ID, "お気に入り馬の結果（速報）", NotificationManager.IMPORTANCE_HIGH);
+        liveResultChannel.setDescription("お気に入り馬のレースの結果が確定したらすぐにお知らせします");
+        manager.createNotificationChannel(liveResultChannel);
+
+        NotificationChannel gradedChannel = new NotificationChannel(
+                GRADED_RACE_CHANNEL_ID, "重賞の発走前", NotificationManager.IMPORTANCE_DEFAULT);
+        gradedChannel.setDescription("重賞レースの発走30分前にお知らせします");
+        manager.createNotificationChannel(gradedChannel);
 
         // 発走直前に気づけるよう、ほかの通知より目立たせる
         NotificationChannel raceStartChannel = new NotificationChannel(
@@ -66,11 +81,20 @@ public class NotificationHelper {
      * 通知を表示する。notificationIdを変えれば複数の通知が上書きされずに並ぶ。
      */
     public static void show(Context context, String channelId, int notificationId, String title, String message) {
+        show(context, channelId, notificationId, title, message, null);
+    }
+
+    /**
+     * タップしたときに開く画面を extras で指定できる版（{@link MainActivity#EXTRA_OPEN_RACE_DATE} など）。
+     */
+    public static void show(Context context, String channelId, int notificationId, String title, String message,
+                            @Nullable Bundle extras) {
         if (!canPostNotifications(context)) return;
         createChannels(context);
 
         Intent intent = new Intent(context, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        if (extras != null) intent.putExtras(extras);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, notificationId, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 

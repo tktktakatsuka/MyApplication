@@ -17,6 +17,7 @@ import androidx.work.WorkerParameters;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.tktkcompany.kakoRaceKeiba.MainActivity;
 import com.tktkcompany.kakoRaceKeiba.db.FavoriteResultFetcher;
 import com.tktkcompany.kakoRaceKeiba.db.KeibalabOdds;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
@@ -151,7 +152,8 @@ public class RaceStartWorker extends Worker {
             NotificationHelper.show(context, NotificationHelper.RACE_START_CHANNEL_ID,
                     ("start" + raceKey).hashCode(),
                     RaceStartNotices.title(horses),
-                    RaceStartNotices.body(start, course, raceNo, race.getRaceTitle(), race.getRaceInfo(), horses, oddsTime));
+                    RaceStartNotices.body(start, course, raceNo, race.getRaceTitle(), race.getRaceInfo(), horses, oddsTime),
+                    MainActivity.openRaceExtras(date, course, raceNo, race.getRaceTitle()));
             prefs.edit().putStringSet(prefKey, kept).apply();
             return Result.success();
         } catch (Exception e) {

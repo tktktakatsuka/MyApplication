@@ -50,6 +50,8 @@ public class HomeFragment extends Fragment {
     private SharedViewModel sharedViewModel;
     private FirebaseAuth mAuth; // mAuthをメンバー変数として追加
     private boolean exeSetRaceResult;
+    // 「今日の開催」カード（開催日だけ表示）
+    private TodayCard todayCard;
     // yyyyMMdd形式用
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
@@ -70,6 +72,7 @@ public class HomeFragment extends Fragment {
 
         binding.cardEntries.setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.action_navigation_home_to_navigation_entries));
+        todayCard = new TodayCard(this, binding.cardToday, binding.todayContainer);
         loadUpcomingEntries();
 
         // ログイン・ログアウトボタンの設定
@@ -140,6 +143,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (todayCard != null) todayCard.stop();
     }
 
 
@@ -239,6 +243,7 @@ public class HomeFragment extends Fragment {
                         text.append("\n📝メモした馬が出走予定: ").append(TextUtils.join("・", memoRunners));
                     }
                     binding.textEntriesBody.setText(text);
+                    todayCard.show(entries, favorites);
                 }));
             }
 

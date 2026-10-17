@@ -108,6 +108,9 @@ public class FavoriteResultWorker extends Worker {
                     if (r.kaisaibi == null || r.kaisaibi.compareTo(since) < 0) continue;
                     stillRecent.add(r.key);
                     if (notified.contains(r.key)) continue;
+                    // レース直後に速報で知らせた結果は、もう一度は知らせない
+                    if (RaceResultWorker.alreadyNotified(context, user.getUid(),
+                            LiveResultNotices.key(r.kaisaibi, r.kaisaijo, parseRaceNo(r.raceNo), r.horseName))) continue;
                     NotificationHelper.show(context, NotificationHelper.FAVORITE_CHANNEL_ID,
                             r.key.hashCode(),
                             "★ " + r.horseName + " の結果",
@@ -121,6 +124,14 @@ public class FavoriteResultWorker extends Worker {
         } catch (Exception e) {
             Log.w(TAG, "お気に入り馬の結果確認に失敗", e);
             return Result.retry();
+        }
+    }
+
+    private static int parseRaceNo(String raceNo) {
+        try {
+            return Integer.parseInt(raceNo.trim());
+        } catch (RuntimeException e) {
+            return 0;
         }
     }
 
@@ -154,6 +165,7 @@ public class FavoriteResultWorker extends Worker {
             // お気に入り馬が出るレースは、発走前の通知も予約する（1レースにつき1回）
             if (favorite && scheduledRaces.add(e.getKaisaibi() + "|" + e.getKaisaijo() + "|" + e.getRaceNo())) {
                 RaceStartWorker.schedule(context, e);
+                RaceResultWorker.schedule(context, e);
             }
             EntryNotices.Item item = new EntryNotices.Item(e.getHorseName(), e.getKaisaibi(), e.getKaisaijo(),
                     e.getRaceNo(), e.getRaceTitle(), e.getRaceInfo(), favorite, memo);

@@ -12,6 +12,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -51,7 +52,12 @@ import com.tktkcompany.kakoRaceKeiba.databinding.ActivityMainBinding;
 import com.tktkcompany.kakoRaceKeiba.dto.SharedViewModel;
 import com.tktkcompany.kakoRaceKeiba.notification.FavoriteResultWorker;
 import com.tktkcompany.kakoRaceKeiba.notification.NotificationHelper;
+import com.tktkcompany.kakoRaceKeiba.ui.entries.EntriesFragment;
 import com.tktkcompany.kakoRaceKeiba.ui.home.HomeFragment;
+import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemoDialog;
+import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemos;
+
+import java.util.HashMap;
 
 import static com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL;
 
@@ -150,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
         if (savedInstanceState == null) {
             // ほかの画面で加えたお気に入りも、発走前の通知を早めに予約しておく
             FavoriteResultWorker.runOnce(this);
+            handleNotificationIntent(getIntent());
         }
 
         // FCM トークン取得
@@ -162,6 +169,58 @@ public class MainActivity extends AppCompatActivity {
                     String token = task.getResult();
                     Log.d("FCM Token", token);
                 });
+    }
+
+    // 通知をタップしたときに開く画面（通知を作る側が extras に入れる）
+    public static final String EXTRA_MEMO_HORSE = "memo_horse";
+    public static final String EXTRA_MEMO_FROM = "memo_from";
+    public static final String EXTRA_OPEN_RACE_DATE = "open_race_date";
+    public static final String EXTRA_OPEN_RACE_COURSE = "open_race_course";
+    public static final String EXTRA_OPEN_RACE_NO = "open_race_no";
+    public static final String EXTRA_OPEN_RACE_TITLE = "open_race_title";
+
+    /** タップでそのレースの出走表を開く通知用の extras */
+    public static Bundle openRaceExtras(String date, String course, int raceNo, @Nullable String raceTitle) {
+        Bundle extras = new Bundle();
+        extras.putString(EXTRA_OPEN_RACE_DATE, date);
+        extras.putString(EXTRA_OPEN_RACE_COURSE, course);
+        extras.putInt(EXTRA_OPEN_RACE_NO, raceNo);
+        extras.putString(EXTRA_OPEN_RACE_TITLE, raceTitle != null ? raceTitle : "");
+        return extras;
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleNotificationIntent(intent);
+    }
+
+    /** 通知から開かれたとき、通知が指定した画面を開く（1回だけ） */
+    private void handleNotificationIntent(@Nullable Intent intent) {
+        if (intent == null) return;
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
+        String memoHorse = intent.getStringExtra(EXTRA_MEMO_HORSE);
+        String raceDate = intent.getStringExtra(EXTRA_OPEN_RACE_DATE);
+        if (memoHorse != null) {
+            String from = intent.getStringExtra(EXTRA_MEMO_FROM);
+            navController.navigate(R.id.navigation_horseMemos);
+            HorseMemos.load(memos -> {
+                if (isFinishing() || isDestroyed()) return;
+                HorseMemoDialog.show(this, new HashMap<>(memos), memoHorse, from, memo -> {
+                });
+            });
+        } else if (raceDate != null) {
+            Bundle args = new Bundle();
+            args.putString(EntriesFragment.ARG_DATE, raceDate);
+            args.putString(EntriesFragment.ARG_COURSE, intent.getStringExtra(EXTRA_OPEN_RACE_COURSE));
+            args.putInt(EntriesFragment.ARG_RACE_NO, intent.getIntExtra(EXTRA_OPEN_RACE_NO, 0));
+            args.putString(EntriesFragment.ARG_RACE_TITLE, intent.getStringExtra(EXTRA_OPEN_RACE_TITLE));
+            navController.navigate(R.id.navigation_entryDetail, args);
+        }
+        // 画面を回転したときなどに、もう一度開かないようにする
+        intent.removeExtra(EXTRA_MEMO_HORSE);
+        intent.removeExtra(EXTRA_OPEN_RACE_DATE);
     }
 
     // アクションバー左の矢印で、ひとつ前の画面に戻る
