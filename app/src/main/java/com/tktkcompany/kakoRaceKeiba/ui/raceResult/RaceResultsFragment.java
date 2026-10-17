@@ -112,19 +112,21 @@ public class RaceResultsFragment extends Fragment {
         }
     }
 
+    // 1R〜12R の表・見出し・発走時刻。フィールド名から探す（リフレクション）と、
+    // リリース版の難読化で名前が変わって見つからず落ちるので、直接並べる
     private void initViews() {
-        for (int i = 1; i <= 12; i++) {
-            try {
-                java.lang.reflect.Field tableField = binding.getClass().getDeclaredField("tableLayout" + i);
-                tableLayouts.add((TableLayout) tableField.get(binding));
-                java.lang.reflect.Field titleField = binding.getClass().getDeclaredField("textDashboard" + i);
-                titleTextViews.add((TextView) titleField.get(binding));
-                java.lang.reflect.Field timeField = binding.getClass().getDeclaredField("textHassouTime" + i);
-                timeTextViews.add((TextView) timeField.get(binding));
-            } catch (Exception e) {
-                Log.e("RaceResultsFragment", "Error mapping views: " + e.getMessage());
-            }
-        }
+        tableLayouts.addAll(java.util.Arrays.asList(
+                binding.tableLayout1, binding.tableLayout2, binding.tableLayout3, binding.tableLayout4,
+                binding.tableLayout5, binding.tableLayout6, binding.tableLayout7, binding.tableLayout8,
+                binding.tableLayout9, binding.tableLayout10, binding.tableLayout11, binding.tableLayout12));
+        titleTextViews.addAll(java.util.Arrays.asList(
+                binding.textDashboard1, binding.textDashboard2, binding.textDashboard3, binding.textDashboard4,
+                binding.textDashboard5, binding.textDashboard6, binding.textDashboard7, binding.textDashboard8,
+                binding.textDashboard9, binding.textDashboard10, binding.textDashboard11, binding.textDashboard12));
+        timeTextViews.addAll(java.util.Arrays.asList(
+                binding.textHassouTime1, binding.textHassouTime2, binding.textHassouTime3, binding.textHassouTime4,
+                binding.textHassouTime5, binding.textHassouTime6, binding.textHassouTime7, binding.textHassouTime8,
+                binding.textHassouTime9, binding.textHassouTime10, binding.textHassouTime11, binding.textHassouTime12));
     }
 
     private void loadRaceResults(String date, String joName) {

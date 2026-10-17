@@ -13,15 +13,33 @@ if (localPropertiesFile.exists()) {
     localPropertiesFile.withInputStream { localProperties.load(it) }
 }
 
+// リリース用の署名情報は keystore.properties から読み込む（Git には入れない。keystore.properties.example を参照）
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+
 android {
     namespace = 'com.tktkcompany.kakoRaceKeiba'
+
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile = file(keystoreProperties.getProperty('storeFile'))
+                storePassword = keystoreProperties.getProperty('storePassword')
+                keyAlias = keystoreProperties.getProperty('keyAlias')
+                keyPassword = keystoreProperties.getProperty('keyPassword')
+            }
+        }
+    }
     compileSdk = 36
 
     defaultConfig {
         applicationId = "com.tktkcompany.kakoRaceKeiba"
         minSdk = 28
         targetSdk = 35
-        versionCode = 376
+        versionCode = 377
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "SUPABASE_URL", "\"${localProperties.getProperty('SUPABASE_URL', '')}\""
@@ -33,6 +51,12 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (project.hasProperty('releaseWithDebugKey')) {
+                // 難読化したリリース版を、データを消さずに手元の端末で試すため（debug 版の上に入れられる）
+                signingConfig = signingConfigs.debug
+            } else if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.release
+            }
         }
     }
     compileOptions {

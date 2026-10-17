@@ -64,19 +64,20 @@ public class NotificationsFragment extends Fragment {
     private void initViews() {
         progressBar = binding.progressBar;
 
-        // ViewBindingを使って動的にリスト化
-        for (int i = 1; i <= 20; i++) {
-            try {
-                // TableLayout
-                java.lang.reflect.Field tableField = binding.getClass().getDeclaredField("tableLayout" + i);
-                tableLayouts.add((TableLayout) tableField.get(binding));
-                // TextView
-                java.lang.reflect.Field textField = binding.getClass().getDeclaredField("textDate" + i);
-                dateTextViews.add((TextView) textField.get(binding));
-            } catch (Exception e) {
-                Log.e("NotificationsFragment", "Error mapping views: " + e.getMessage());
-            }
-        }
+        // 20日分の表と日付。フィールド名から探す（リフレクション）と、
+        // リリース版の難読化で名前が変わって見つからないので、直接並べる
+        tableLayouts.addAll(java.util.Arrays.asList(
+                binding.tableLayout1, binding.tableLayout2, binding.tableLayout3, binding.tableLayout4,
+                binding.tableLayout5, binding.tableLayout6, binding.tableLayout7, binding.tableLayout8,
+                binding.tableLayout9, binding.tableLayout10, binding.tableLayout11, binding.tableLayout12,
+                binding.tableLayout13, binding.tableLayout14, binding.tableLayout15, binding.tableLayout16,
+                binding.tableLayout17, binding.tableLayout18, binding.tableLayout19, binding.tableLayout20));
+        dateTextViews.addAll(java.util.Arrays.asList(
+                binding.textDate1, binding.textDate2, binding.textDate3, binding.textDate4,
+                binding.textDate5, binding.textDate6, binding.textDate7, binding.textDate8,
+                binding.textDate9, binding.textDate10, binding.textDate11, binding.textDate12,
+                binding.textDate13, binding.textDate14, binding.textDate15, binding.textDate16,
+                binding.textDate17, binding.textDate18, binding.textDate19, binding.textDate20));
 
         binding.showDialogButton.setOnClickListener(v -> showRaceCourseDialog());
 

@@ -69,3 +69,12 @@
 -keep class * implements android.os.Parcelable {
   public static final android.os.Parcelable$Creator *;
 }
+
+# WorkManager（通知の予約に使う）。-repackageclasses / -allowaccessmodification と組み合わさると
+# 内部のデータベース（Room）の生成用コンストラクタが消えて起動時に落ちるので残す
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
+-keep class androidx.work.impl.WorkDatabase_Impl { *; }
+# Worker はクラス名からリフレクションで作られる
+-keep class * extends androidx.work.ListenableWorker {
+    public <init>(android.content.Context, androidx.work.WorkerParameters);
+}
