@@ -105,10 +105,12 @@
                         app:tabMode="scrollable" />
                 </HorizontalScrollView>
 
+                <!-- タブの切り替えにだけ使う（中身はタブ名だけなので見せない） -->
                 <androidx.viewpager2.widget.ViewPager2
                     android:id="@+id/viewPager"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
+                    android:layout_height="1dp"
+                    android:visibility="invisible" />
 
             </LinearLayout>
 

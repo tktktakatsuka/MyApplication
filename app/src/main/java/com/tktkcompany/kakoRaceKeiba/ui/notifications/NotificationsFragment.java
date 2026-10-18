@@ -183,7 +183,9 @@ public class NotificationsFragment extends Fragment {
                 finishDate(generation, true);
                 boolean isHeaderSet = false;
                 dateText.setText(joName + "   " + WeekendDays.formatWithDayOfWeek(date));
-                dateText.setPadding(16, 8, 16, 8);
+                dateText.setPadding(16, 12, 16, 12);
+                dateText.setTextColor(0xFF2E7D32);
+                dateText.setTypeface(dateText.getTypeface(), android.graphics.Typeface.BOLD);
 
                 // 取り込みが2回動いた日は同じレースが2行入っているので、レース番号ごとに1行にする
                 java.util.Map<String, SupabaseManager.RaceTrend> byRace = new java.util.LinkedHashMap<>();
@@ -241,7 +243,7 @@ public class NotificationsFragment extends Fragment {
 
     private TableRow createHeaderRow(TrendCategory category) {
         TableRow row = new TableRow(getContext());
-        row.setBackgroundColor(Color.LTGRAY);
+        row.setBackgroundColor(0xFF388E3C);
         String[] headers;
         if (category == TrendCategory.HARAIMODOSI) {
             headers = Lang.ja() ? new String[]{"レース", "条件", "馬場・天候", "荒れ", "単勝", "馬連", "３連単"}
@@ -250,7 +252,12 @@ public class NotificationsFragment extends Fragment {
             headers = Lang.ja() ? new String[]{"レース", "条件", "馬場・天候", "１着(人気)", "２着(人気)", "３着(人気)"}
                     : new String[]{"Race", "Conditions", "Track/Weather", "1st (fav)", "2nd (fav)", "3rd (fav)"};
         }
-        for (String h : headers) row.addView(createTextView(h));
+        for (String h : headers) {
+            TextView tv = createTextView(h);
+            tv.setTextColor(Color.WHITE);
+            tv.setTypeface(tv.getTypeface(), android.graphics.Typeface.BOLD);
+            row.addView(tv);
+        }
         return row;
     }
 
@@ -266,18 +273,24 @@ public class NotificationsFragment extends Fragment {
         TableRow row = new TableRow(getContext());
         // 1行おきに背景色を変えて、横に長い表でも行を追いやすくする
         if (table.getChildCount() % 2 == 0) {
-            row.setBackgroundColor(Color.parseColor("#F1F8E9"));
+            row.setBackgroundColor(0xFFF5F5F5);
         }
         // レース番号とレース名を1列にまとめて列数を減らす
-        row.addView(createTextView(joinNonEmpty(trend.getRaceNum(), trend.getRaceName())));
-        row.addView(createTextView(distance));
-        row.addView(createTextView(trend.getRaceCondition()));
+        TextView race = createTextView(joinNonEmpty(trend.getRaceNum(), trend.getRaceName()));
+        race.setTextColor(0xFF2E7D32);
+        race.setTypeface(race.getTypeface(), android.graphics.Typeface.BOLD);
+        row.addView(race);
+        TextView course = createTextView(distance);
+        // 芝は緑、ダートは茶色
+        course.setTextColor(distance.contains("芝") ? 0xFF2E7D32 : distance.contains("ダ") ? 0xFF8D6E63 : 0xFF333333);
+        row.addView(course);
+        row.addView(conditionView(trend.getRaceCondition()));
 
         if (category == TrendCategory.HARAIMODOSI) {
-            row.addView(createTextView(trend.getHaraimodosiAre()));
-            row.addView(createTextView(trend.getHaraimodosiTansyo()));
-            row.addView(createTextView(trend.getHaraimodosiUmaren()));
-            row.addView(createTextView(trend.getHaraimodosi3Rentan()));
+            row.addView(upsetView(trend.getHaraimodosiAre()));
+            row.addView(payoutView(trend.getHaraimodosiTansyo()));
+            row.addView(payoutView(trend.getHaraimodosiUmaren()));
+            row.addView(payoutView(trend.getHaraimodosi3Rentan()));
         } else {
             String v1 = trend.getUma1Name(), v2 = trend.getUma2Name(), v3 = trend.getUmaName(); // Default HORSE
             switch (category) {
@@ -290,14 +303,74 @@ public class NotificationsFragment extends Fragment {
                 case SEISAN: v1 = trend.getSeisann1(); v2 = trend.getSeisann2(); v3 = trend.getSeisann3(); break;
             }
             // 馬番と内容を1つのセルにまとめる（例: 「3番 ○○(1人)」）
-            row.addView(createTextView(joinNonEmpty(withBan(trend.getUma1Ban()), v1)));
-            row.addView(createTextView(joinNonEmpty(withBan(trend.getUma2Ban()), v2)));
-            row.addView(createTextView(joinNonEmpty(withBan(trend.getUma3Ban()), v3)));
+            row.addView(placeView(1, trend.getUma1Ban(), v1));
+            row.addView(placeView(2, trend.getUma2Ban(), v2));
+            row.addView(placeView(3, trend.getUma3Ban(), v3));
         }
         table.addView(row);
     }
 
+    /** 1〜3着のセル。「1着」は赤、2・3着は緑の帯を左に付け、人気（①②…）が5番人気以下なら目立たせる */
+    private TextView placeView(int place, String ban, String value) {
+        TextView tv = createTextView(joinNonEmpty(withBan(ban), value));
+        int color = place == 1 ? 0xFFC62828 : 0xFF2E7D32;
+        GradientDrawable bg = new GradientDrawable();
+        bg.setStroke(2, 0xFFE0E0E0);
+        GradientDrawable mark = new GradientDrawable();
+        mark.setColor(color);
+        android.graphics.drawable.LayerDrawable layer = new android.graphics.drawable.LayerDrawable(new android.graphics.drawable.Drawable[]{bg, mark});
+        layer.setLayerGravity(1, android.view.Gravity.START | android.view.Gravity.FILL_VERTICAL);
+        layer.setLayerWidth(1, 8);
+        tv.setBackground(layer);
+        if (value != null && value.matches(".*[⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱].*")) {
+            tv.setTextColor(0xFFE65100);
+            tv.setTypeface(tv.getTypeface(), android.graphics.Typeface.BOLD);
+        }
+        return tv;
+    }
+
+    /** 馬場・天候。良は緑、稍重は橙、重・不良は赤 */
+    private TextView conditionView(String condition) {
+        TextView tv = createTextView(condition);
+        if (condition != null) {
+            if (condition.startsWith("不良") || condition.startsWith("重")) tv.setTextColor(0xFFC62828);
+            else if (condition.startsWith("稍")) tv.setTextColor(0xFFE65100);
+            else if (condition.startsWith("良")) tv.setTextColor(0xFF2E7D32);
+        }
+        return tv;
+    }
+
+    /** 荒れ具合。大荒・超荒は赤、中荒は橙、それ以外（本命など）は緑のラベル */
+    private TextView upsetView(String upset) {
+        TextView tv = createTextView(upset);
+        if (upset == null || upset.isEmpty()) return tv;
+        int color = (upset.contains("大") || upset.contains("超")) ? 0xFFC62828 : upset.contains("中") ? 0xFFE65100 : 0xFF2E7D32;
+        tv.setTextColor(Color.WHITE);
+        tv.setTypeface(tv.getTypeface(), android.graphics.Typeface.BOLD);
+        tv.setGravity(android.view.Gravity.CENTER);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(color);
+        bg.setStroke(2, 0xFFE0E0E0);
+        tv.setBackground(bg);
+        return tv;
+    }
+
+    /** 払戻金。万馬券は赤の太字 */
+    private TextView payoutView(String yen) {
+        TextView tv = createTextView(yen);
+        tv.setGravity(android.view.Gravity.END);
+        if (yen != null) {
+            String digits = yen.replaceAll("[^0-9]", "");
+            if (!digits.isEmpty() && Long.parseLong(digits) >= 10000) {
+                tv.setTextColor(0xFFC62828);
+                tv.setTypeface(tv.getTypeface(), android.graphics.Typeface.BOLD);
+            }
+        }
+        return tv;
+    }
+
     private static String withBan(String ban) {
+
         return ban == null || ban.isEmpty() ? null : Lang.t(ban + "番", "#" + ban);
     }
 
@@ -310,9 +383,10 @@ public class NotificationsFragment extends Fragment {
     private TextView createTextView(String text) {
         TextView tv = new TextView(getContext());
         tv.setText(text != null ? text : "");
-        tv.setPadding(16, 8, 16, 8);
+        tv.setPadding(16, 10, 16, 10);
+        tv.setTextColor(0xFF333333);
         GradientDrawable gd = new GradientDrawable();
-        gd.setStroke(2, Color.BLACK);
+        gd.setStroke(2, 0xFFE0E0E0);
         tv.setBackground(gd);
         return tv;
     }
