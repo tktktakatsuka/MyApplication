@@ -1,80 +1,43 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
+# リリース版の R8（縮小・最適化・難読化）の規則。
+# ライブラリ（Google Play 開発者サービス・Firebase・OkHttp・Retrofit・kotlinx.serialization など）は
+# 必要な規則を自分で同梱しているので、ここではパッケージ丸ごとの -keep はしない。
+# 以前は com.google.android.gms.** などを丸ごと残していて、コードの 7 割以上が最適化・難読化されず、
+# Google Play から「DEX コードの最適化がしきい値を下回っています」と警告された（2026/10/18）。
 
-# Preserve line number information for debugging stack traces.
+# クラッシュログで行番号を読めるようにする（難読化の対応表 mapping.txt は AAB に入る）
 -keepattributes SourceFile,LineNumberTable
--keep public class * extends java.lang.Exception
+-renamesourcefileattribute SourceFile
+-keepattributes Signature,Exceptions,*Annotation*,InnerClasses,EnclosingMethod
 
-# Aggressive optimizations
 -allowaccessmodification
 -repackageclasses ''
 
-# =================================================================
-#  Google Play Services & Firebase
-# =================================================================
--keep class com.google.android.gms.** { *; }
--keep class * extends java.lang.annotation.Annotation { *; }
--keepattributes Signature
--keepnames class com.google.firebase.database.** { *; }
-
-# =================================================================
-#  Retrofit & OkHttp
-# =================================================================
--dontwarn retrofit2.**
--keep class retrofit2.** { *; }
--keepattributes Signature
--keepattributes Exceptions
-
--dontwarn okhttp3.**
--keep class okhttp3.** { *; }
--keep interface okhttp3.** { *; }
--dontwarn okio.**
--keep class okio.** { *; }
-
-# =================================================================
-#  Gson & DTO (Data Transfer Object)
-# =================================================================
-# Keep your DTO classes to ensure reflection-based parsing works correctly
+# Firebase Realtime Database で読み書きするクラス（フィールド名がそのままキーになる）
 -keep class com.tktkcompany.kakoRaceKeiba.dto.** { *; }
--keepclassmembers class com.tktkcompany.kakoRaceKeiba.dto.** { *; }
--keepattributes *Annotation*
 
-# =================================================================
-#  ThreeTenABP (Date/Time Backport)
-# =================================================================
--keep class org.threeten.bp.** { *; }
--dontwarn org.threeten.bp.**
-
-# =================================================================
-#  Jsoup (HTML Parser)
-# =================================================================
--keep class org.jsoup.** { *; }
--dontwarn org.jsoup.**
-
-# =================================================================
-#  MPAndroidChart
-# =================================================================
--keep class com.github.mikephil.charting.** { *; }
--dontwarn com.github.mikephil.charting.**
--keep public class * extends com.github.mikephil.charting.charts.Chart {
-    public <init>(android.content.Context);
-    public <init>(android.content.Context, android.util.AttributeSet);
-    public <init>(android.content.Context, android.util.AttributeSet, int);
-}
-
-# =================================================================
-#  Android Core
-# =================================================================
--keep class * implements android.os.Parcelable {
-  public static final android.os.Parcelable$Creator *;
-}
-
-# WorkManager（通知の予約に使う）。-repackageclasses / -allowaccessmodification と組み合わさると
-# 内部のデータベース（Room）の生成用コンストラクタが消えて起動時に落ちるので残す
+# WorkManager（通知の予約に使う）。内部のデータベース（Room）の生成用コンストラクタが消えると起動時に落ちる
 -keep class * extends androidx.room.RoomDatabase { <init>(); }
 -keep class androidx.work.impl.WorkDatabase_Impl { *; }
 # Worker はクラス名からリフレクションで作られる
 -keep class * extends androidx.work.ListenableWorker {
     public <init>(android.content.Context, androidx.work.WorkerParameters);
 }
+
+# グラフ（MPAndroidChart）はレイアウトの XML から作られる
+-keep public class * extends com.github.mikephil.charting.charts.Chart {
+    public <init>(android.content.Context);
+    public <init>(android.content.Context, android.util.AttributeSet);
+    public <init>(android.content.Context, android.util.AttributeSet, int);
+}
+-dontwarn com.github.mikephil.charting.**
+
+-keep class * implements android.os.Parcelable {
+  public static final android.os.Parcelable$Creator *;
+}
+
+# 規則を同梱していないライブラリの警告を抑える（動作には関係しない）
+-dontwarn org.jsoup.**
+-dontwarn org.threeten.bp.**
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn retrofit2.**
