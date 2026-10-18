@@ -34,6 +34,10 @@ public final class PredictionStats {
     /** 「◎ 5レース 1着2回・2着以内3回・3着以内4回（勝率40%・複勝率80%）」。レースが無ければ空文字 */
     public String summary() {
         if (races == 0) return "";
+        if (!com.tktkcompany.kakoRaceKeiba.util.Lang.ja()) {
+            return "◎ " + races + " races  Won " + wins + " · Top 2: " + top2 + " · Top 3: " + top3
+                    + "\nWin " + percent(wins) + " · Top 2 " + percent(top2) + " · Top 3 " + percent(top3);
+        }
         return "◎ " + races + "レース　1着" + wins + "回・2着以内" + top2 + "回・3着以内" + top3 + "回"
                 + "\n勝率" + percent(wins) + "・連対率" + percent(top2) + "・複勝率" + percent(top3);
     }

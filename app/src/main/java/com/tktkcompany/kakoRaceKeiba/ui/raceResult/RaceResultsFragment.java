@@ -93,7 +93,7 @@ public class RaceResultsFragment extends Fragment {
             targetRaceNo = args.getInt(ARG_RACE_NO, 0);
             targetHorse = args.getString(ARG_HORSE);
             if (date != null && jo != null) {
-                setScreenTitle(WeekendDays.formatShort(date) + " " + jo + "のレース結果");
+                setScreenTitle(WeekendDays.formatShort(date) + " " + Lang.t(jo + "のレース結果", Lang.course(jo) + " results"));
                 raceDate = date;
                 // 各行の📝にメモの有無を出すため、先にメモを読んでおく
                 HorseMemos.load(loaded -> {
@@ -137,6 +137,8 @@ public class RaceResultsFragment extends Fragment {
             @Override
             public void onSuccess(List<SupabaseManager.RaceResult> results) {
                 if (binding == null || !isAdded()) return;
+                // 今日の開催で取り込み前なら、速報を取り終えるまでスピナーを残す
+                if (!results.isEmpty()) binding.progressResults.setVisibility(View.GONE);
                 Set<Integer> loaded = new HashSet<>();
                 for (SupabaseManager.RaceResult result : results) {
                     int raceNo = result.getRaceNo();
@@ -162,26 +164,43 @@ public class RaceResultsFragment extends Fragment {
      */
     private void loadTodayResultsLive(String date, String joName, Set<Integer> alreadyShown) {
         String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        if (!today.equals(date)) return;
+        if (!today.equals(date)) {
+            hideProgress();
+            return;
+        }
         LIVE_EXECUTOR.execute(() -> {
-            for (int raceNo = 1; raceNo <= 12; raceNo++) {
-                if (alreadyShown.contains(raceNo)) continue;
-                List<SupabaseManager.RaceResult> rows;
-                try {
-                    rows = KeibalabResults.fetchRaceBlocking(date, joName, raceNo);
-                } catch (Exception e) {
-                    Log.w("RaceResultsFragment", "当日の結果の取得に失敗: " + raceNo + "R", e);
-                    return;
-                }
-                if (rows.isEmpty()) return;
-                int no = raceNo;
-                if (getActivity() == null) return;
-                getActivity().runOnUiThread(() -> {
-                    if (binding == null || !isAdded()) return;
-                    for (SupabaseManager.RaceResult row : rows) updateRaceUI(no, row);
-                });
+            try {
+                loadLiveRaces(date, joName, alreadyShown);
+            } finally {
+                if (getActivity() != null) getActivity().runOnUiThread(this::hideProgress);
             }
         });
+    }
+
+    private void hideProgress() {
+        if (binding != null) binding.progressResults.setVisibility(View.GONE);
+    }
+
+    /** 確定したレースを1Rから順に取る（バックグラウンドで呼ぶ） */
+    private void loadLiveRaces(String date, String joName, Set<Integer> alreadyShown) {
+        for (int raceNo = 1; raceNo <= 12; raceNo++) {
+            if (alreadyShown.contains(raceNo)) continue;
+            List<SupabaseManager.RaceResult> rows;
+            try {
+                rows = KeibalabResults.fetchRaceBlocking(date, joName, raceNo);
+            } catch (Exception e) {
+                Log.w("RaceResultsFragment", "当日の結果の取得に失敗: " + raceNo + "R", e);
+                return;
+            }
+            if (rows.isEmpty()) return;
+            int no = raceNo;
+            if (getActivity() == null) return;
+            getActivity().runOnUiThread(() -> {
+                if (binding == null || !isAdded()) return;
+                hideProgress();
+                for (SupabaseManager.RaceResult row : rows) updateRaceUI(no, row);
+            });
+        }
     }
 
     private void updateRaceUI(int raceNo, SupabaseManager.RaceResult result) {
@@ -194,7 +213,7 @@ public class RaceResultsFragment extends Fragment {
             titleTv.setText(raceNo + "R   " + (result.getRaceTitle() != null ? result.getRaceTitle() : ""));
             titleTv.setPadding(16, 8, 16, 8);
             String info = formatHassouTime(result.getHassouTime());
-            timeTv.setText(info + "\n💴 払い戻しを見る ›");
+            timeTv.setText(info + Lang.t("\n💴 払い戻しを見る ›", "\n💴 Show payouts ›"));
             timeTv.setTextSize(12);
             timeTv.setPadding(16, 8, 16, 16);
             // 払い戻しはタップしたときだけ keibalab から取る（12レース分をまとめて取りに行かないため）
@@ -229,7 +248,7 @@ public class RaceResultsFragment extends Fragment {
     }
 
     private void loadPayouts(TextView view, String info, String date, String course, int raceNo) {
-        view.setText(info + "\n💴 払い戻しを読み込み中…");
+        view.setText(info + Lang.t("\n💴 払い戻しを読み込み中…", "\n💴 Loading payouts…"));
         view.setOnClickListener(null);
         LIVE_EXECUTOR.execute(() -> {
             List<KeibalabPayouts.Payout> payouts;
@@ -243,7 +262,7 @@ public class RaceResultsFragment extends Fragment {
             getActivity().runOnUiThread(() -> {
                 if (binding == null || !isAdded()) return;
                 if (result.isEmpty()) {
-                    view.setText(info + "\n💴 払い戻しを取得できませんでした（タップで再読み込み）");
+                    view.setText(info + Lang.t("\n💴 払い戻しを取得できませんでした（タップで再読み込み）", "\n💴 Couldn't load payouts (tap to retry)"));
                     view.setOnClickListener(v -> loadPayouts(view, info, date, course, raceNo));
                     return;
                 }
@@ -286,7 +305,7 @@ public class RaceResultsFragment extends Fragment {
     private TableRow createHeaderRow() {
         TableRow row = new TableRow(getContext());
         row.setBackgroundColor(HEADER_COLOR);
-        String[] headers = {"★", "📝", Lang.t("着", "Pos"), Lang.t("枠", "Gate"), Lang.t("馬名", "Horse"),
+        String[] headers = {"★", "📝", Lang.t("着", "Pos"), Lang.t("枠", "Gate"), Lang.t("馬番", "No."), Lang.t("馬名", "Horse"),
                 Lang.t("性齢", "Sex/Age"), Lang.t("騎手", "Jockey"), Lang.t("人気", "Fav"), Lang.t("単勝", "Odds"),
                 Lang.t("タイム", "Time")};
         for (String h : headers) {
@@ -371,6 +390,10 @@ public class RaceResultsFragment extends Fragment {
 
         row.addView(createRankView(result.getRank()));
         row.addView(createWakuView(result.getWaku()));
+        TextView number = createTextView(result.getHorseNumber());
+        number.setGravity(android.view.Gravity.CENTER);
+        number.setTypeface(number.getTypeface(), Typeface.BOLD);
+        row.addView(number);
         TextView name = createTextView(result.getHorseName());
         name.setTextColor(0xFF111111);
         name.setTypeface(name.getTypeface(), Typeface.BOLD);
@@ -408,7 +431,7 @@ public class RaceResultsFragment extends Fragment {
     private void toggleFavorite(TableRow row, TextView textView, String horseName) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
-            Toast.makeText(getContext(), "お気に入り機能を利用するにはログインが必要です", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), Lang.t("お気に入り機能を利用するにはログインが必要です", "Sign in to use favorites"), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -422,7 +445,7 @@ public class RaceResultsFragment extends Fragment {
             textView.setText("★");
             textView.setTextColor(Color.parseColor("#FFD700"));
             row.setBackgroundColor(Color.parseColor("#33FFD700"));
-            Toast.makeText(getContext(), safeName + "をお気に入りに追加しました", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), Lang.t(safeName + "をお気に入りに追加しました", "Added " + safeName + " to favorites"), Toast.LENGTH_SHORT).show();
         } else {
             FirebaseManager.removeFavoriteHorse(uid, horseName);
             SupabaseManager.removeFavorite(uid, horseName);
@@ -431,7 +454,7 @@ public class RaceResultsFragment extends Fragment {
             TableLayout table = (TableLayout) row.getParent();
             row.setBackgroundColor(TARGET_ROW.equals(row.getTag()) ? TARGET_ROW_COLOR
                     : stripeColor(table != null ? table.indexOfChild(row) : 1));
-            Toast.makeText(getContext(), safeName + "をお気に入りから削除しました", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), Lang.t(safeName + "をお気に入りから削除しました", "Removed " + safeName + " from favorites"), Toast.LENGTH_SHORT).show();
         }
     }
 

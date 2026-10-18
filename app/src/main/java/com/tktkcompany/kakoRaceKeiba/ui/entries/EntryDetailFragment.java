@@ -1,5 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.ui.entries;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
+
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -130,7 +132,7 @@ public class EntryDetailFragment extends Fragment {
                 if (binding == null || !isAdded()) return;
                 if (entries.isEmpty()) {
                     binding.progressBar.setVisibility(View.GONE);
-                    showMessage("出走馬のデータがありません");
+                    showMessage(Lang.t("出走馬のデータがありません", "No runners found"));
                     return;
                 }
                 showHeader(entries);
@@ -154,7 +156,7 @@ public class EntryDetailFragment extends Fragment {
                 Log.e("EntryDetailFragment", "Supabase load failed: " + message);
                 if (binding == null || !isAdded()) return;
                 binding.progressBar.setVisibility(View.GONE);
-                showMessage("出走馬の読み込みに失敗しました");
+                showMessage(Lang.t("出走馬の読み込みに失敗しました", "Couldn't load runners"));
             }
         });
     }
@@ -172,11 +174,14 @@ public class EntryDetailFragment extends Fragment {
 
         text.append("\n");
         if (isBeforeDraw(entries)) {
-            text.append("枠順確定前（特別登録 " + entries.size() + "頭）。出走できる頭数を超える場合は抽選・除外があります");
+            text.append(Lang.t("枠順確定前（特別登録 " + entries.size() + "頭）。出走できる頭数を超える場合は抽選・除外があります",
+                    "Before the draw (" + entries.size() + " nominated). Some may be balloted out"));
         } else {
-            text.append(entries.size() + "頭立て");
+            text.append(Lang.t(entries.size() + "頭立て", entries.size() + " runners"));
         }
-        text.append("\n各馬の近走" + RecentRunsReward.runs(requireContext()) + "走（新しい順）。行をタップするとそのレースの結果を表示します");
+        int shownRuns = RecentRunsReward.runs(requireContext());
+        text.append(Lang.t("\n各馬の近走" + shownRuns + "走（新しい順）。行をタップするとそのレースの結果を表示します",
+                "\nLast " + shownRuns + " runs for each horse (newest first). Tap a row to see that race"));
         binding.textEntriesLead.setText(text);
         binding.textEntriesLead.setTextColor(0xFF333333);
     }
@@ -278,7 +283,7 @@ public class EntryDetailFragment extends Fragment {
             LinearLayout pastContainer = card.findViewById(R.id.entry_past_results);
             if (runs == null || runs.isEmpty()) {
                 TextView none = new TextView(requireContext());
-                none.setText("過去の成績データはありません");
+                none.setText(Lang.t("過去の成績データはありません", "No past runs"));
                 none.setTextSize(12);
                 none.setTextColor(0xFF999999);
                 none.setPadding(0, 6, 0, 6);
@@ -291,7 +296,8 @@ public class EntryDetailFragment extends Fragment {
                 }
                 if (runs.size() > shown) {
                     TextView more = new TextView(requireContext());
-                    more.setText("ほか" + (runs.size() - shown) + "走（上のボタンから広告を見ると表示）");
+                    more.setText(Lang.t("ほか" + (runs.size() - shown) + "走（上のボタンから広告を見ると表示）",
+                            (runs.size() - shown) + " more runs (watch an ad with the button above)"));
                     more.setTextSize(12);
                     more.setTextColor(0xFF1565C0);
                     more.setPadding(0, 6, 0, 6);
@@ -300,10 +306,10 @@ public class EntryDetailFragment extends Fragment {
             }
             binding.entriesContainer.addView(card);
             if (entry.getHorseNumber() != null) {
-                String no = entry.getHorseNumber().trim().replaceFirst("^0+(?=\\d)", "");
                 oddsViews.put(entry.getHorseNumber().trim(), card.findViewById(R.id.text_entry_odds));
-                horseCards.put(no, card);
             }
+            // 当日の出馬表と照合するため、馬名で引けるようにしておく（取り込み時に馬番が無くても照合できる）
+            horseCards.put(FavoriteHorseNames.normalize(entry.getHorseName()), card);
         }
         // 行がフォーカスを取ってスクロール位置がずれないよう、先頭から表示する
         binding.getRoot().post(() -> {
@@ -319,7 +325,9 @@ public class EntryDetailFragment extends Fragment {
      * 朝の取り込みより後の変更を反映するため、出走表を開くたびに取りに行く。枠順確定前は何もしない
      */
     private void loadRaceCard(List<SupabaseManager.RaceEntry> entries) {
-        if (horseCards.isEmpty()) return;
+        // 終わった開催は取りに行かない（取り込み済みの馬番で足りる）
+        String today = org.threeten.bp.LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        if (horseCards.isEmpty() || entries.get(0).getKaisaibi().compareTo(today) < 0) return;
         SupabaseManager.RaceEntry first = entries.get(0);
         ODDS_EXECUTOR.execute(() -> {
             KeibalabRaceCard.Card card;
@@ -341,36 +349,49 @@ public class EntryDetailFragment extends Fragment {
         String condition = card.conditionLabel();
         if (!condition.isEmpty()) binding.textEntriesLead.append("\n" + condition);
         int scratchedCount = 0;
+        Map<String, KeibalabRaceCard.Horse> byName = new HashMap<>();
+        for (KeibalabRaceCard.Horse h : card.horses.values()) {
+            if (h.name != null) byName.put(FavoriteHorseNames.normalize(h.name), h);
+        }
+        boolean drawnNow = false;
         for (SupabaseManager.RaceEntry entry : entries) {
-            if (entry.getHorseNumber() == null) continue;
-            String no = entry.getHorseNumber().trim().replaceFirst("^0+(?=\\d)", "");
-            View view = horseCards.get(no);
-            KeibalabRaceCard.Horse horse = card.horses.get(no);
+            String key = FavoriteHorseNames.normalize(entry.getHorseName());
+            View view = horseCards.get(key);
+            KeibalabRaceCard.Horse horse = byName.get(key);
             if (view == null || horse == null) continue;
+            // 取り込み時は枠順確定前で馬番が無かった馬にも、当日の出馬表の馬番と枠の色を付ける
+            if (entry.getHorseNumber() == null && !horse.number.isEmpty()) {
+                TextView number = view.findViewById(R.id.text_entry_number);
+                number.setText(horse.number);
+                number.setVisibility(View.VISIBLE);
+                styleWaku(number, horse.waku);
+                drawnNow = true;
+            }
             TextView today = view.findViewById(R.id.text_entry_today);
             SpannableStringBuilder text = new SpannableStringBuilder();
             if (horse.scratched) {
                 scratchedCount++;
-                appendStyled(text, "出走取消・除外", 0xFFC62828);
+                appendStyled(text, Lang.t("出走取消・除外", "Scratched"), 0xFFC62828);
                 // 取り消された馬は薄く表示し、オッズは出さない
                 view.setAlpha(0.45f);
                 view.findViewById(R.id.text_entry_odds).setVisibility(View.GONE);
             } else {
                 if (horse.weight != null) {
-                    text.append("馬体重 ");
+                    text.append(Lang.t("馬体重 ", "Weight "));
                     appendStyled(text, horse.weight, weightColor(horse.weight));
                 }
                 String jockeyBefore = entry.getJockey() != null ? entry.getJockey().trim() : null;
                 if (horse.jockey != null && jockeyBefore != null && !sameJockey(jockeyBefore, horse.jockey)) {
                     if (text.length() > 0) text.append("　");
-                    appendStyled(text, "騎手変更 " + jockeyBefore + "→" + horse.jockey, 0xFFE65100);
+                    appendStyled(text, Lang.t("騎手変更 ", "Jockey change ") + jockeyBefore + "→" + horse.jockey, 0xFFE65100);
                 }
             }
             if (text.length() == 0) continue;
             today.setText(text);
             today.setVisibility(View.VISIBLE);
         }
-        if (scratchedCount > 0) binding.textEntriesLead.append("\n出走取消・除外 " + scratchedCount + "頭");
+        if (scratchedCount > 0) binding.textEntriesLead.append("\n" + Lang.t("出走取消・除外 ", "Scratched: ") + Lang.horses(scratchedCount));
+        if (drawnNow) binding.textEntriesLead.append(Lang.t("\n枠順が確定しました（馬番は最新の出馬表から表示）", "\nThe draw is out (numbers from the latest race card)"));
     }
 
     private void loadBets() {
@@ -418,8 +439,8 @@ public class EntryDetailFragment extends Fragment {
             SpannableStringBuilder text = new SpannableStringBuilder("🎫 " + b.label());
             if (b.isSettled()) {
                 text.append("　");
-                if (b.payout > 0) appendStyled(text, "的中 " + String.format("%,d", b.payout) + "円", 0xFFC62828);
-                else text.append("はずれ");
+                if (b.payout > 0) appendStyled(text, Lang.t("的中 ", "Won ") + Lang.yen(b.payout), 0xFFC62828);
+                else text.append(Lang.t("はずれ", "Lost"));
             }
             row.setText(text);
             row.setTextSize(14);
@@ -427,13 +448,13 @@ public class EntryDetailFragment extends Fragment {
             row.setPadding(0, (int) (4 * density), 0, (int) (4 * density));
             row.setOnLongClickListener(v -> {
                 new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                        .setMessage(b.label() + " を消しますか？")
-                        .setPositiveButton("消す", (d, w) -> {
+                        .setMessage(Lang.t(b.label() + " を消しますか？", "Delete " + b.label() + "?"))
+                        .setPositiveButton(Lang.t("消す", "Delete"), (d, w) -> {
                             Bets.delete(b);
                             raceBets.remove(b);
                             renderBets();
                         })
-                        .setNegativeButton("キャンセル", null)
+                        .setNegativeButton(Lang.t("キャンセル", "Cancel"), null)
                         .show();
                 return true;
             });
@@ -447,7 +468,7 @@ public class EntryDetailFragment extends Fragment {
             box.addView(total);
         }
         TextView add = new TextView(requireContext());
-        add.setText(raceBets.isEmpty() ? "🎫 買い目を記録する（記録だけで、馬券は買いません）" : "＋ 買い目を追加（長押しで消す）");
+        add.setText(raceBets.isEmpty() ? Lang.t("🎫 買い目を記録する（記録だけで、馬券は買いません）", "🎫 Log a bet (records only, no real betting)") : Lang.t("＋ 買い目を追加（長押しで消す）", "+ Add a bet (long-press to delete)"));
         add.setTextSize(14);
         add.setTextColor(0xFF1565C0);
         add.setPadding(0, (int) (6 * density), 0, (int) (6 * density));
@@ -468,7 +489,7 @@ public class EntryDetailFragment extends Fragment {
 
     private void showAddBetDialog() {
         if (!Bets.isSignedIn()) {
-            Toast.makeText(getContext(), "買い目を記録するにはログインが必要です", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), Lang.t("買い目を記録するにはログインが必要です", "Sign in to log bets"), Toast.LENGTH_SHORT).show();
             return;
         }
         if (raceForBets == null) return;
@@ -479,27 +500,30 @@ public class EntryDetailFragment extends Fragment {
         form.setPadding(pad, (int) (8 * density), pad, 0);
 
         android.widget.Spinner type = new android.widget.Spinner(requireContext());
+        // 表示は言語に合わせ、記録は日本語の券種名で残す（払い戻しとの照合に使うため）
+        List<String> typeLabels = new ArrayList<>();
+        for (String t : KeibalabPayouts.TYPES) typeLabels.add(Lang.betType(t));
         type.setAdapter(new android.widget.ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_spinner_dropdown_item, KeibalabPayouts.TYPES));
+                android.R.layout.simple_spinner_dropdown_item, typeLabels));
         form.addView(type);
         android.widget.EditText numbers = new android.widget.EditText(requireContext());
-        numbers.setHint("馬番（例: 5-10。枠連は枠番）");
+        numbers.setHint(Lang.t("馬番（例: 5-10。枠連は枠番）", "Numbers (e.g. 5-10; gate numbers for Bracket Q)"));
         numbers.setInputType(android.text.InputType.TYPE_CLASS_PHONE);
         form.addView(numbers);
         android.widget.EditText amount = new android.widget.EditText(requireContext());
-        amount.setHint("金額（円）");
+        amount.setHint(Lang.t("金額（円）", "Amount (¥)"));
         amount.setText("100");
         amount.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
         form.addView(amount);
 
         androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("買い目を記録")
+                .setTitle(Lang.t("買い目を記録", "Log a bet"))
                 .setView(form)
-                .setPositiveButton("記録", null)
-                .setNegativeButton("キャンセル", null)
+                .setPositiveButton(Lang.t("記録", "Save"), null)
+                .setNegativeButton(Lang.t("キャンセル", "Cancel"), null)
                 .create();
         dialog.setOnShowListener(d -> dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String t = (String) type.getSelectedItem();
+            String t = KeibalabPayouts.TYPES.get(type.getSelectedItemPosition());
             String n = numbers.getText().toString().trim();
             int yen;
             try {
@@ -557,11 +581,13 @@ public class EntryDetailFragment extends Fragment {
         GradientDrawable bg = new GradientDrawable();
         bg.setCornerRadius(10 * density);
         if (RecentRunsReward.isUnlocked(requireContext())) {
-            view.setText("✓ 今日は近走を" + RecentRunsReward.REWARDED_RUNS + "走まで表示しています");
+            view.setText(Lang.t("✓ 今日は近走を" + RecentRunsReward.REWARDED_RUNS + "走まで表示しています",
+                    "✓ Showing the last " + RecentRunsReward.REWARDED_RUNS + " runs today"));
             view.setTextColor(0xFF2E7D32);
             bg.setColor(0xFFE8F5E9);
         } else {
-            view.setText("▶ 広告を見て近走を" + RecentRunsReward.REWARDED_RUNS + "走まで表示（今日いっぱい）");
+            view.setText(Lang.t("▶ 広告を見て近走を" + RecentRunsReward.REWARDED_RUNS + "走まで表示（今日いっぱい）",
+                    "▶ Watch an ad to see the last " + RecentRunsReward.REWARDED_RUNS + " runs (all day)"));
             view.setTextColor(0xFF0D47A1);
             view.setTypeface(view.getTypeface(), Typeface.BOLD);
             bg.setColor(0xFFE3F2FD);
@@ -570,7 +596,8 @@ public class EntryDetailFragment extends Fragment {
                 @Override
                 public void onRewarded() {
                     if (binding == null || !isAdded()) return;
-                    Toast.makeText(getContext(), "今日いっぱい、近走を" + RecentRunsReward.REWARDED_RUNS + "走まで表示します",
+                    Toast.makeText(getContext(), Lang.t("今日いっぱい、近走を" + RecentRunsReward.REWARDED_RUNS + "走まで表示します",
+                            "Showing the last " + RecentRunsReward.REWARDED_RUNS + " runs for the rest of today"),
                             Toast.LENGTH_SHORT).show();
                     // 10走分はもう読んであるので、表示だけ広げる
                     showHeader(entries);
@@ -595,7 +622,7 @@ public class EntryDetailFragment extends Fragment {
         paintMark(view, marks.get(key));
         view.setOnClickListener(v -> {
             if (FirebaseAuth.getInstance().getCurrentUser() == null) {
-                Toast.makeText(getContext(), "予想の印を付けるにはログインが必要です", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), Lang.t("予想の印を付けるにはログインが必要です", "Sign in to mark picks"), Toast.LENGTH_SHORT).show();
                 return;
             }
             Predictions.setMark(entry.getKaisaibi(), entry.getKaisaijo(), entry.getRaceNo(), entry.getRaceTitle(),
@@ -605,7 +632,7 @@ public class EntryDetailFragment extends Fragment {
     }
 
     private static void paintMark(TextView view, @Nullable String mark) {
-        view.setText(mark != null ? mark : "印");
+        view.setText(mark != null ? mark : Lang.t("印", "Pick"));
         view.setTextSize(mark != null ? 20 : 12);
         view.setTextColor(mark == null ? 0xFFBDBDBD : "◎".equals(mark) ? 0xFFC62828 : 0xFF1565C0);
     }
@@ -647,17 +674,17 @@ public class EntryDetailFragment extends Fragment {
             TextView view = resultViews.get(key);
             if (view == null) continue;
             String rank = r.getRank() != null ? r.getRank() : "-";
-            String label = "結果 " + (rank.matches("\\d+") ? rank + "着" : rank);
-            if (r.getPopular() != null) label += "（" + r.getPopular() + "番人気）";
+            String label = Lang.t("結果 ", "Result ") + Lang.rank(rank);
+            if (r.getPopular() != null) label += " (" + Lang.popularity(r.getPopular()) + ")";
             view.setText(label);
             view.setTextColor("1".equals(rank) ? 0xFFC62828 : ("2".equals(rank) || "3".equals(rank)) ? 0xFF2E7D32 : 0xFF555555);
             view.setVisibility(View.VISIBLE);
             if ("◎".equals(marks.get(key))) {
-                honmeiLine = "◎" + r.getHorseName() + "は" + (rank.matches("\\d+") ? rank + "着" : rank)
-                        + ("1".equals(rank) ? "　的中！" : "");
+                honmeiLine = "◎" + r.getHorseName() + Lang.t("は", ": ") + Lang.rank(rank)
+                        + ("1".equals(rank) ? Lang.t("　的中！", "  Winner!") : "");
             }
         }
-        binding.textEntriesLead.append("\n" + (honmeiLine != null ? honmeiLine : "結果が確定しました"));
+        binding.textEntriesLead.append("\n" + (honmeiLine != null ? honmeiLine : Lang.t("結果が確定しました", "Result is official")));
     }
 
     /**
@@ -704,7 +731,7 @@ public class EntryDetailFragment extends Fragment {
             if (shownTime == null) shownTime = time;
         }
         if (shownTime != null) {
-            binding.textEntriesLead.append("\nオッズは" + shownTime + "時点（開き直すと更新します）");
+            binding.textEntriesLead.append(Lang.t("\nオッズは" + shownTime + "時点（開き直すと更新します）", "\nOdds as of " + shownTime + " (reopen to refresh)"));
         }
     }
 
@@ -743,14 +770,15 @@ public class EntryDetailFragment extends Fragment {
         paint.run();
         star.setOnClickListener(v -> {
             if (FirebaseAuth.getInstance().getCurrentUser() == null) {
-                Toast.makeText(getContext(), "お気に入り機能を利用するにはログインが必要です", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), Lang.t("お気に入り機能を利用するにはログインが必要です", "Sign in to use favorites"), Toast.LENGTH_SHORT).show();
                 return;
             }
             boolean added = FavoriteHorseNames.toggle(favorites, horseName);
             paint.run();
             // このレースの発走前の通知をすぐ予約する（定期チェックを待つと間に合わないことがある）
             if (added) FavoriteResultWorker.runOnce(requireContext());
-            Toast.makeText(getContext(), horseName + (added ? "をお気に入りに追加しました" : "をお気に入りから削除しました"), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), added ? Lang.t(horseName + "をお気に入りに追加しました", "Added " + horseName + " to favorites")
+                    : Lang.t(horseName + "をお気に入りから削除しました", "Removed " + horseName + " from favorites"), Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -791,7 +819,7 @@ public class EntryDetailFragment extends Fragment {
             // チップより背の低い枠線つきのラベルにする（1頭あたりの高さを抑えるため）
             boolean caution = text.equals("休み明け") || text.equals("連闘") || text.equals("乗り替わり") || text.contains("→");
             TextView badge = new TextView(requireContext());
-            badge.setText(text);
+            badge.setText(EntryForm.label(text));
             badge.setTextSize(11);
             badge.setTextColor(caution ? 0xFFE65100 : 0xFF2E7D32);
             badge.setPadding((int) (8 * density), (int) (2 * density), (int) (8 * density), (int) (2 * density));
@@ -826,11 +854,11 @@ public class EntryDetailFragment extends Fragment {
         ((TextView) row.findViewById(R.id.text_run_date)).setText(paren > 0 ? date.substring(0, paren) : date);
         ((TextView) row.findViewById(R.id.text_run_course)).setText(run.getKaisaijo());
         ((TextView) row.findViewById(R.id.text_run_title)).setText(run.getRaceTitle() != null ? run.getRaceTitle().trim() : "");
-        ((TextView) row.findViewById(R.id.text_run_distance)).setText(EntryForm.courseLabel(run.getHassouTime()));
+        ((TextView) row.findViewById(R.id.text_run_distance)).setText(EntryForm.courseText(EntryForm.courseLabel(run.getHassouTime())));
 
         String rank = run.getRank() != null ? run.getRank() : "-";
-        String result = rank.matches("\\d+") ? rank + "着" : rank;
-        if (run.getPopular() != null && !run.getPopular().isEmpty()) result += " " + run.getPopular() + "人";
+        String result = Lang.rank(rank);
+        if (run.getPopular() != null && !run.getPopular().isEmpty()) result += " " + Lang.t(run.getPopular() + "人", "(" + run.getPopular() + ")");
         TextView resultView = row.findViewById(R.id.text_run_result);
         resultView.setText(result);
         if ("1".equals(rank)) {

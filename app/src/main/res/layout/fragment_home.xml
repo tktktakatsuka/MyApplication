@@ -41,7 +41,7 @@
                             android:id="@+id/btn_login"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Googleでログイン"
+                            android:text="@string/login_google"
                             android:textAllCaps="false"
                             android:textColor="@android:color/white"
                             android:textSize="16sp" />
@@ -50,7 +50,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="ログインすると、お気に入り馬の登録・レース結果の通知・メモの保存ができます"
+                            android:text="@string/login_benefit"
                             android:textColor="#555555"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -87,7 +87,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="ログイン中"
+                                android:text="@string/signed_in"
                                 android:textSize="12sp" />
                         </LinearLayout>
 
@@ -96,12 +96,20 @@
                             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="ログアウト"
+                            android:text="@string/logout"
                             android:textColor="#D32F2F"
                             app:strokeColor="#D32F2F" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
+            <!-- 出馬表を読み込んでいる間だけ出す -->
+            <ProgressBar
+                android:id="@+id/progress_home"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginVertical="24dp" />
 
             <!-- 今日の開催（開催日だけ表示。次のレース・お気に入り馬・直前の結果。中身はコードで作る） -->
             <com.google.android.material.card.MaterialCardView
@@ -126,7 +134,7 @@
                         android:id="@+id/text_today_header"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="今日の開催"
+                        android:text="@string/today_meeting"
                         android:textColor="@color/green_dark"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -156,7 +164,7 @@
                     android:layout_marginHorizontal="4dp"
                     android:layout_weight="1"
                     android:backgroundTint="#FFD700"
-                    android:text="★ お気に入り馬"
+                    android:text="@string/favorites_button"
                     android:textColor="@android:color/black" />
 
                 <Button
@@ -166,7 +174,7 @@
                     android:layout_marginHorizontal="4dp"
                     android:layout_weight="1"
                     android:backgroundTint="#1565C0"
-                    android:text="◎ 答え合わせ"
+                    android:text="@string/predictions_button"
                     android:textColor="@android:color/white" />
             </LinearLayout>
 
@@ -189,7 +197,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="今週の開催"
+                        android:text="@string/this_week_meeting"
                         android:textColor="@color/green_dark"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -244,7 +252,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="今週の出走馬"
+                            android:text="@string/this_week_entries"
                             android:textColor="@color/green_dark"
                             android:textSize="16sp"
                             android:textStyle="bold" />
@@ -309,7 +317,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="レース結果"
+                    android:text="@string/race_results"
                     android:textColor="@android:color/black"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -317,7 +325,7 @@
                     android:id="@+id/text_popular_raceResult_more"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="詳細を見る >"
+                    android:text="@string/see_details"
                     android:textColor="#2E7D32"
                     android:textSize="14sp" />
             </LinearLayout>
@@ -394,7 +402,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="レース結果"
+                    android:text="@string/race_results"
                     android:textColor="@android:color/black"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -402,7 +410,7 @@
                     android:id="@+id/text2_popular_raceResult_more"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="詳細を見る >"
+                    android:text="@string/see_details"
                     android:textColor="#2E7D32"
                     android:textSize="14sp" />
             </LinearLayout>

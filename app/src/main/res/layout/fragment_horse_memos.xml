@@ -24,7 +24,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="14dp"
-            android:text="◎ 予想の答え合わせ ›\n出走表で付けた◎○▲△の結果と、◎の成績を見る"
+            android:text="@string/open_predictions_card"
             android:textColor="#0D47A1"
             android:textSize="14sp" />
     </com.google.android.material.card.MaterialCardView>
@@ -36,7 +36,7 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="12dp"
-        android:text="レース結果や出走表の📝から、気になった馬にメモを残せます。メモした馬が出走すると、ここと出走表・ホームでお知らせします。"
+        android:text="@string/memo_lead"
         android:textColor="#555555"
         android:textSize="13sp" />
 

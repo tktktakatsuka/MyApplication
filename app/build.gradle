@@ -39,7 +39,7 @@ android {
         applicationId = "com.tktkcompany.kakoRaceKeiba"
         minSdk = 28
         targetSdk = 36
-        versionCode = 381
+        versionCode = 382
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "SUPABASE_URL", "\"${localProperties.getProperty('SUPABASE_URL', '')}\""
@@ -62,6 +62,13 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+    }
+    // 単体テストは日本語の文面で確かめる（PC の言語に左右されないよう固定する）
+    testOptions {
+        unitTests.all {
+            systemProperty 'user.language', 'ja'
+            systemProperty 'user.country', 'JP'
+        }
     }
     buildFeatures {
         viewBinding true

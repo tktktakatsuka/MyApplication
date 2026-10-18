@@ -1,5 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.ads;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
+
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
@@ -88,8 +90,8 @@ public final class RecentRunsReward {
     public void show(Activity activity, Listener listener) {
         RewardedAd current = ad;
         if (current == null) {
-            listener.onNotShown(loading ? "広告を読み込み中です。少し待ってからもう一度押してください"
-                    : "今は広告を表示できません。時間をおいてもう一度お試しください");
+            listener.onNotShown(loading ? Lang.t("広告を読み込み中です。少し待ってからもう一度押してください", "The ad is loading. Please tap again in a moment")
+                    : Lang.t("今は広告を表示できません。時間をおいてもう一度お試しください", "No ad is available right now. Please try again later"));
             preload(activity);
             return;
         }
@@ -98,7 +100,7 @@ public final class RecentRunsReward {
         current.setFullScreenContentCallback(new FullScreenContentCallback() {
             @Override
             public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError error) {
-                listener.onNotShown("今は広告を表示できません。時間をおいてもう一度お試しください");
+                listener.onNotShown(Lang.t("今は広告を表示できません。時間をおいてもう一度お試しください", "No ad is available right now. Please try again later"));
                 preload(activity);
             }
 
@@ -107,7 +109,8 @@ public final class RecentRunsReward {
                 if (rewarded[0]) {
                     listener.onRewarded();
                 } else {
-                    listener.onNotShown("広告を最後まで見ると、近走を" + REWARDED_RUNS + "走まで表示できます");
+                    listener.onNotShown(Lang.t("広告を最後まで見ると、近走を" + REWARDED_RUNS + "走まで表示できます",
+                            "Watch the whole ad to see the last " + REWARDED_RUNS + " runs"));
                     preload(activity);
                 }
             }

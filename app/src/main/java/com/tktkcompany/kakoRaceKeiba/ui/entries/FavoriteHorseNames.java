@@ -1,5 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.ui.entries;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
+
 import android.os.Bundle;
 import android.view.View;
 
@@ -72,15 +74,15 @@ public final class FavoriteHorseNames {
 
     /** 例: 「★出走予定: 10/18(土) 東京11R 富士S（芝1600m）5番 ›」 */
     public static String nextEntryLabel(SupabaseManager.RaceEntry e) {
-        StringBuilder sb = new StringBuilder("★出走予定: ");
+        StringBuilder sb = new StringBuilder(Lang.t("★出走予定: ", "★Next: "));
         sb.append(WeekendDays.formatShort(e.getKaisaibi())).append(' ')
-                .append(e.getKaisaijo()).append(e.getRaceNo()).append('R');
+                .append(Lang.race(e.getKaisaijo(), e.getRaceNo()));
         String title = e.getRaceTitle();
         if (title != null && !title.trim().isEmpty()) sb.append(' ').append(title.trim());
-        String course = EntryForm.courseLabel(e.getRaceInfo());
-        if (!course.isEmpty()) sb.append('（').append(course).append("m）");
+        String course = EntryForm.courseText(EntryForm.courseLabel(e.getRaceInfo()));
+        if (!course.isEmpty()) sb.append(Lang.t("（" + course + "m）", " (" + course + "m)"));
         String number = e.getHorseNumber();
-        if (number != null && !number.trim().isEmpty()) sb.append(' ').append(number.trim()).append('番');
+        if (number != null && !number.trim().isEmpty()) sb.append(Lang.t(" " + number.trim() + "番", " #" + number.trim()));
         return sb.append(" ›").toString();
     }
 

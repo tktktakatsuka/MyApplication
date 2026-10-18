@@ -1,5 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.ui.favorite;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
+
 import android.graphics.Typeface;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -125,14 +127,14 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         });
 
         rows.clear();
-        addGroup("今週出走", upcoming);
-        addGroup("今日走った", ranToday);
-        addGroup(upcoming.isEmpty() && ranToday.isEmpty() ? null : "そのほか", others);
+        addGroup(Lang.t("今週出走", "Running this week"), upcoming);
+        addGroup(Lang.t("今日走った", "Ran today"), ranToday);
+        addGroup(upcoming.isEmpty() && ranToday.isEmpty() ? null : Lang.t("そのほか", "Others"), others);
     }
 
     private void addGroup(@Nullable String title, List<String> names) {
         if (names.isEmpty()) return;
-        if (title != null) rows.add(title + "（" + names.size() + "頭）");
+        if (title != null) rows.add(title + Lang.t("（" + names.size() + "頭）", " (" + names.size() + ")"));
         for (String name : names) rows.add(new Horse(name));
     }
 
@@ -207,18 +209,18 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         boolean isLive = live != null && (latest == null || nz(live.kaisaibi).compareTo(nz(latest.kaisaibi)) > 0);
         holder.latestResultView.setVisibility(View.VISIBLE);
         if (isLive) {
-            holder.latestResultView.setText(resultLabel("速報", live));
+            holder.latestResultView.setText(resultLabel(Lang.t("速報", "Live"), live));
             holder.latestResultView.setOnClickListener(v -> resultClickListener.onResultClick(live));
         } else if (latestResults == null) {
-            holder.latestResultView.setText("前走を読み込み中…");
+            holder.latestResultView.setText(Lang.t("前走を読み込み中…", "Loading last run…"));
             holder.latestResultView.setOnClickListener(null);
         } else if (latest == null) {
             // 出走予定を出している馬に「出走はありません」と並べると矛盾して見えるので出さない
             holder.latestResultView.setVisibility(next != null ? View.GONE : View.VISIBLE);
-            holder.latestResultView.setText("最近の出走はありません");
+            holder.latestResultView.setText(Lang.t("最近の出走はありません", "No recent runs"));
             holder.latestResultView.setOnClickListener(null);
         } else {
-            holder.latestResultView.setText(resultLabel("前走", latest));
+            holder.latestResultView.setText(resultLabel(Lang.t("前走", "Last"), latest));
             holder.latestResultView.setOnClickListener(v -> resultClickListener.onResultClick(latest));
         }
     }
@@ -227,15 +229,15 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private static CharSequence entryLabel(SupabaseManager.RaceEntry e) {
         SpannableStringBuilder sb = new SpannableStringBuilder("▶ ");
         sb.append(WeekendDays.formatShort(e.getKaisaibi())).append(' ')
-                .append(e.getKaisaijo()).append(String.valueOf(e.getRaceNo())).append('R');
+                .append(Lang.race(e.getKaisaijo(), e.getRaceNo()));
         Matcher m = START_TIME.matcher(e.getRaceInfo() != null ? e.getRaceInfo() : "");
         if (m.find()) sb.append(' ').append(String.valueOf(Integer.parseInt(m.group(1)))).append(':').append(m.group(2));
         String title = e.getRaceTitle() != null ? e.getRaceTitle().trim().replaceFirst("^サラ系", "") : "";
         if (!title.isEmpty()) sb.append('\n').append(title);
-        String course = EntryForm.courseLabel(e.getRaceInfo());
-        if (!course.isEmpty()) sb.append('（').append(course).append("m）");
+        String course = EntryForm.courseText(EntryForm.courseLabel(e.getRaceInfo()));
+        if (!course.isEmpty()) sb.append(Lang.t("（" + course + "m）", " (" + course + "m)"));
         String number = e.getHorseNumber();
-        if (number != null && !number.trim().isEmpty()) sb.append(' ').append(number.trim()).append('番');
+        if (number != null && !number.trim().isEmpty()) sb.append(Lang.t(" " + number.trim() + "番", " #" + number.trim()));
         sb.append(" ›");
         sb.setSpan(new StyleSpan(Typeface.BOLD), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return sb;
@@ -245,16 +247,16 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private static CharSequence resultLabel(String prefix, HorseResult r) {
         SpannableStringBuilder sb = new SpannableStringBuilder(prefix);
         sb.append(' ').append(nz(WeekendDays.formatShort(r.kaisaibi))).append(' ')
-                .append(nz(r.kaisaijo)).append(nz(r.raceNo)).append("R ");
+                .append(Lang.ja() ? nz(r.kaisaijo) + nz(r.raceNo) + "R " : Lang.course(r.kaisaijo) + " R" + nz(r.raceNo) + " ");
         String rank = nz(r.tyaku);
         int from = sb.length();
-        sb.append(rank.matches("\\d+") ? rank + "着" : rank);
+        sb.append(Lang.rank(rank));
         if (rank.matches("[123]")) {
             sb.setSpan(new ForegroundColorSpan("1".equals(rank) ? 0xFFC62828 : 0xFF2E7D32), from, sb.length(),
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             sb.setSpan(new StyleSpan(Typeface.BOLD), from, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
-        if (r.popular != null && !r.popular.isEmpty()) sb.append("（").append(r.popular).append("人気）");
+        if (r.popular != null && !r.popular.isEmpty()) sb.append(Lang.t("（" + r.popular + "人気）", " (" + Lang.popularity(r.popular) + ")"));
         sb.append(" ›");
         return sb;
     }

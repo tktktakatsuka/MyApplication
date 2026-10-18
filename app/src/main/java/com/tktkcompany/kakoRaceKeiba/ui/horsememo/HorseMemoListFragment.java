@@ -1,5 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.ui.horsememo;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
+
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -72,7 +74,7 @@ public class HorseMemoListFragment extends Fragment {
         if (!HorseMemos.isSignedIn()) {
             keys.clear();
             adapter.notifyDataSetChanged();
-            showEmpty("ログインすると、馬ごとのメモを残せます");
+            showEmpty(Lang.t("ログインすると、馬ごとのメモを残せます", "Sign in to keep notes on horses"));
             return;
         }
         progressBar.setVisibility(keys.isEmpty() ? View.VISIBLE : View.GONE);
@@ -121,7 +123,7 @@ public class HorseMemoListFragment extends Fragment {
         });
         adapter.notifyDataSetChanged();
         if (keys.isEmpty()) {
-            showEmpty("まだメモはありません。\nレース結果や出走表で、馬の横の📝をタップして書いてみましょう");
+            showEmpty(Lang.t("まだメモはありません。\nレース結果や出走表で、馬の横の📝をタップして書いてみましょう", "No notes yet.\nTap 📝 next to a horse on results or race cards to write one"));
         } else {
             emptyText.setVisibility(View.GONE);
         }
@@ -136,7 +138,7 @@ public class HorseMemoListFragment extends Fragment {
     private static String metaLabel(HorseMemos.Memo memo) {
         StringBuilder sb = new StringBuilder();
         if (memo.updatedAt > 0) {
-            sb.append(new SimpleDateFormat(WeekendDays.DATE_PATTERN, Locale.JAPAN).format(new Date(memo.updatedAt))).append(" 更新");
+            sb.append(new SimpleDateFormat(WeekendDays.datePattern(), Lang.ja() ? Locale.JAPAN : Locale.US).format(new Date(memo.updatedAt))).append(Lang.t(" 更新", " updated"));
         }
         if (memo.from != null && !memo.from.isEmpty()) {
             if (sb.length() > 0) sb.append("・");

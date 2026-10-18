@@ -33,7 +33,7 @@
                     android:id="@+id/showDialogButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="競馬場を選択する"
+                    android:text="@string/select_course"
                     android:textColor="#FFFFFF" />
 
                 <!-- テキスト -->
@@ -42,7 +42,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:text="xx競馬場の傾向を表示"
+                    android:text="@string/show_course_trends"
                     android:textColor="#000000"
                     android:textSize="16sp" />
             </LinearLayout>
@@ -58,28 +58,28 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="true"
-                    android:text="日付降順" />
+                    android:text="@string/sort_date_desc" />
 
                 <CheckBox
                     android:id="@+id/checkboxShiba"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="true"
-                    android:text="芝" />
+                    android:text="@string/turf" />
 
                 <CheckBox
                     android:id="@+id/checkboxDart"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="true"
-                    android:text="ダート" />
+                    android:text="@string/dirt" />
 
                 <CheckBox
                     android:id="@+id/checkboxHani"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="false"
-                    android:text="2か月分表示" />
+                    android:text="@string/two_months" />
             </LinearLayout>
 
             <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"

@@ -3,6 +3,7 @@ package com.tktkcompany.kakoRaceKeiba.notification;
 import androidx.annotation.Nullable;
 
 import com.tktkcompany.kakoRaceKeiba.ui.entries.EntryForm;
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 import java.util.List;
@@ -49,9 +50,9 @@ public final class EntryNotices {
     public static String title(List<Item> items) {
         if (items.size() == 1) {
             Item item = items.get(0);
-            return mark(item) + item.horseName + "が出走予定";
+            return Lang.t(mark(item) + item.horseName + "が出走予定", mark(item) + item.horseName + " is entered");
         }
-        return "お気に入り・メモした馬が" + items.size() + "頭出走予定";
+        return Lang.t("お気に入り・メモした馬が" + items.size() + "頭出走予定", items.size() + " of your horses are entered");
     }
 
     public static String body(List<Item> items) {
@@ -76,10 +77,10 @@ public final class EntryNotices {
     /** 「10/17(土) 京都9R もみじステークス（芝1400m）」。withCourse=false なら距離を省く */
     static String raceLabel(Item item, boolean withCourse) {
         StringBuilder sb = new StringBuilder();
-        sb.append(WeekendDays.formatShort(item.date)).append(' ').append(item.course).append(item.raceNo).append('R');
+        sb.append(WeekendDays.formatShort(item.date)).append(' ').append(Lang.race(item.course, item.raceNo));
         if (item.raceTitle != null && !item.raceTitle.trim().isEmpty()) sb.append(' ').append(item.raceTitle.trim());
-        String course = EntryForm.courseLabel(item.raceInfo);
-        if (withCourse && !course.isEmpty()) sb.append('（').append(course).append("m）");
+        String course = EntryForm.courseText(EntryForm.courseLabel(item.raceInfo));
+        if (withCourse && !course.isEmpty()) sb.append(Lang.t("（" + course + "m）", " (" + course + "m)"));
         return sb.toString();
     }
 }

@@ -1,5 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.ui.prediction;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
+
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
@@ -52,12 +54,13 @@ public class PredictionsFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentEntriesBinding.inflate(inflater, container, false);
-        binding.textEntriesLead.setText("出走表で馬の左の「印」をタップすると、◎○▲△の予想を付けられます。レース後にここで答え合わせできます");
+        binding.textEntriesLead.setText(Lang.t("出走表で馬の左の「印」をタップすると、◎○▲△の予想を付けられます。レース後にここで答え合わせできます",
+                "Tap \"Pick\" next to a horse on a race card to mark ◎○▲△. Check how you did here after the race"));
         Predictions.loadAll(races -> Bets.loadAll(bets -> {
             if (binding == null || !isAdded()) return;
             if (races.isEmpty() && bets.isEmpty()) {
                 binding.progressBar.setVisibility(View.GONE);
-                binding.textEntriesEmpty.setText("まだ予想も買い目の記録もありません");
+                binding.textEntriesEmpty.setText(Lang.t("まだ予想も買い目の記録もありません", "No picks or bets yet"));
                 binding.textEntriesEmpty.setVisibility(View.VISIBLE);
                 return;
             }
@@ -113,14 +116,14 @@ public class PredictionsFragment extends Fragment {
             if (b.date.equals(latestDate)) latest.add(b);
         }
         StringBuilder lead = new StringBuilder(binding.textEntriesLead.getText());
-        lead.append("\n\n🎫 買い目の収支");
+        lead.append(Lang.t("\n\n🎫 買い目の収支", "\n\n🎫 Bet results"));
         if (latest.count > 0) lead.append("\n").append(WeekendDays.formatShort(latestDate)).append("　").append(latest.label());
-        if (all.count > latest.count) lead.append("\nこれまで　").append(all.label());
-        if (all.count == 0) lead.append("\n結果が出たら、ここに投資・払戻・回収率を出します");
+        if (all.count > latest.count) lead.append(Lang.t("\nこれまで　", "\nAll time  ")).append(all.label());
+        if (all.count == 0) lead.append(Lang.t("\n結果が出たら、ここに投資・払戻・回収率を出します", "\nOnce results are in, your stake, returns and ROI appear here"));
         binding.textEntriesLead.setText(lead);
 
         TextView header = new TextView(requireContext());
-        header.setText("🎫 記録した買い目");
+        header.setText(Lang.t("🎫 記録した買い目", "🎫 Logged bets"));
         header.setTextSize(18);
         header.setTextColor(0xFF333333);
         header.setTypeface(header.getTypeface(), Typeface.BOLD);
@@ -129,18 +132,18 @@ public class PredictionsFragment extends Fragment {
         for (Bets.Bet b : bets) {
             TextView row = new TextView(requireContext());
             SpannableStringBuilder text = new SpannableStringBuilder();
-            text.append(WeekendDays.formatShort(b.date)).append(" ").append(b.course).append(String.valueOf(b.raceNo)).append("R　")
+            text.append(WeekendDays.formatShort(b.date)).append(" ").append(Lang.race(b.course, b.raceNo)).append("　")
                     .append(b.label());
             if (b.isSettled()) {
                 text.append("　");
                 int from = text.length();
-                text.append(b.payout > 0 ? "的中 " + String.format("%,d", b.payout) + "円" : "はずれ");
+                text.append(b.payout > 0 ? Lang.t("的中 ", "Won ") + Lang.yen(b.payout) : Lang.t("はずれ", "Lost"));
                 if (b.payout > 0) {
                     text.setSpan(new ForegroundColorSpan(0xFFC62828), from, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                     text.setSpan(new StyleSpan(Typeface.BOLD), from, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
             } else {
-                text.append("　結果待ち");
+                text.append(Lang.t("　結果待ち", "  Awaiting result"));
             }
             row.setText(text);
             row.setTextSize(13);
@@ -200,7 +203,8 @@ public class PredictionsFragment extends Fragment {
     private void render(List<Predictions.Race> races, Map<String, Map<String, String>> ranks) {
         binding.entriesContainer.removeAllViews();
         if (races.isEmpty()) {
-            binding.textEntriesLead.setText("出走表で「印」をタップすると◎○▲△の予想を、「🎫 買い目を記録する」で買い目を残せます");
+            binding.textEntriesLead.setText(Lang.t("出走表で「印」をタップすると◎○▲△の予想を、「🎫 買い目を記録する」で買い目を残せます",
+                    "On a race card, tap \"Pick\" to mark ◎○▲△, or \"🎫 Log a bet\" to keep your bets"));
             return;
         }
         PredictionStats all = new PredictionStats();
@@ -214,12 +218,12 @@ public class PredictionsFragment extends Fragment {
         }
 
         StringBuilder lead = new StringBuilder();
-        if (latest.races > 0) lead.append(WeekendDays.formatShort(latestDate)).append("の成績\n").append(latest.summary());
+        if (latest.races > 0) lead.append(WeekendDays.formatShort(latestDate)).append(Lang.t("の成績\n", "\n")).append(latest.summary());
         if (all.races > latest.races) {
             if (lead.length() > 0) lead.append("\n\n");
-            lead.append("これまでの成績\n").append(all.summary());
+            lead.append(Lang.t("これまでの成績\n", "All time\n")).append(all.summary());
         }
-        if (lead.length() == 0) lead.append("結果が出たら、ここに◎の成績を出します");
+        if (lead.length() == 0) lead.append(Lang.t("結果が出たら、ここに◎の成績を出します", "Once results are in, your ◎ record appears here"));
         binding.textEntriesLead.setText(lead);
         binding.textEntriesLead.setTextColor(0xFF333333);
 
@@ -239,7 +243,7 @@ public class PredictionsFragment extends Fragment {
             }
             Map<String, String> r = ranks.get(raceKey(race.date, race.course, race.raceNo));
             View item = inflater.inflate(R.layout.item_race_day, binding.entriesContainer, false);
-            ((TextView) item.findViewById(R.id.text_race_day_date)).setText(race.course + race.raceNo + "R");
+            ((TextView) item.findViewById(R.id.text_race_day_date)).setText(Lang.race(race.course, race.raceNo));
             ((TextView) item.findViewById(R.id.text_race_day_main)).setText(race.title != null ? race.title.trim() : "");
             TextView sub = item.findViewById(R.id.text_race_day_sub);
             sub.setText(marksLine(race, r));
@@ -265,7 +269,7 @@ public class PredictionsFragment extends Fragment {
                 String rank = ranks != null ? ranks.get(e.getKey()) : null;
                 if (rank != null) {
                     from = sb.length();
-                    sb.append(" ").append(rank.matches("\\d+") ? rank + "着" : rank);
+                    sb.append(" ").append(Lang.rank(rank));
                     if (rank.matches("[123]")) {
                         sb.setSpan(new ForegroundColorSpan("1".equals(rank) ? 0xFFC62828 : 0xFF2E7D32), from, sb.length(),
                                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -274,7 +278,7 @@ public class PredictionsFragment extends Fragment {
                 }
             }
         }
-        if (ranks == null) sb.append("\n結果待ち");
+        if (ranks == null) sb.append(Lang.t("\n結果待ち", "\nAwaiting result"));
         return sb;
     }
 

@@ -1,5 +1,6 @@
 package com.tktkcompany.kakoRaceKeiba.notification;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
@@ -123,7 +124,7 @@ public class FavoriteResultWorker extends Worker {
                             LiveResultNotices.key(r.kaisaibi, r.kaisaijo, parseRaceNo(r.raceNo), r.horseName))) continue;
                     NotificationHelper.show(context, NotificationHelper.FAVORITE_CHANNEL_ID,
                             r.key.hashCode(),
-                            "★ " + r.horseName + " の結果",
+                            Lang.t("★ " + r.horseName + " の結果", "★ " + r.horseName + " result"),
                             r.summary());
                 }
             }

@@ -2,6 +2,7 @@ package com.tktkcompany.kakoRaceKeiba.notification;
 
 import androidx.annotation.Nullable;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
 
 import java.util.List;
@@ -42,22 +43,22 @@ public final class LiveResultNotices {
     public static String title(String course, int raceNo, List<Finish> finishes) {
         if (finishes.size() == 1) {
             Finish f = finishes.get(0);
-            String popular = f.popular != null ? "（" + f.popular + "番人気）" : "";
-            if ("1".equals(f.rank)) return "★" + f.horseName + "が1着！" + popular;
+            String popular = f.popular != null ? Lang.t("（" + f.popular + "番人気）", " (" + Lang.popularity(f.popular) + ")") : "";
+            if ("1".equals(f.rank)) return Lang.t("★" + f.horseName + "が1着！" + popular, "★" + f.horseName + " won!" + popular);
             return "★" + f.horseName + " " + rankLabel(f.rank) + popular;
         }
-        return "★" + course + raceNo + "R お気に入り馬の結果";
+        return "★" + Lang.race(course, raceNo) + Lang.t(" お気に入り馬の結果", " favorites' results");
     }
 
     /** 1行目にレース、続けて結果、最後にメモへの案内 */
     public static String body(String date, String course, int raceNo, @Nullable String raceTitle, List<Finish> finishes) {
         StringBuilder sb = new StringBuilder();
-        sb.append(WeekendDays.formatShort(date)).append(' ').append(course).append(raceNo).append('R');
+        sb.append(WeekendDays.formatShort(date)).append(' ').append(Lang.race(course, raceNo));
         if (raceTitle != null && !raceTitle.trim().isEmpty()) sb.append(' ').append(raceTitle.trim());
         if (finishes.size() == 1) {
             Finish f = finishes.get(0);
             StringBuilder detail = new StringBuilder();
-            if (f.winOdds != null) detail.append("単勝").append(f.winOdds).append('倍');
+            if (f.winOdds != null) detail.append(Lang.t("単勝", "Win ")).append(Lang.odds(f.winOdds));
             if (f.time != null) {
                 if (detail.length() > 0) detail.append('・');
                 detail.append(f.time);
@@ -66,16 +67,16 @@ public final class LiveResultNotices {
         } else {
             for (Finish f : finishes) {
                 sb.append('\n').append(rankLabel(f.rank)).append(' ').append(f.horseName);
-                if (f.popular != null) sb.append("（").append(f.popular).append("番人気）");
+                if (f.popular != null) sb.append(Lang.t("（" + f.popular + "番人気）", " (" + Lang.popularity(f.popular) + ")"));
             }
         }
-        sb.append("\n📝 タップしてメモを残せます");
+        sb.append(Lang.t("\n📝 タップしてメモを残せます", "\n📝 Tap to add a note"));
         return sb.toString();
     }
 
     /** "3" → "3着"、"取消" はそのまま */
     static String rankLabel(@Nullable String rank) {
         if (rank == null) return "-";
-        return rank.matches("\\d+") ? rank + "着" : rank;
+        return Lang.rank(rank);
     }
 }

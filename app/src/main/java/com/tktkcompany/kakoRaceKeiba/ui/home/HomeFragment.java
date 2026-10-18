@@ -1,5 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.ui.home;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
+
 
 import android.os.Bundle;
 
@@ -111,7 +113,7 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onFailure(@NonNull String message) {
-                Toast.makeText(getContext(), "データの読み込みに失敗しました", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), Lang.t("データの読み込みに失敗しました", "Couldn't load data"), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -187,7 +189,7 @@ public class HomeFragment extends Fragment {
         if (user != null) {
             // ログイン中
             binding.layoutUserInfo.setVisibility(View.VISIBLE);
-            binding.textUserName.setText(user.getDisplayName() + " さんとしてログイン中");
+            binding.textUserName.setText(Lang.t(user.getDisplayName() + " さんとしてログイン中", "Signed in as " + user.getDisplayName()));
             binding.layoutLogin.setVisibility(View.GONE);
             binding.layoutQuickButtons.setVisibility(View.VISIBLE);
         } else {
@@ -229,7 +231,7 @@ public class HomeFragment extends Fragment {
         }
         // 出馬表が読めたら、そちらの開催日・競馬場で書き直す（新潟などの開催も入るため）
         if (!entriesSummaryShown) {
-            binding.textUpcomingBody.setText(TextUtils.join("・", dayLabels) + "　" + TextUtils.join("・", joNames));
+            binding.textUpcomingBody.setText(TextUtils.join("・", dayLabels) + "　" + TextUtils.join("・", courseNames(joNames)));
         }
         binding.cardUpcoming.setVisibility(View.VISIBLE);
         updateUpcomingHint(mAuth != null ? mAuth.getCurrentUser() : null);
@@ -242,6 +244,7 @@ public class HomeFragment extends Fragment {
             @Override
             public void onSuccess(List<SupabaseManager.RaceEntry> entries) {
                 if (!isAdded() || binding == null) return;
+                binding.progressHome.setVisibility(View.GONE);
                 if (entries.isEmpty()) {
                     // 出馬表がまだ無い週は開催日ではないので、前の開催の結果を出す
                     binding.layoutLastResults.setVisibility(View.VISIBLE);
@@ -255,9 +258,9 @@ public class HomeFragment extends Fragment {
                     courses.add(e.getKaisaijo());
                     races.add(e.getKaisaibi() + e.getKaisaijo() + e.getRaceNo());
                 }
-                binding.textUpcomingBody.setText(TextUtils.join("・", days) + "　" + TextUtils.join("・", courses));
+                binding.textUpcomingBody.setText(TextUtils.join("・", days) + "　" + TextUtils.join("・", courseNames(courses)));
                 entriesSummaryShown = true;
-                String body = races.size() + "レースの出走馬と近走成績";
+                String body = Lang.t(races.size() + "レースの出走馬と近走成績", races.size() + " races: runners and recent form");
                 binding.textEntriesBody.setText(body);
                 binding.cardEntries.setVisibility(View.VISIBLE);
 
@@ -272,8 +275,8 @@ public class HomeFragment extends Fragment {
                     }
                     // 馬名を全部並べると長くなるので、頭数と最初の2頭だけ出す
                     StringBuilder text = new StringBuilder(body);
-                    if (!favoriteRunners.isEmpty()) text.append("\n★ お気に入り ").append(runnersLabel(favoriteRunners));
-                    if (!memoRunners.isEmpty()) text.append("\n📝 メモした馬 ").append(runnersLabel(memoRunners));
+                    if (!favoriteRunners.isEmpty()) text.append(Lang.t("\n★ お気に入り ", "\n★ Favorites: ")).append(runnersLabel(favoriteRunners));
+                    if (!memoRunners.isEmpty()) text.append(Lang.t("\n📝 メモした馬 ", "\n📝 Noted: ")).append(runnersLabel(memoRunners));
                     binding.textEntriesBody.setText(text);
                     todayCard.show(entries, favorites);
                     // 開催日は今日の開催カードで足りるので、前の開催のメインレース結果は出さない
@@ -286,21 +289,31 @@ public class HomeFragment extends Fragment {
             @Override
             public void onFailure(@NonNull String message) {
                 Log.w("HomeFragment", "Entries load failed: " + message);
-                if (isAdded() && binding != null) binding.layoutLastResults.setVisibility(View.VISIBLE);
+                if (isAdded() && binding != null) {
+                    binding.progressHome.setVisibility(View.GONE);
+                    binding.layoutLastResults.setVisibility(View.VISIBLE);
+                }
             }
         });
+    }
+
+    /** 競馬場名の一覧を表示の言語にする */
+    private static List<String> courseNames(java.util.Collection<String> courses) {
+        List<String> names = new ArrayList<>();
+        for (String c : courses) names.add(Lang.course(c));
+        return names;
     }
 
     /** 1頭なら馬名、何頭もいれば「7頭（バルチックアンバー ほか）」 */
     static String runnersLabel(Set<String> names) {
         List<String> list = new ArrayList<>(names);
         if (list.size() == 1) return list.get(0);
-        return list.size() + "頭（" + list.get(0) + " ほか）";
+        return Lang.t(list.size() + "頭（" + list.get(0) + " ほか）", list.size() + " (" + list.get(0) + " and more)");
     }
 
     private void updateUpcomingHint(FirebaseUser user) {
         if (binding == null) return;
-        binding.textUpcomingHint.setText("🔔 通知の設定 ›");
+        binding.textUpcomingHint.setText(Lang.t("🔔 通知の設定 ›", "🔔 Notification settings ›"));
         binding.textUpcomingHint.setOnClickListener(v -> showNotificationSettings(user != null));
     }
 
@@ -311,24 +324,24 @@ public class HomeFragment extends Fragment {
         TextView title = new TextView(requireContext());
         int pad = (int) (20 * density);
         title.setPadding(pad, pad, pad, (int) (8 * density));
-        SpannableStringBuilder text = new SpannableStringBuilder("通知の設定");
+        SpannableStringBuilder text = new SpannableStringBuilder(Lang.t("通知の設定", "Notification settings"));
         text.setSpan(new StyleSpan(Typeface.BOLD), 0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         text.setSpan(new RelativeSizeSpan(1.3f), 0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         text.append("\n\n").append(signedIn
-                ? "お気に入り馬・メモした馬の出走予定、お気に入り馬の発走30分前と結果（確定後すぐ）をお知らせします。"
-                : "ログインしてお気に入り馬を登録すると、出走予定・発走前・結果もお知らせします。");
+                ? Lang.t("お気に入り馬・メモした馬の出走予定、お気に入り馬の発走30分前と結果（確定後すぐ）をお知らせします。", "We'll notify you when your favorite or noted horses are entered, 30 minutes before your favorites run, and as soon as their results are official.")
+                : Lang.t("ログインしてお気に入り馬を登録すると、出走予定・発走前・結果もお知らせします。", "Sign in and add favorites to get entry, pre-race and result notifications."));
         title.setText(text);
         title.setTextColor(0xFF333333);
         new AlertDialog.Builder(requireContext())
                 .setCustomTitle(title)
-                .setMultiChoiceItems(new String[]{"重賞の発走30分前に上位人気とオッズを知らせる"}, checked,
+                .setMultiChoiceItems(new String[]{Lang.t("重賞の発走30分前に上位人気とオッズを知らせる", "Notify me 30 minutes before graded races with the favorites and odds")}, checked,
                         (dialog, which, isChecked) -> checked[which] = isChecked)
-                .setPositiveButton("保存", (dialog, which) -> {
+                .setPositiveButton(Lang.t("保存", "Save"), (dialog, which) -> {
                     GradedRaceWorker.setEnabled(requireContext(), checked[0]);
                     // オンにしたら、次の定期チェックを待たずに予約する
                     if (checked[0]) FavoriteResultWorker.runOnce(requireContext());
                 })
-                .setNegativeButton("キャンセル", null)
+                .setNegativeButton(Lang.t("キャンセル", "Cancel"), null)
                 .show();
     }
 
@@ -378,8 +391,8 @@ public class HomeFragment extends Fragment {
             binding.textTodayRaceName.setText(raceTitle);
             binding.textTodayRaceLocation.setText(kaisaijo);
             binding.textTodayRaceTime.setText(hassouTime);
-            binding.textTodayRaceNumber.setText(WeekendDays.formatShort(raceDateStr) + " " + kaisaijo + "のレース結果");
-            binding.textPopularRaceResultMore.setText(kaisaijo + "のレース結果をもっとみる");
+            binding.textTodayRaceNumber.setText(WeekendDays.formatShort(raceDateStr) + " " + Lang.t(kaisaijo + "のレース結果", Lang.course(kaisaijo) + " results"));
+            binding.textPopularRaceResultMore.setText(Lang.t(kaisaijo + "のレース結果をもっとみる", "More " + Lang.course(kaisaijo) + " results"));
             binding.textRaceResult1Odds.setText(winOdds);
             //レースの着順を設定する。
             binding.textRaceResult1Name.setText(horseName);
@@ -411,8 +424,8 @@ public class HomeFragment extends Fragment {
             binding.text2TodayRaceName.setText(raceTitle);
             binding.text2TodayRaceLocation.setText(kaisaijo);
             binding.text2TodayRaceTime.setText(hassouTime);
-            binding.text2TodayRaceNumber.setText(WeekendDays.formatShort(raceDateStr) + " " + kaisaijo + "のレース結果");
-            binding.text2PopularRaceResultMore.setText(kaisaijo + "のレース結果をもっとみる");
+            binding.text2TodayRaceNumber.setText(WeekendDays.formatShort(raceDateStr) + " " + Lang.t(kaisaijo + "のレース結果", Lang.course(kaisaijo) + " results"));
+            binding.text2PopularRaceResultMore.setText(Lang.t(kaisaijo + "のレース結果をもっとみる", "More " + Lang.course(kaisaijo) + " results"));
             binding.text2RaceResult1Odds.setText(winOdds);
             //レースの着順を設定する。
             binding.text2RaceResult1Name.setText(horseName);

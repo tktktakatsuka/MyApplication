@@ -3,6 +3,7 @@ package com.tktkcompany.kakoRaceKeiba.notification;
 import androidx.annotation.Nullable;
 
 import com.tktkcompany.kakoRaceKeiba.ui.entries.EntryForm;
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
 
 import org.threeten.bp.LocalDateTime;
 import org.threeten.bp.format.DateTimeFormatter;
@@ -39,20 +40,18 @@ public final class GradedRaceNotices {
     }
 
     public static String title(String raceTitle) {
-        return "🏆 " + raceTitle.trim() + " まもなく発走";
+        return "🏆 " + raceTitle.trim() + Lang.t(" まもなく発走", " starts soon");
     }
 
     /** 「15:45発走 東京11R（芝1600m）」の下に上位人気を並べる */
     public static String body(LocalDateTime start, String course, int raceNo, @Nullable String raceInfo,
                               List<Favorite> favorites, @Nullable String oddsTime) {
         StringBuilder sb = new StringBuilder();
-        sb.append(start.format(DateTimeFormatter.ofPattern("H:mm"))).append("発走 ").append(course).append(raceNo).append('R');
-        String label = EntryForm.courseLabel(raceInfo);
-        if (!label.isEmpty()) sb.append('（').append(label).append("m）");
+        sb.append(RaceStartNotices.raceHead(start, course, raceNo)).append(RaceStartNotices.courseSuffix(raceInfo));
         for (Favorite f : favorites) {
-            sb.append('\n').append(f.popularity).append("番人気 ").append(f.horseName).append(' ').append(f.odds).append('倍');
+            sb.append('\n').append(Lang.popularity(f.popularity)).append(' ').append(f.horseName).append(' ').append(Lang.odds(f.odds));
         }
-        if (!favorites.isEmpty() && oddsTime != null) sb.append("\nオッズは").append(oddsTime).append("時点");
+        if (!favorites.isEmpty() && oddsTime != null) sb.append(Lang.t("\nオッズは" + oddsTime + "時点", "\nOdds as of " + oddsTime));
         return sb.toString();
     }
 }

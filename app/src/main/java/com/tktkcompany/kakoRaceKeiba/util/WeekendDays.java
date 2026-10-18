@@ -14,6 +14,16 @@ public class WeekendDays {
 
     // アプリ全体の日付の表示形式（例: 2026年10月12日）
     public static final String DATE_PATTERN = "yyyy年MM月dd日";
+    private static final String DATE_PATTERN_EN = "MMM d, yyyy";
+
+    /** 表示の言語の日付の形（日本語「2026年10月17日」、英語「Oct 17, 2026」） */
+    public static String datePattern() {
+        return Lang.ja() ? DATE_PATTERN : DATE_PATTERN_EN;
+    }
+
+    private static DateTimeFormatter dateFormatter() {
+        return Lang.ja() ? DateTimeFormatter.ofPattern(DATE_PATTERN) : DateTimeFormatter.ofPattern(DATE_PATTERN_EN, java.util.Locale.US);
+    }
 
     // 先月と今月の開催候補日（土日・祝日の月曜）のうち、今日以前の日付を取得するメソッド
     public static List<String> getPastWeekendsInCurrentMonth() {
@@ -62,7 +72,7 @@ public class WeekendDays {
         if (dateStr == null || dateStr.length() != 8) return dateStr;
         try {
             LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
-            return date.format(DateTimeFormatter.ofPattern(DATE_PATTERN)) + getDayOfWeek(dateStr);
+            return date.format(dateFormatter()) + getDayOfWeek(dateStr);
         } catch (DateTimeParseException e) {
             return dateStr;
         }
@@ -73,7 +83,7 @@ public class WeekendDays {
         if (dateStr == null || dateStr.length() != 8) return dateStr;
         try {
             LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
-            return date.format(DateTimeFormatter.ofPattern(DATE_PATTERN)) + getDayOfWeek(dateStr).trim();
+            return date.format(dateFormatter()) + (Lang.ja() ? getDayOfWeek(dateStr).trim() : getDayOfWeek(dateStr));
         } catch (DateTimeParseException e) {
             return dateStr;
         }
@@ -89,19 +99,19 @@ public class WeekendDays {
             // 日本語の曜日名を返す
             switch (dayOfWeek) {
                 case MONDAY:
-                    return " (月)";
+                    return Lang.t(" (月)", " (Mon)");
                 case TUESDAY:
-                    return " (火)";
+                    return Lang.t(" (火)", " (Tue)");
                 case WEDNESDAY:
-                    return " (水)";
+                    return Lang.t(" (水)", " (Wed)");
                 case THURSDAY:
-                    return " (木)";
+                    return Lang.t(" (木)", " (Thu)");
                 case FRIDAY:
-                    return " (金)";
+                    return Lang.t(" (金)", " (Fri)");
                 case SATURDAY:
-                    return " (土)";
+                    return Lang.t(" (土)", " (Sat)");
                 case SUNDAY:
-                    return " (日)";
+                    return Lang.t(" (日)", " (Sun)");
                 default:
                     return "";
             }

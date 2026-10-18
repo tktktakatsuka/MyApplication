@@ -1,5 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
+
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -96,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         } catch (ApiException e) {
                             Log.w(TAG, "Google sign in failed", e);
-                            Toast.makeText(this, "Googleサインインに失敗しました", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, Lang.t("Googleサインインに失敗しました", "Google sign-in failed"), Toast.LENGTH_SHORT).show();
                             updateHomeFragmentUI(null);
                         }
                     }
@@ -274,7 +276,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         } else {
                             Log.w(TAG, "取得した Credential が Google ID トークンではありませんでした。");
-                            Toast.makeText(MainActivity.this, "ログインに失敗しました。", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, Lang.t("ログインに失敗しました。", "Sign-in failed."), Toast.LENGTH_SHORT).show();
                             updateHomeFragmentUI(null);
                         }
                     }
@@ -286,7 +288,7 @@ public class MainActivity extends AppCompatActivity {
                             launchGoogleSignInFallback();
                         } else {
                             Log.e(TAG, "GetCredential failed", e);
-                            Toast.makeText(MainActivity.this, "ログイン処理でエラーが発生しました。", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, Lang.t("ログイン処理でエラーが発生しました。", "An error occurred while signing in."), Toast.LENGTH_SHORT).show();
                         }
                         updateHomeFragmentUI(null);
                     }
@@ -308,7 +310,7 @@ public class MainActivity extends AppCompatActivity {
         // HomeFragment の UI を未ログイン状態に更新
         updateHomeFragmentUI(null);
 
-        Toast.makeText(this, "ログアウトしました。", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, Lang.t("ログアウトしました。", "Signed out."), Toast.LENGTH_SHORT).show();
     }
 
     private void firebaseAuthWithGoogle(String idToken) {
@@ -322,11 +324,11 @@ public class MainActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         Log.d(TAG, "signInWithCredential:success");
                         if (user != null) {
-                            Toast.makeText(this, "ログイン成功: " + user.getDisplayName(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, Lang.t("ログイン成功: ", "Signed in: ") + user.getDisplayName(), Toast.LENGTH_SHORT).show();
                         }
                     } else {
                         Log.w(TAG, "signInWithCredential:failure", task.getException());
-                        Toast.makeText(this, "Firebaseでの認証に失敗しました。", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, Lang.t("Firebaseでの認証に失敗しました。", "Firebase authentication failed."), Toast.LENGTH_SHORT).show();
                     }
                 });
     }

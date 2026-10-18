@@ -1,7 +1,40 @@
 <resources>
-    <string name="app_name">競馬　過去レース結果</string>
-    <string name="title_home">ホーム</string>
-    <string name="title_dashboard">レース一覧</string>
-    <string name="title_notifications">レース傾向分析</string>
-    <string name="kaisai_info_format">%1$s%2$sの開催情報</string>
+    <!-- 英語（端末の言語が日本語以外のとき）。日本語は values-ja -->
+    <string name="app_name">Keiba Past Race Results</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Races</string>
+    <string name="title_notifications">Race trends</string>
+    <string name="kaisai_info_format">%1$s %2$s race info</string>
+    <string name="loading_race_info">Loading race info</string>
+    <string name="sort_date_desc">Newest first</string>
+    <string name="open_trends">📊 Race trends ›</string>
+    <string name="no_favorites">No favorite horses yet</string>
+    <string name="login_google">Sign in with Google</string>
+    <string name="login_benefit">Sign in to save favorite horses and notes, and get result notifications</string>
+    <string name="signed_in">Signed in</string>
+    <string name="logout">Sign out</string>
+    <string name="today_meeting">Today\'s races</string>
+    <string name="favorites_button">★ Favorites</string>
+    <string name="predictions_button">◎ My picks</string>
+    <string name="this_week_meeting">This week</string>
+    <string name="this_week_entries">This week\'s runners</string>
+    <string name="race_results">Race results</string>
+    <string name="see_details">Details &gt;</string>
+    <string name="open_predictions_card">◎ Check my picks ›\nResults of your ◎○▲△ marks and your ◎ record</string>
+    <string name="memo_lead">Tap 📝 on results or race cards to keep notes on horses. When a horse you noted runs, you\'ll see it here, on the race card and on Home.</string>
+    <string name="select_course">Choose a racecourse</string>
+    <string name="show_course_trends">Show trends</string>
+    <string name="turf">Turf</string>
+    <string name="dirt">Dirt</string>
+    <string name="two_months">Show 2 months</string>
+    <string name="cd_mark">Pick mark</string>
+    <string name="cd_memo">Note</string>
+    <string name="cd_remove_favorite">Remove from favorites</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_entries">Race cards</string>
+    <string name="nav_results">Results</string>
+    <string name="nav_memos">Notes &amp; picks</string>
+    <string name="label_favorites">Favorite horses</string>
+    <string name="label_predictions">My picks &amp; bets</string>
+    <string name="label_entry_detail">Runners\' recent form</string>
 </resources>

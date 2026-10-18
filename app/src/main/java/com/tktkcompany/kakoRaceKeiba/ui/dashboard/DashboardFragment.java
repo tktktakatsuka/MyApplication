@@ -1,5 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.ui.dashboard;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
+
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -214,7 +216,7 @@ public class DashboardFragment extends Fragment {
         ((TextView) item.findViewById(R.id.text_race_day_date)).setText(WeekendDays.formatShort(date));
         if (date.equals(today())) {
             TextView sub = item.findViewById(R.id.text_race_day_sub);
-            sub.setText("今日・確定したレースから速報で表示");
+            sub.setText(Lang.t("今日・確定したレースから速報で表示", "Today: live results as races finish"));
             sub.setTextColor(0xFFE65100);
             sub.setVisibility(View.VISIBLE);
         }

@@ -22,7 +22,7 @@
         android:layout_gravity="center"
         android:gravity="center"
         android:padding="24dp"
-        android:text="お気に入りに登録された馬はいません"
+        android:text="@string/no_favorites"
         android:textColor="#777777"
         android:visibility="gone" />
 

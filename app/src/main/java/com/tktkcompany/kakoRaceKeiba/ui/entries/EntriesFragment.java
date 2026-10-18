@@ -1,5 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.ui.entries;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
+
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
@@ -46,7 +48,7 @@ public class EntriesFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentEntriesBinding.inflate(inflater, container, false);
-        binding.textEntriesLead.setText("レースを選ぶと、出走馬ごとの近走成績を確認できます");
+        binding.textEntriesLead.setText(Lang.t("レースを選ぶと、出走馬ごとの近走成績を確認できます", "Pick a race to see each runner's recent form"));
         loadEntries();
         return binding.getRoot();
     }
@@ -59,7 +61,7 @@ public class EntriesFragment extends Fragment {
                 if (binding == null || !isAdded()) return;
                 binding.progressBar.setVisibility(View.GONE);
                 if (entries.isEmpty()) {
-                    showEmpty("今週の出走馬はまだ発表されていません。\n出馬表が確定すると、ここに表示されます。");
+                    showEmpty(Lang.t("今週の出走馬はまだ発表されていません。\n出馬表が確定すると、ここに表示されます。", "This week's runners aren't out yet.\nThey'll appear here once the race cards are published."));
                     return;
                 }
                 FavoriteHorseNames.load(favorites -> {
@@ -73,7 +75,7 @@ public class EntriesFragment extends Fragment {
                 Log.e("EntriesFragment", "Supabase load failed: " + message);
                 if (binding == null || !isAdded()) return;
                 binding.progressBar.setVisibility(View.GONE);
-                showEmpty("出走馬の読み込みに失敗しました");
+                showEmpty(Lang.t("出走馬の読み込みに失敗しました", "Couldn't load runners"));
             }
         });
     }
@@ -110,7 +112,7 @@ public class EntriesFragment extends Fragment {
             String course = key[1];
 
             TextView header = new TextView(requireContext());
-            header.setText(WeekendDays.formatShort(date) + " " + course);
+            header.setText(WeekendDays.formatShort(date) + " " + Lang.course(course));
             header.setTextSize(18);
             header.setTextColor(0xFF333333);
             header.setTypeface(header.getTypeface(), Typeface.BOLD);
@@ -129,7 +131,7 @@ public class EntriesFragment extends Fragment {
                 SpannableStringBuilder number = new SpannableStringBuilder(raceNo + "R");
                 if (start != null) {
                     int from = number.length();
-                    number.append("\n").append(start.format(DateTimeFormatter.ofPattern("H:mm"))).append("発走");
+                    number.append("\n").append(start.format(DateTimeFormatter.ofPattern("H:mm"))).append(Lang.t("発走", ""));
                     number.setSpan(new RelativeSizeSpan(0.75f), from, number.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                     number.setSpan(new ForegroundColorSpan(0xFF666666), from, number.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
@@ -145,15 +147,16 @@ public class EntriesFragment extends Fragment {
                     if (e.getHorseNumber() != null) beforeDraw = false;
                     if (FavoriteHorseNames.contains(favorites, e.getHorseName())) favoriteCount++;
                 }
-                String courseLabel = EntryForm.courseLabel(first.getRaceInfo());
-                String count = (beforeDraw ? "登録" : "") + race.getValue().size() + "頭";
+                String courseLabel = EntryForm.courseText(EntryForm.courseLabel(first.getRaceInfo()));
+                String count = Lang.ja() ? (beforeDraw ? "登録" : "") + race.getValue().size() + "頭"
+                        : race.getValue().size() + (beforeDraw ? " nominated" : " runners");
                 ((TextView) item.findViewById(R.id.text_race_day_main)).setText(title);
                 TextView sub = item.findViewById(R.id.text_race_day_sub);
                 String subText = courseLabel.isEmpty() ? count : courseLabel + "m・" + count;
-                if (next) subText = "▶ 次のレース・" + subText;
+                if (next) subText = Lang.t("▶ 次のレース・", "▶ Next race・") + subText;
                 if (favoriteCount > 0) {
                     // お気に入り馬が出るレースは目立たせる
-                    subText += "・★お気に入り" + favoriteCount + "頭";
+                    subText += Lang.t("・★お気に入り" + favoriteCount + "頭", "・★" + favoriteCount + " favorite" + (favoriteCount == 1 ? "" : "s"));
                     sub.setTextColor(0xFFE65100);
                 }
                 sub.setText(subText);

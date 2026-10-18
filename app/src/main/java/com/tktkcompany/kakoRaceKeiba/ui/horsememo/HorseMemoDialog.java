@@ -1,5 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.ui.horsememo;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
+
 import android.content.Context;
 import android.text.InputType;
 import android.view.Gravity;
@@ -29,7 +31,7 @@ public final class HorseMemoDialog {
     public static void show(Context context, Map<String, HorseMemos.Memo> memos, String horseName,
                             @Nullable String from, OnChanged onChanged) {
         if (!HorseMemos.isSignedIn()) {
-            Toast.makeText(context, "メモ機能を利用するにはログインが必要です", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, Lang.t("メモ機能を利用するにはログインが必要です", "Sign in to use notes"), Toast.LENGTH_SHORT).show();
             return;
         }
         HorseMemos.Memo existing = HorseMemos.find(memos, horseName);
@@ -39,7 +41,7 @@ public final class HorseMemoDialog {
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
         input.setMinLines(3);
         input.setGravity(Gravity.TOP | Gravity.START);
-        input.setHint("例: 4角で前が詰まって脚を余した。次走は買い");
+        input.setHint(Lang.t("例: 4角で前が詰まって脚を余した。次走は買い", "e.g. Got blocked at the turn, had more to give. Back next time"));
         if (existing != null) {
             input.setText(existing.text);
             input.setSelection(input.getText().length());
@@ -51,21 +53,21 @@ public final class HorseMemoDialog {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context)
                 .setTitle("📝 " + HorseMemos.displayName(horseName))
-                .setMessage("メモした馬が出走すると、出走表とホームでお知らせします")
+                .setMessage(Lang.t("メモした馬が出走すると、出走表とホームでお知らせします", "When this horse runs, you'll see it on the race card and Home"))
                 .setView(box)
-                .setPositiveButton("保存", (d, w) -> {
+                .setPositiveButton(Lang.t("保存", "Save"), (d, w) -> {
                     String text = input.getText().toString();
                     HorseMemos.Memo saved = HorseMemos.save(memos, horseName, text,
                             from != null ? from : existing != null ? existing.from : null);
                     if (saved == null && existing == null) return; // 空のまま保存した
-                    Toast.makeText(context, saved != null ? "メモを保存しました" : "メモを削除しました", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, saved != null ? Lang.t("メモを保存しました", "Note saved") : Lang.t("メモを削除しました", "Note deleted"), Toast.LENGTH_SHORT).show();
                     onChanged.onChanged(saved);
                 })
-                .setNegativeButton("キャンセル", null);
+                .setNegativeButton(Lang.t("キャンセル", "Cancel"), null);
         if (existing != null) {
-            builder.setNeutralButton("削除", (d, w) -> {
+            builder.setNeutralButton(Lang.t("削除", "Delete"), (d, w) -> {
                 HorseMemos.delete(memos, horseName);
-                Toast.makeText(context, "メモを削除しました", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, Lang.t("メモを削除しました", "Note deleted"), Toast.LENGTH_SHORT).show();
                 onChanged.onChanged(null);
             });
         }

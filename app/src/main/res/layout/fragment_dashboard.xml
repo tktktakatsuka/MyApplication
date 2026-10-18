@@ -30,7 +30,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:checked="true"
-                    android:text="日付降順" />
+                    android:text="@string/sort_date_desc" />
 
                 <!-- レース傾向はタブから外したので、ここから開く -->
                 <TextView
@@ -39,7 +39,7 @@
                     android:layout_height="wrap_content"
                     android:background="?attr/selectableItemBackground"
                     android:padding="8dp"
-                    android:text="📊 レース傾向 ›"
+                    android:text="@string/open_trends"
                     android:textColor="#1565C0"
                     android:textSize="14sp" />
             </LinearLayout>

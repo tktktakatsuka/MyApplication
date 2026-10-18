@@ -1,5 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.ui.home;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
+
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -119,7 +121,7 @@ class TodayCard {
         for (SupabaseManager.RaceEntry e : favoriteRuns) {
             LocalDateTime start = start(e);
             if (start == null || !start.isAfter(now)) continue;
-            addRow("★", 0xFFE65100, e.getHorseName() + "　" + e.getKaisaijo() + e.getRaceNo() + "R " + start.format(HM),
+            addRow("★", 0xFFE65100, e.getHorseName() + "　" + Lang.race(e.getKaisaijo(), e.getRaceNo()) + " " + start.format(HM),
                     remaining(now, start), null, v -> openEntry(e));
             break;
         }
@@ -152,10 +154,10 @@ class TodayCard {
             if (next != null) {
                 LocalDateTime start = start(next);
                 SupabaseManager.RaceEntry target = next;
-                addRow(jo, 0xFF2E7D32, next.getRaceNo() + "R " + start.format(HM) + "発走", remaining(now, start), result,
+                addRow(Lang.course(jo), 0xFF2E7D32, Lang.t(next.getRaceNo() + "R " + start.format(HM) + "発走", "R" + next.getRaceNo() + " " + start.format(HM)), remaining(now, start), result,
                         v -> openEntry(target));
             } else {
-                addRow(jo, 0xFF2E7D32, "全レース終了", null, result, v -> openResults(jo));
+                addRow(Lang.course(jo), 0xFF2E7D32, Lang.t("全レース終了", "All races finished"), null, result, v -> openResults(jo));
             }
         }
         // 残り時間を1分ごとに書き直す
@@ -181,10 +183,10 @@ class TodayCard {
             SpannableStringBuilder text = new SpannableStringBuilder();
             for (SupabaseManager.RaceResult r : rows) {
                 if (!"1".equals(r.getRank())) continue;
-                text.append(String.valueOf(raceNo)).append("R ");
-                appendColored(text, "1着", 0xFFC62828, true);
+                text.append(Lang.t(raceNo + "R ", "R" + raceNo + " "));
+                appendColored(text, Lang.rank("1"), 0xFFC62828, true);
                 text.append(" ").append(r.getHorseName() != null ? r.getHorseName() : "");
-                if (r.getPopular() != null) text.append("（").append(r.getPopular()).append("人気）");
+                if (r.getPopular() != null) text.append(Lang.t("（" + r.getPopular() + "人気）", " (" + Lang.popularity(r.getPopular()) + ")"));
                 break;
             }
             handler.post(() -> {
@@ -275,9 +277,9 @@ class TodayCard {
     /** 「あと12分」「あと1時間5分」 */
     static String remaining(LocalDateTime now, LocalDateTime start) {
         long minutes = Math.max(0, Duration.between(now, start).toMinutes());
-        if (minutes < 1) return "まもなく";
-        if (minutes < 60) return "あと" + minutes + "分";
-        return "あと" + (minutes / 60) + "時間" + (minutes % 60) + "分";
+        if (minutes < 1) return Lang.t("まもなく", "Soon");
+        if (minutes < 60) return Lang.t("あと" + minutes + "分", "in " + minutes + " min");
+        return Lang.t("あと" + (minutes / 60) + "時間" + (minutes % 60) + "分", "in " + (minutes / 60) + "h " + (minutes % 60) + "m");
     }
 
     private static void appendColored(SpannableStringBuilder sb, String text, int color, boolean bold) {

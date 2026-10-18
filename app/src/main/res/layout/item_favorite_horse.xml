@@ -58,7 +58,7 @@
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="お気に入りから外す"
+            android:contentDescription="@string/cd_remove_favorite"
             android:src="@android:drawable/ic_menu_close_clear_cancel"
             app:tint="#BDBDBD" />
     </LinearLayout>

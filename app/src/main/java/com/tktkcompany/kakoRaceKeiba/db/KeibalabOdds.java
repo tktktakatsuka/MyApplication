@@ -62,15 +62,18 @@ public final class KeibalabOdds {
         /** 「単勝 5.3倍（3番人気）　複勝 1.9〜2.2倍」。どちらも無ければ空文字 */
         public String label() {
             StringBuilder sb = new StringBuilder();
+            boolean ja = com.tktkcompany.kakoRaceKeiba.util.Lang.ja();
             if (win != null) {
-                sb.append("単勝 ").append(win).append('倍');
-                if (popularity != null) sb.append('（').append(popularity).append("番人気）");
+                sb.append(ja ? "単勝 " + win + "倍" : "Win " + win);
+                if (popularity != null) {
+                    sb.append(ja ? "（" + popularity + "番人気）" : " (" + com.tktkcompany.kakoRaceKeiba.util.Lang.popularity(popularity) + ")");
+                }
             }
             if (placeMin != null) {
                 if (sb.length() > 0) sb.append('　');
-                sb.append("複勝 ").append(placeMin);
-                if (placeMax != null && !placeMax.equals(placeMin)) sb.append('〜').append(placeMax);
-                sb.append('倍');
+                sb.append(ja ? "複勝 " : "Place ").append(placeMin);
+                if (placeMax != null && !placeMax.equals(placeMin)) sb.append(ja ? "〜" : "–").append(placeMax);
+                if (ja) sb.append('倍');
             }
             return sb.toString();
         }

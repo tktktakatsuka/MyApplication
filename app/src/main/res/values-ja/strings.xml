@@ -1,0 +1,40 @@
+<resources>
+    <!-- 日本語（端末の言語が日本語のとき）。それ以外は values（英語） -->
+    <string name="app_name">競馬　過去レース結果</string>
+    <string name="title_home">ホーム</string>
+    <string name="title_dashboard">レース一覧</string>
+    <string name="title_notifications">レース傾向分析</string>
+    <string name="kaisai_info_format">%1$s%2$sの開催情報</string>
+    <string name="loading_race_info">レース情報取得中</string>
+    <string name="sort_date_desc">日付降順</string>
+    <string name="open_trends">📊 レース傾向 ›</string>
+    <string name="no_favorites">お気に入りに登録された馬はいません</string>
+    <string name="login_google">Googleでログイン</string>
+    <string name="login_benefit">ログインすると、お気に入り馬の登録・レース結果の通知・メモの保存ができます</string>
+    <string name="signed_in">ログイン中</string>
+    <string name="logout">ログアウト</string>
+    <string name="today_meeting">今日の開催</string>
+    <string name="favorites_button">★ お気に入り馬</string>
+    <string name="predictions_button">◎ 答え合わせ</string>
+    <string name="this_week_meeting">今週の開催</string>
+    <string name="this_week_entries">今週の出走馬</string>
+    <string name="race_results">レース結果</string>
+    <string name="see_details">詳細を見る &gt;</string>
+    <string name="open_predictions_card">◎ 予想の答え合わせ ›\n出走表で付けた◎○▲△の結果と、◎の成績を見る</string>
+    <string name="memo_lead">レース結果や出走表の📝から、気になった馬にメモを残せます。メモした馬が出走すると、ここと出走表・ホームでお知らせします。</string>
+    <string name="select_course">競馬場を選択する</string>
+    <string name="show_course_trends">xx競馬場の傾向を表示</string>
+    <string name="turf">芝</string>
+    <string name="dirt">ダート</string>
+    <string name="two_months">2か月分表示</string>
+    <string name="cd_mark">予想の印</string>
+    <string name="cd_memo">メモ</string>
+    <string name="cd_remove_favorite">お気に入りから外す</string>
+    <string name="nav_home">ホーム</string>
+    <string name="nav_entries">出走表</string>
+    <string name="nav_results">結果</string>
+    <string name="nav_memos">メモ・予想</string>
+    <string name="label_favorites">お気に入り馬</string>
+    <string name="label_predictions">予想・買い目の答え合わせ</string>
+    <string name="label_entry_detail">出走馬の近走成績</string>
+</resources>

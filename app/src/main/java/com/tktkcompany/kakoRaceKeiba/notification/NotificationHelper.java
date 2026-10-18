@@ -1,5 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.notification;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
+
 import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -37,34 +39,34 @@ public class NotificationHelper {
         if (manager == null) return;
 
         NotificationChannel defaultChannel = new NotificationChannel(
-                DEFAULT_CHANNEL_ID, "お知らせ", NotificationManager.IMPORTANCE_DEFAULT);
-        defaultChannel.setDescription("アプリからのお知らせ");
+                DEFAULT_CHANNEL_ID, Lang.t("お知らせ", "Announcements"), NotificationManager.IMPORTANCE_DEFAULT);
+        defaultChannel.setDescription(Lang.t("アプリからのお知らせ", "News from the app"));
         manager.createNotificationChannel(defaultChannel);
 
         NotificationChannel favoriteChannel = new NotificationChannel(
-                FAVORITE_CHANNEL_ID, "お気に入り馬の結果", NotificationManager.IMPORTANCE_DEFAULT);
-        favoriteChannel.setDescription("お気に入り登録した馬のレース結果");
+                FAVORITE_CHANNEL_ID, Lang.t("お気に入り馬の結果", "Favorite horses' results"), NotificationManager.IMPORTANCE_DEFAULT);
+        favoriteChannel.setDescription(Lang.t("お気に入り登録した馬のレース結果", "Race results of your favorite horses"));
         manager.createNotificationChannel(favoriteChannel);
 
         NotificationChannel entryChannel = new NotificationChannel(
-                ENTRY_CHANNEL_ID, "お気に入り馬・メモした馬の出走予定", NotificationManager.IMPORTANCE_DEFAULT);
-        entryChannel.setDescription("出馬表に載ったときにお知らせします");
+                ENTRY_CHANNEL_ID, Lang.t("お気に入り馬・メモした馬の出走予定", "Entries of your favorite and noted horses"), NotificationManager.IMPORTANCE_DEFAULT);
+        entryChannel.setDescription(Lang.t("出馬表に載ったときにお知らせします", "When they appear on a race card"));
         manager.createNotificationChannel(entryChannel);
 
         NotificationChannel liveResultChannel = new NotificationChannel(
-                LIVE_RESULT_CHANNEL_ID, "お気に入り馬の結果（速報）", NotificationManager.IMPORTANCE_HIGH);
-        liveResultChannel.setDescription("お気に入り馬のレースの結果が確定したらすぐにお知らせします");
+                LIVE_RESULT_CHANNEL_ID, Lang.t("お気に入り馬の結果（速報）", "Favorite horses' results (live)"), NotificationManager.IMPORTANCE_HIGH);
+        liveResultChannel.setDescription(Lang.t("お気に入り馬のレースの結果が確定したらすぐにお知らせします", "As soon as their race result is official"));
         manager.createNotificationChannel(liveResultChannel);
 
         NotificationChannel gradedChannel = new NotificationChannel(
-                GRADED_RACE_CHANNEL_ID, "重賞の発走前", NotificationManager.IMPORTANCE_DEFAULT);
-        gradedChannel.setDescription("重賞レースの発走30分前にお知らせします");
+                GRADED_RACE_CHANNEL_ID, Lang.t("重賞の発走前", "Before graded races"), NotificationManager.IMPORTANCE_DEFAULT);
+        gradedChannel.setDescription(Lang.t("重賞レースの発走30分前にお知らせします", "30 minutes before graded races"));
         manager.createNotificationChannel(gradedChannel);
 
         // 発走直前に気づけるよう、ほかの通知より目立たせる
         NotificationChannel raceStartChannel = new NotificationChannel(
-                RACE_START_CHANNEL_ID, "お気に入り馬の出走前", NotificationManager.IMPORTANCE_HIGH);
-        raceStartChannel.setDescription("お気に入り馬が出るレースの発走30分前にお知らせします");
+                RACE_START_CHANNEL_ID, Lang.t("お気に入り馬の出走前", "Before favorites run"), NotificationManager.IMPORTANCE_HIGH);
+        raceStartChannel.setDescription(Lang.t("お気に入り馬が出るレースの発走30分前にお知らせします", "30 minutes before your favorites run"));
         manager.createNotificationChannel(raceStartChannel);
     }
 

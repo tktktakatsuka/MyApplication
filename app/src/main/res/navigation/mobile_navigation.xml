@@ -43,33 +43,33 @@
     <fragment
         android:id="@+id/navigation_raceResults"
         android:name="com.tktkcompany.kakoRaceKeiba.ui.raceResult.RaceResultsFragment"
-        android:label="レース結果"
+        android:label="@string/race_results"
         android:textColor="@color/tyairo"
         tools:layout="@layout/fragment_raceresults" />
 
     <fragment
         android:id="@+id/navigation_horseMemos"
         android:name="com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemoListFragment"
-        android:label="メモ・予想"
+        android:label="@string/nav_memos"
         tools:layout="@layout/fragment_horse_memos" />
 
     <fragment
         android:id="@+id/navigation_favorites"
         android:name="com.tktkcompany.kakoRaceKeiba.ui.favorite.FavoriteHorsesFragment"
-        android:label="お気に入り馬"
+        android:label="@string/label_favorites"
         tools:layout="@layout/fragment_favorite_horses" />
 
 
     <fragment
         android:id="@+id/navigation_predictions"
         android:name="com.tktkcompany.kakoRaceKeiba.ui.prediction.PredictionsFragment"
-        android:label="予想・買い目の答え合わせ"
+        android:label="@string/label_predictions"
         tools:layout="@layout/fragment_entries" />
 
     <fragment
         android:id="@+id/navigation_entries"
         android:name="com.tktkcompany.kakoRaceKeiba.ui.entries.EntriesFragment"
-        android:label="出走表"
+        android:label="@string/nav_entries"
         tools:layout="@layout/fragment_entries">
         <action
             android:id="@+id/action_navigation_entries_to_navigation_entryDetail"
@@ -79,7 +79,7 @@
     <fragment
         android:id="@+id/navigation_entryDetail"
         android:name="com.tktkcompany.kakoRaceKeiba.ui.entries.EntryDetailFragment"
-        android:label="出走馬の近走成績"
+        android:label="@string/label_entry_detail"
         tools:layout="@layout/fragment_entries" />
 
 </navigation>

@@ -15,6 +15,41 @@ import java.util.regex.Pattern;
  */
 public final class EntryForm {
 
+    /**
+     * 印（badges の戻り値。日本語）を表示の言語にする。印の判定や比較は日本語のまま行い、表示にだけ使う
+     */
+    public static String label(String badge) {
+        if (com.tktkcompany.kakoRaceKeiba.util.Lang.ja()) return badge;
+        switch (badge) {
+            case "休み明け": return "Layoff";
+            case "連闘": return "Back-to-back";
+            case "乗り替わり": return "Jockey change";
+        }
+        Matcher m = Pattern.compile("^中(\\d+)週$").matcher(badge);
+        if (m.find()) return m.group(1) + "-wk gap";
+        if (badge.startsWith("距離延長 ")) return "Longer " + badge.substring(5);
+        if (badge.startsWith("距離短縮 ")) return "Shorter " + badge.substring(5);
+        if (badge.startsWith("同条件 ")) return "Same cond. " + badge.substring(4);
+        if (badge.contains("→")) return surfaceLabel(badge.substring(0, badge.indexOf('→'))) + "→" + surfaceLabel(badge.substring(badge.indexOf('→') + 1));
+        return badge;
+    }
+
+    /** 「芝」「ダ」「障」を英語にする（表示用） */
+    private static String surfaceLabel(String s) {
+        switch (s) {
+            case "芝": return "Turf";
+            case "ダ": return "Dirt";
+            case "障": return "Jump";
+            default: return s;
+        }
+    }
+
+    /** 「芝1600」を表示の言語にする（英語は「T1600」「D1400」「J3000」） */
+    public static String courseText(String label) {
+        if (label == null || label.isEmpty() || com.tktkcompany.kakoRaceKeiba.util.Lang.ja()) return label;
+        return label.replaceFirst("^芝", "T").replaceFirst("^ダ", "D").replaceFirst("^障", "J");
+    }
+
     /** 「芝2000m」「ダ1400m」「障芝3000m」などから馬場と距離を取り出す */
     private static final Pattern COURSE = Pattern.compile("(芝|ダ|障)\\D{0,2}(\\d{3,4})m");
     private static final DateTimeFormatter YMD = DateTimeFormatter.ofPattern("yyyyMMdd");

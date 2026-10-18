@@ -6,24 +6,24 @@
     <item
         android:id="@+id/navigation_home"
         android:icon="@drawable/ic_home_black_24dp"
-        android:title="ホーム"
+        android:title="@string/nav_home"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/navigation_entries"
         android:icon="@drawable/ic_entries_black_24dp"
-        android:title="出走表"
+        android:title="@string/nav_entries"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/navigation_dashboard"
         android:icon="@drawable/ic_raceresult_black_24dp"
-        android:title="結果"
+        android:title="@string/nav_results"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/navigation_horseMemos"
         android:icon="@drawable/ic_racekeikou_black_24dp"
-        android:title="メモ・予想"
+        android:title="@string/nav_memos"
         app:showAsAction="ifRoom" />
 </menu>

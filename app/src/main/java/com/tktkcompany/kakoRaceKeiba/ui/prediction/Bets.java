@@ -1,5 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.ui.prediction;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -64,7 +66,7 @@ public final class Bets {
 
         /** 「馬連 5-10 1,000円」 */
         public String label() {
-            return type + " " + numbers + " " + String.format("%,d", amount) + "円";
+            return Lang.betType(type) + " " + numbers + " " + Lang.yen(amount);
         }
     }
 
@@ -183,8 +185,9 @@ public final class Bets {
         /** 「投資 3,000円・払戻 4,030円（回収率 134%）・的中 1/3」。結果が無ければ空文字 */
         public String label() {
             if (count == 0) return "";
-            return "投資 " + String.format("%,d", invested) + "円・払戻 " + String.format("%,d", returned) + "円"
-                    + "（回収率 " + Math.round(returned * 100.0 / invested) + "%）・的中 " + hits + "/" + count;
+            long roi = Math.round(returned * 100.0 / invested);
+            return Lang.t("投資 " + Lang.yen(invested) + "・払戻 " + Lang.yen(returned) + "（回収率 " + roi + "%）・的中 " + hits + "/" + count,
+                    "Staked " + Lang.yen(invested) + " · Returned " + Lang.yen(returned) + " (ROI " + roi + "%) · Hits " + hits + "/" + count);
         }
     }
 
@@ -210,9 +213,10 @@ public final class Bets {
             default:
                 need = 3;
         }
-        if (list.size() != need) return type + "は" + need + "頭（" + (need == 1 ? "馬番" : "馬番をハイフンで区切って") + "）で入力してください";
-        if (!type.equals("枠連") && new java.util.HashSet<>(list).size() != list.size()) return "同じ馬番が入っています";
-        if (amount < 100 || amount % 100 != 0) return "金額は100円単位で入力してください";
+        if (list.size() != need) return Lang.t(type + "は" + need + "頭（" + (need == 1 ? "馬番" : "馬番をハイフンで区切って") + "）で入力してください",
+                Lang.betType(type) + " needs " + need + (need == 1 ? " number" : " numbers separated by hyphens"));
+        if (!type.equals("枠連") && new java.util.HashSet<>(list).size() != list.size()) return Lang.t("同じ馬番が入っています", "The same number is entered twice");
+        if (amount < 100 || amount % 100 != 0) return Lang.t("金額は100円単位で入力してください", "Enter the amount in units of ¥100");
         return null;
     }
 

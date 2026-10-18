@@ -1,5 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.db;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
+
 import androidx.annotation.Nullable;
 
 import org.jsoup.Jsoup;
@@ -30,6 +32,11 @@ public final class KeibalabRaceCard {
         /** 今の騎手（略称） */
         @Nullable public final String jockey;
 
+        /** 馬番・枠番（先頭の0なし）と馬名（印なし） */
+        public String number = "";
+        @Nullable public String waku;
+        @Nullable public String name;
+
         Horse(@Nullable String weight, boolean scratched, @Nullable String jockey) {
             this.weight = weight;
             this.scratched = scratched;
@@ -55,10 +62,10 @@ public final class KeibalabRaceCard {
         /** 「天気 晴・馬場 良」。どちらも無ければ空文字 */
         public String conditionLabel() {
             StringBuilder sb = new StringBuilder();
-            if (weather != null) sb.append("天気 ").append(weather);
+            if (weather != null) sb.append(Lang.t("天気 ", "Weather ")).append(weather);
             if (ground != null) {
                 if (sb.length() > 0) sb.append('・');
-                sb.append("馬場 ").append(ground);
+                sb.append(Lang.t("馬場 ", "Track ")).append(ground);
             }
             return sb.toString();
         }
@@ -91,7 +98,12 @@ public final class KeibalabRaceCard {
                 if (number == null) continue;
                 // 取消・除外の馬は行が灰色になり、オッズと馬体重が空になる
                 boolean scratched = tr.hasClass("bgGray");
-                horses.put(number, new Horse(weight(cell(td, col, "馬体重")), scratched, cell(td, col, "騎手")));
+                Horse horse = new Horse(weight(cell(td, col, "馬体重")), scratched, cell(td, col, "騎手"));
+                horse.number = number;
+                horse.waku = stripZeros(cell(td, col, "枠"));
+                Element nameCell = tr.selectFirst("td[data-hsnm]");
+                horse.name = KeibalabResults.horseName(nameCell != null ? nameCell.attr("data-hsnm") : null);
+                horses.put(number, horse);
             }
         }
         List<Element> conditions = doc.select(".weather_ground li");

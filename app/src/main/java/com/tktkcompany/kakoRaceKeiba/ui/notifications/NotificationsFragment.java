@@ -1,5 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.ui.notifications;
 
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
+
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -42,6 +44,9 @@ public class NotificationsFragment extends Fragment {
     private List<TextView> dateTextViews = new ArrayList<>();
     private List<String> joNameList = new ArrayList<>();
     private List<String> dateList = new ArrayList<>();
+    // 読み込み待ちの日付の数と、傾向があった日付の数（どの日も無ければ案内を出す）
+    private int pendingDates;
+    private int datesWithData;
     private ProgressBar progressBar;
     private int refreshGeneration;
 
@@ -92,7 +97,7 @@ public class NotificationsFragment extends Fragment {
         SharedViewModel sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
         sharedViewModel.getJoNames().observe(getViewLifecycleOwner(), joNames -> {
             if (joNames == null || joNames.isEmpty()) {
-                binding.selectRaceText.setText("現在、開催中の競馬場はありません");
+                binding.selectRaceText.setText(Lang.t("現在、開催中の競馬場はありません", "No racecourses are running now"));
                 return;
             }
             joNameList = new ArrayList<>(joNames);
@@ -107,7 +112,10 @@ public class NotificationsFragment extends Fragment {
         TabPagerAdapter adapter = new TabPagerAdapter(requireActivity(), tabTitles);
         binding.viewPager.setAdapter(adapter);
 
-        new TabLayoutMediator(binding.tabLayout, binding.viewPager, (tab, position) -> tab.setText(tabTitles.get(position))).attach();
+        // タブの中身は日本語の名前で選ぶので、表示だけ英語にする
+        List<String> tabLabels = Lang.ja() ? tabTitles
+                : List.of("Top horses", "Running style", "Jockeys", "Trainers", "Sires", "Dam sires", "Payouts", "Owners", "Breeders");
+        new TabLayoutMediator(binding.tabLayout, binding.viewPager, (tab, position) -> tab.setText(tabLabels.get(position))).attach();
 
         binding.tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -140,7 +148,10 @@ public class NotificationsFragment extends Fragment {
         
         int displayLimit = binding.checkboxHani.isChecked() ? dateList.size() : Math.min(dateList.size(), 8);
         
-        for (int i = 0; i < Math.min(displayLimit, tableLayouts.size()); i++) {
+        int count = Math.min(displayLimit, tableLayouts.size());
+        pendingDates = count;
+        datesWithData = 0;
+        for (int i = 0; i < count; i++) {
             String date = dateList.get(i);
             loadTrendsForDate(generation, date, joNameList.get(0), tableLayouts.get(i), dateTextViews.get(i), category);
         }
@@ -166,14 +177,19 @@ public class NotificationsFragment extends Fragment {
                 // その日に開催がなければ日付見出しも出さない
                 if (trends.isEmpty()) {
                     progressBar.setVisibility(View.GONE);
+                    finishDate(generation, false);
                     return;
                 }
+                finishDate(generation, true);
                 boolean isHeaderSet = false;
                 dateText.setText(joName + "   " + WeekendDays.formatWithDayOfWeek(date));
                 dateText.setPadding(16, 8, 16, 8);
 
+                // 取り込みが2回動いた日は同じレースが2行入っているので、レース番号ごとに1行にする
+                java.util.Map<String, SupabaseManager.RaceTrend> byRace = new java.util.LinkedHashMap<>();
+                for (SupabaseManager.RaceTrend t : trends) byRace.put(t.getRaceNum(), t);
                 // レース番号でソート (1R, 2R... 12R)
-                List<SupabaseManager.RaceTrend> sortedRaces = new ArrayList<>(trends);
+                List<SupabaseManager.RaceTrend> sortedRaces = new ArrayList<>(byRace.values());
                 sortedRaces.sort((o1, o2) -> Integer.compare(raceNumber(o1), raceNumber(o2)));
 
                 for (SupabaseManager.RaceTrend trend : sortedRaces) {
@@ -190,9 +206,26 @@ public class NotificationsFragment extends Fragment {
             @Override
             public void onFailure(@NonNull String message) {
                 Log.e("NotificationsFragment", "Supabase load failed: " + message);
-                if (isAdded() && generation == refreshGeneration) progressBar.setVisibility(View.GONE);
+                if (isAdded() && generation == refreshGeneration) {
+                    progressBar.setVisibility(View.GONE);
+                    finishDate(generation, false);
+                }
             }
         });
+    }
+
+    /**
+     * 日付ごとの読み込みが終わるたびに呼ぶ。どの日にも傾向が無ければ、その旨を出す
+     * （その週の開催が始まったばかりの競馬場は、夜の取り込みまでデータが無い）
+     */
+    private void finishDate(int generation, boolean hasData) {
+        if (generation != refreshGeneration || binding == null) return;
+        if (hasData) datesWithData++;
+        if (--pendingDates > 0 || datesWithData > 0 || dateTextViews.isEmpty()) return;
+        dateTextViews.get(0).setText(Lang.t(
+                "この競馬場の傾向データはまだありません。開催日の夜に取り込まれます",
+                "No trend data for this racecourse yet. It is added on the evening of each race day"));
+        dateTextViews.get(0).setPadding(16, 24, 16, 24);
     }
 
     // 「11R」のようなレース番号を数値にする（読み取れない場合は末尾に並べる）
@@ -211,9 +244,11 @@ public class NotificationsFragment extends Fragment {
         row.setBackgroundColor(Color.LTGRAY);
         String[] headers;
         if (category == TrendCategory.HARAIMODOSI) {
-            headers = new String[]{"レース", "条件", "馬場・天候", "荒れ", "単勝", "馬連", "３連単"};
+            headers = Lang.ja() ? new String[]{"レース", "条件", "馬場・天候", "荒れ", "単勝", "馬連", "３連単"}
+                    : new String[]{"Race", "Conditions", "Track/Weather", "Upset", "Win", "Quinella", "Trifecta"};
         } else {
-            headers = new String[]{"レース", "条件", "馬場・天候", "１着(人気)", "２着(人気)", "３着(人気)"};
+            headers = Lang.ja() ? new String[]{"レース", "条件", "馬場・天候", "１着(人気)", "２着(人気)", "３着(人気)"}
+                    : new String[]{"Race", "Conditions", "Track/Weather", "1st (fav)", "2nd (fav)", "3rd (fav)"};
         }
         for (String h : headers) row.addView(createTextView(h));
         return row;
@@ -263,7 +298,7 @@ public class NotificationsFragment extends Fragment {
     }
 
     private static String withBan(String ban) {
-        return ban == null || ban.isEmpty() ? null : ban + "番";
+        return ban == null || ban.isEmpty() ? null : Lang.t(ban + "番", "#" + ban);
     }
 
     private static String joinNonEmpty(String a, String b) {
@@ -286,7 +321,7 @@ public class NotificationsFragment extends Fragment {
         if (joNameList.isEmpty()) return;
         String[] items = joNameList.toArray(new String[0]);
         new AlertDialog.Builder(requireContext())
-                .setTitle("競馬場を選択する")
+                .setTitle(Lang.t("競馬場を選択する", "Choose a racecourse"))
                 .setItems(items, (dialog, which) -> {
                     String selected = joNameList.remove(which);
                     joNameList.add(0, selected);
@@ -298,9 +333,9 @@ public class NotificationsFragment extends Fragment {
 
     private void updateRaceText() {
         if (joNameList != null && !joNameList.isEmpty()) {
-            binding.selectRaceText.setText(joNameList.get(0) + "競馬場の傾向を表示");
+            binding.selectRaceText.setText(Lang.t(joNameList.get(0) + "競馬場の傾向を表示", Lang.course(joNameList.get(0)) + " trends"));
         } else {
-            binding.selectRaceText.setText("競馬場が選択されていません");
+            binding.selectRaceText.setText(Lang.t("競馬場が選択されていません", "No racecourse selected"));
         }
     }
 
