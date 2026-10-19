@@ -27,7 +27,6 @@ import com.google.firebase.auth.FirebaseUser;
 import com.tktkcompany.kakoRaceKeiba.MainActivity;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentHomeBinding;
-import com.tktkcompany.kakoRaceKeiba.db.KeibalabResults;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.notification.FavoriteResultWorker;
 import com.tktkcompany.kakoRaceKeiba.notification.GradedRaceWorker;
@@ -292,27 +291,12 @@ public class HomeFragment extends Fragment {
         void onLoaded(List<SupabaseManager.RaceResult> results);
     }
 
-    /** 1場分のメインレースの結果。取り込みが遅れて最新の開催日の結果がまだ無ければ、keibalab から直接取る */
+    /** 1場分の、いちばん新しいメインレースの結果（開催日は PC のバッチが発走の数分後に入れる） */
     private void loadMainRace(String joName, MainRaceListener listener) {
         SupabaseManager.fetchLatestMainRace(joName, new SupabaseManager.SupabaseCallback<List<SupabaseManager.RaceResult>>() {
             @Override
             public void onSuccess(List<SupabaseManager.RaceResult> results) {
-                String latestDay = latestPastRaceDay();
-                String stored = results.isEmpty() ? "" : results.get(0).getKaisaibi();
-                if (latestDay == null || stored.compareTo(latestDay) >= 0) {
-                    listener.onLoaded(results);
-                    return;
-                }
-                LIVE_EXECUTOR.execute(() -> {
-                    List<SupabaseManager.RaceResult> live = null;
-                    try {
-                        live = KeibalabResults.fetchRaceBlocking(latestDay, joName, 11);
-                    } catch (Exception e) {
-                        Log.w("HomeFragment", "メインレースの結果の取得に失敗", e);
-                    }
-                    List<SupabaseManager.RaceResult> shown = live != null && !live.isEmpty() ? live : results;
-                    mainHandler.post(() -> listener.onLoaded(shown));
-                });
+                listener.onLoaded(results);
             }
 
             @Override
@@ -339,22 +323,6 @@ public class HomeFragment extends Fragment {
         for (List<SupabaseManager.RaceResult> race : races) {
             container.addView(MainRaceCard.create(inflater, container, race));
         }
-    }
-
-    private static final java.util.concurrent.ExecutorService LIVE_EXECUTOR = java.util.concurrent.Executors.newSingleThreadExecutor();
-    private final android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
-
-    /**
-     * いちばん最近の、もう終わった開催日（土日・祝日の月曜）。
-     * 今日が開催日でも、メインレースが終わる 16 時までは前の開催日を返す
-     */
-    static String latestPastRaceDay() {
-        org.threeten.bp.LocalDateTime now = org.threeten.bp.LocalDateTime.now();
-        LocalDate day = now.getHour() >= 16 ? now.toLocalDate() : now.toLocalDate().minusDays(1);
-        for (int i = 0; i < 14; i++, day = day.minusDays(1)) {
-            if (WeekendDays.isRaceDayCandidate(day)) return day.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        }
-        return null;
     }
 
     /** 競馬場名の一覧を表示の言語にする */

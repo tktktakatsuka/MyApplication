@@ -49,7 +49,7 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private Map<String, HorseResult> latestResults;
     // 馬名（印を外した名前）→ いちばん近い出走予定。出走予定がない馬は入っていない
     private Map<String, SupabaseManager.RaceEntry> nextEntries = new HashMap<>();
-    // お気に入りのキー → 今日のレースの速報（keibalab から）
+    // お気に入りのキー → 今日のレースの速報
     private Map<String, HorseResult> liveResults = new HashMap<>();
     // 見出し（String）と馬（Horse）を並べたもの
     private final List<Object> rows = new ArrayList<>();

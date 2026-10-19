@@ -30,8 +30,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentRaceresultsBinding;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
-import com.tktkcompany.kakoRaceKeiba.db.KeibalabPayouts;
-import com.tktkcompany.kakoRaceKeiba.db.KeibalabResults;
+import com.tktkcompany.kakoRaceKeiba.db.LivePayouts;
+import com.tktkcompany.kakoRaceKeiba.db.LiveResults;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
 import com.tktkcompany.kakoRaceKeiba.ui.horsememo.HorseMemoDialog;
@@ -159,7 +159,7 @@ public class RaceResultsFragment extends Fragment {
     }
 
     /**
-     * 今日の開催は、夜の取り込みを待たずに keibalab から確定したレースの結果を取って出す。
+     * 今日の開催は、PC のバッチが発走の数分後に入れた結果を出す。
      * レースは番号順に行われるので、結果がまだ無いレースが見つかったらそこで止める
      */
     private void loadTodayResultsLive(String date, String joName, Set<Integer> alreadyShown) {
@@ -187,7 +187,7 @@ public class RaceResultsFragment extends Fragment {
             if (alreadyShown.contains(raceNo)) continue;
             List<SupabaseManager.RaceResult> rows;
             try {
-                rows = KeibalabResults.fetchRaceBlocking(date, joName, raceNo);
+                rows = LiveResults.fetchRaceBlocking(date, joName, raceNo);
             } catch (Exception e) {
                 Log.w("RaceResultsFragment", "当日の結果の取得に失敗: " + raceNo + "R", e);
                 return;
@@ -216,7 +216,7 @@ public class RaceResultsFragment extends Fragment {
             timeTv.setText(info + Lang.t("\n💴 払い戻しを見る ›", "\n💴 Show payouts ›"));
             timeTv.setTextSize(12);
             timeTv.setPadding(16, 8, 16, 16);
-            // 払い戻しはタップしたときだけ keibalab から取る（12レース分をまとめて取りに行かないため）
+            // 払い戻しはタップしたときだけ読む（12レース分をまとめて読まないため）
             timeTv.setOnClickListener(v -> loadPayouts(timeTv, info, result.getKaisaibi(), result.getKaisaijo(), raceNo));
             table.addView(createHeaderRow());
         }
@@ -251,13 +251,13 @@ public class RaceResultsFragment extends Fragment {
         view.setText(info + Lang.t("\n💴 払い戻しを読み込み中…", "\n💴 Loading payouts…"));
         view.setOnClickListener(null);
         LIVE_EXECUTOR.execute(() -> {
-            List<KeibalabPayouts.Payout> payouts;
+            List<LivePayouts.Payout> payouts;
             try {
-                payouts = KeibalabPayouts.fetchBlocking(date, course, raceNo);
+                payouts = LivePayouts.fetchBlocking(date, course, raceNo);
             } catch (Exception e) {
                 payouts = new ArrayList<>();
             }
-            List<KeibalabPayouts.Payout> result = payouts;
+            List<LivePayouts.Payout> result = payouts;
             if (getActivity() == null) return;
             getActivity().runOnUiThread(() -> {
                 if (binding == null || !isAdded()) return;

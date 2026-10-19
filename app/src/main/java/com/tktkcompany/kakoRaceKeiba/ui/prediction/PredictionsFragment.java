@@ -20,8 +20,8 @@ import androidx.navigation.Navigation;
 
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentEntriesBinding;
-import com.tktkcompany.kakoRaceKeiba.db.KeibalabPayouts;
-import com.tktkcompany.kakoRaceKeiba.db.KeibalabResults;
+import com.tktkcompany.kakoRaceKeiba.db.LivePayouts;
+import com.tktkcompany.kakoRaceKeiba.db.LiveResults;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.EntriesFragment;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
@@ -41,7 +41,7 @@ import java.util.concurrent.Executors;
 
 /**
  * 自分の予想（◎○▲△）の答え合わせ。予想したレースを新しい順に並べ、各印の馬の着順と◎の成績を出す。
- * 着順は取り込み済みの race_results から、今日のレースは keibalab から取る。
+ * 着順は race_results から読む（今日のレースも PC のバッチが発走の数分後に入れる）。
  */
 public class PredictionsFragment extends Fragment {
 
@@ -82,7 +82,7 @@ public class PredictionsFragment extends Fragment {
     /** 結果のまだ入っていない買い目のうち、レースが終わっているものの払い戻しを取って入れる（レースごとに1回） */
     private static List<Bets.Bet> settleFinished(List<Bets.Bet> bets) {
         String today = LocalDate.now().format(YMD);
-        Map<String, List<KeibalabPayouts.Payout>> cache = new HashMap<>();
+        Map<String, List<LivePayouts.Payout>> cache = new HashMap<>();
         List<Bets.Bet> result = new java.util.ArrayList<>();
         for (Bets.Bet b : bets) {
             if (b.isSettled() || b.date.compareTo(today) > 0) {
@@ -90,10 +90,10 @@ public class PredictionsFragment extends Fragment {
                 continue;
             }
             String key = raceKey(b.date, b.course, b.raceNo);
-            List<KeibalabPayouts.Payout> payouts = cache.get(key);
+            List<LivePayouts.Payout> payouts = cache.get(key);
             if (payouts == null) {
                 try {
-                    payouts = KeibalabPayouts.fetchBlocking(b.date, b.course, b.raceNo);
+                    payouts = LivePayouts.fetchBlocking(b.date, b.course, b.raceNo);
                 } catch (Exception e) {
                     Log.w(TAG, "払い戻しの取得に失敗", e);
                     payouts = new java.util.ArrayList<>();
@@ -166,7 +166,7 @@ public class PredictionsFragment extends Fragment {
         for (Predictions.Race race : races) {
             if (race.date.equals(today)) {
                 try {
-                    List<SupabaseManager.RaceResult> rows = KeibalabResults.fetchRaceBlocking(race.date, race.course, race.raceNo);
+                    List<SupabaseManager.RaceResult> rows = LiveResults.fetchRaceBlocking(race.date, race.course, race.raceNo);
                     if (!rows.isEmpty()) ranks.put(raceKey(race.date, race.course, race.raceNo), toRanks(rows));
                 } catch (Exception e) {
                     Log.w(TAG, "今日の結果の取得に失敗", e);

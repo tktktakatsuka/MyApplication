@@ -19,7 +19,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.tktkcompany.kakoRaceKeiba.MainActivity;
 import com.tktkcompany.kakoRaceKeiba.db.FavoriteResultFetcher;
-import com.tktkcompany.kakoRaceKeiba.db.KeibalabOdds;
+import com.tktkcompany.kakoRaceKeiba.db.LiveOdds;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
 
@@ -128,19 +128,19 @@ public class RaceStartWorker extends Worker {
             }
             if (!kept.add(raceKey)) return Result.success();
 
-            // 今の単勝オッズを keibalab から取る。取れなければ、取り込み済みのオッズ（当日のバッチで更新）を使う
+            // 今の単勝オッズ（PC のバッチが5分ごとに更新）を読む
             Map<String, String> liveOdds = new HashMap<>();
             String oddsTime = null;
             try {
-                liveOdds = KeibalabOdds.fetchWinOddsBlocking(date, course, raceNo);
+                liveOdds = LiveOdds.fetchWinOddsBlocking(date, course, raceNo);
                 if (!liveOdds.isEmpty()) oddsTime = LocalTime.now(JST).format(DateTimeFormatter.ofPattern("H:mm"));
             } catch (Exception e) {
                 Log.w(TAG, "オッズの取得に失敗（オッズなしで通知する）", e);
             }
             List<RaceStartNotices.Horse> horses = new ArrayList<>();
             for (SupabaseManager.RaceEntry e : favoriteEntries) {
-                String odds = KeibalabOdds.oddsOf(liveOdds, e.getHorseNumber());
-                Integer popularity = odds != null ? KeibalabOdds.popularity(liveOdds, e.getHorseNumber()) : null;
+                String odds = LiveOdds.oddsOf(liveOdds, e.getHorseNumber());
+                Integer popularity = odds != null ? LiveOdds.popularity(liveOdds, e.getHorseNumber()) : null;
                 if (odds == null && e.getWinOdds() != null) {
                     odds = e.getWinOdds();
                     popularity = parseIntOrNull(e.getPopular());

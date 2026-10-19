@@ -165,7 +165,7 @@ public class DashboardFragment extends Fragment {
         if (binding == null || !isAdded()) return;
         buttonContainer.removeAllViews();
         LayoutInflater inflater = getLayoutInflater();
-        // 今日開催している競馬場は、取り込み前でも今日の日付を足す（結果画面が keibalab から速報を取る）
+        // 今日開催している競馬場は、取り込み前でも今日の日付を足す（結果画面が PC のバッチの入れた速報を読む）
         Map<String, List<String>> courses = new LinkedHashMap<>();
         for (String course : todayCourses) courses.put(course, new ArrayList<>());
         for (Map.Entry<String, List<String>> entry : raceDatesByCourse.entrySet()) {

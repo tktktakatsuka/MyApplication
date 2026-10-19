@@ -15,7 +15,7 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.tktkcompany.kakoRaceKeiba.MainActivity;
-import com.tktkcompany.kakoRaceKeiba.db.KeibalabOdds;
+import com.tktkcompany.kakoRaceKeiba.db.LiveOdds;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 
 import org.threeten.bp.Duration;
@@ -128,12 +128,12 @@ public class GradedRaceWorker extends Worker {
             List<GradedRaceNotices.Favorite> favorites = new ArrayList<>();
             String oddsTime = null;
             try {
-                Map<String, String> odds = KeibalabOdds.fetchWinOddsBlocking(date, course, raceNo);
+                Map<String, String> odds = LiveOdds.fetchWinOddsBlocking(date, course, raceNo);
                 for (int popularity = 1; popularity <= TOP_FAVORITES; popularity++) {
                     for (SupabaseManager.RaceEntry e : horses) {
-                        Integer p = e.getHorseNumber() != null ? KeibalabOdds.popularity(odds, e.getHorseNumber()) : null;
+                        Integer p = e.getHorseNumber() != null ? LiveOdds.popularity(odds, e.getHorseNumber()) : null;
                         if (p != null && p == popularity) {
-                            favorites.add(new GradedRaceNotices.Favorite(p, e.getHorseName(), KeibalabOdds.oddsOf(odds, e.getHorseNumber())));
+                            favorites.add(new GradedRaceNotices.Favorite(p, e.getHorseName(), LiveOdds.oddsOf(odds, e.getHorseNumber())));
                             break;
                         }
                     }

@@ -36,7 +36,6 @@
 }
 
 # 規則を同梱していないライブラリの警告を抑える（動作には関係しない）
--dontwarn org.jsoup.**
 -dontwarn org.threeten.bp.**
 -dontwarn okhttp3.**
 -dontwarn okio.**

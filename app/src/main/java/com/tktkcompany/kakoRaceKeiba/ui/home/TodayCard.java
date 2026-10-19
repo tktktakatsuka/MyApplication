@@ -24,7 +24,7 @@ import androidx.navigation.Navigation;
 
 import com.google.android.material.card.MaterialCardView;
 import com.tktkcompany.kakoRaceKeiba.R;
-import com.tktkcompany.kakoRaceKeiba.db.KeibalabResults;
+import com.tktkcompany.kakoRaceKeiba.db.LiveResults;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.notification.RaceStartNotices;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
@@ -47,7 +47,7 @@ import java.util.concurrent.Executors;
 /**
  * ホームの「今日の開催」カード。開催日だけ表示する。
  * 競馬場ごとの次のレース（残り時間つき）、お気に入り馬が出る次のレース、確定したばかりのレースの結果を出す。
- * 残り時間は1分ごとに書き直し、結果は確定したレースが変わったときだけ keibalab から取り直す。
+ * 残り時間は1分ごとに書き直し、結果は確定したレースが変わったときだけ読み直す。
  */
 class TodayCard {
 
@@ -164,12 +164,12 @@ class TodayCard {
         handler.postDelayed(tick, 60_000);
     }
 
-    /** 確定したばかりのレースの1〜3着を keibalab から取る */
+    /** 確定したばかりのレースの1〜3着を読む */
     private void loadLatestResult(String jo, int raceNo) {
         EXECUTOR.execute(() -> {
             List<SupabaseManager.RaceResult> rows;
             try {
-                rows = KeibalabResults.fetchRaceBlocking(today, jo, raceNo);
+                rows = LiveResults.fetchRaceBlocking(today, jo, raceNo);
             } catch (Exception e) {
                 Log.w(TAG, "直前の結果の取得に失敗: " + jo + raceNo + "R", e);
                 return;

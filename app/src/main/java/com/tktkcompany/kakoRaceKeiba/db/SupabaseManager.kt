@@ -153,7 +153,28 @@ object SupabaseManager {
         // 出馬表の取り込み・当日のオッズ更新で入る単勝オッズと人気（列が無い・未取得なら null）
         @SerialName("win_odds") val winOdds: String? = null,
         @SerialName("popular") val popular: String? = null,
-        @SerialName("odds_updated_at") val oddsUpdatedAt: String? = null
+        @SerialName("odds_updated_at") val oddsUpdatedAt: String? = null,
+        // 開催日に PC のバッチ（live）が入れる、複勝オッズと当日の出馬表の情報（未取得なら null）
+        @SerialName("place_odds_min") val placeOddsMin: String? = null,
+        @SerialName("place_odds_max") val placeOddsMax: String? = null,
+        @SerialName("horse_weight") val horseWeight: String? = null,
+        @SerialName("scratched") val scratched: Boolean = false,
+        @SerialName("card_jockey") val cardJockey: String? = null,
+        @SerialName("weather") val weather: String? = null,
+        @SerialName("ground") val ground: String? = null,
+        @SerialName("card_updated_at") val cardUpdatedAt: String? = null
+    )
+
+    /** 払い戻し1件（PC のバッチが結果と一緒に入れる） */
+    @Serializable
+    data class RacePayout(
+        @SerialName("kaisaibi") val kaisaibi: String,
+        @SerialName("kaisaijo") val kaisaijo: String,
+        @SerialName("race_no") val raceNo: Int,
+        @SerialName("bet_type") val betType: String,
+        @SerialName("numbers") val numbers: String,
+        @SerialName("yen") val yen: Int,
+        @SerialName("sort") val sort: Int = 0
     )
 
     @JvmStatic
@@ -382,6 +403,38 @@ object SupabaseManager {
                 }.decodeList<RaceResult>()
             }
         }
+    }
+
+    /**
+     * 1レース分の全着順（着順の表の並び）。結果がまだ入っていなければ空。
+     * 開催日は PC のバッチが発走の数分後に入れる。必ずバックグラウンドスレッドから呼ぶこと
+     */
+    @JvmStatic
+    @Throws(Exception::class)
+    fun fetchRaceResultBlocking(date: String, course: String, raceNo: Int): List<RaceResult> =
+        blocking { it.from("race_results").select { filter { raceFilter(date, course, raceNo) }; order("id", Order.ASCENDING) }.decodeList<RaceResult>() }
+
+    /** 1レース分の出馬表（オッズ・当日の情報つき）。必ずバックグラウンドスレッドから呼ぶこと */
+    @JvmStatic
+    @Throws(Exception::class)
+    fun fetchRaceEntriesBlocking(date: String, course: String, raceNo: Int): List<RaceEntry> =
+        blocking { it.from("race_entries").select { filter { raceFilter(date, course, raceNo) }; order("id", Order.ASCENDING) }.decodeList<RaceEntry>() }
+
+    /** 1レース分の払い戻し（表の並び）。確定前なら空。必ずバックグラウンドスレッドから呼ぶこと */
+    @JvmStatic
+    @Throws(Exception::class)
+    fun fetchPayoutsBlocking(date: String, course: String, raceNo: Int): List<RacePayout> =
+        blocking { it.from("race_payouts").select { filter { raceFilter(date, course, raceNo) }; order("sort", Order.ASCENDING) }.decodeList<RacePayout>() }
+
+    private fun io.github.jan.supabase.postgrest.query.filter.PostgrestFilterBuilder.raceFilter(date: String, course: String, raceNo: Int) {
+        eq("kaisaibi", date)
+        eq("kaisaijo", course)
+        eq("race_no", raceNo)
+    }
+
+    private fun <T> blocking(block: suspend (SupabaseClient) -> T): T {
+        val currentClient = client ?: throw IllegalStateException("Supabase client not initialized")
+        return runBlocking { withTimeout(BLOCKING_TIMEOUT_MS) { block(currentClient) } }
     }
 
     // 1Rの1着の行を「その日その競馬場で開催があった」印として使う（開催日ごとに1行で済む）

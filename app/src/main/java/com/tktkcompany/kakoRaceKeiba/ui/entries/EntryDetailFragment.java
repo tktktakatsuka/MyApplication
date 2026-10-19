@@ -30,10 +30,10 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.ads.RecentRunsReward;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentEntriesBinding;
-import com.tktkcompany.kakoRaceKeiba.db.KeibalabOdds;
-import com.tktkcompany.kakoRaceKeiba.db.KeibalabPayouts;
-import com.tktkcompany.kakoRaceKeiba.db.KeibalabRaceCard;
-import com.tktkcompany.kakoRaceKeiba.db.KeibalabResults;
+import com.tktkcompany.kakoRaceKeiba.db.LiveOdds;
+import com.tktkcompany.kakoRaceKeiba.db.LivePayouts;
+import com.tktkcompany.kakoRaceKeiba.db.LiveRaceCard;
+import com.tktkcompany.kakoRaceKeiba.db.LiveResults;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.notification.FavoriteResultWorker;
 import com.tktkcompany.kakoRaceKeiba.notification.RaceStartNotices;
@@ -95,7 +95,7 @@ public class EntryDetailFragment extends Fragment {
     @Nullable private LinearLayout betsSection;
     @Nullable private SupabaseManager.RaceEntry raceForBets;
     private List<Bets.Bet> raceBets = new ArrayList<>();
-    private List<KeibalabPayouts.Payout> payouts = new ArrayList<>();
+    private List<LivePayouts.Payout> payouts = new ArrayList<>();
     private static final ExecutorService ODDS_EXECUTOR = Executors.newSingleThreadExecutor();
 
     @Override
@@ -321,8 +321,8 @@ public class EntryDetailFragment extends Fragment {
     }
 
     /**
-     * 当日の馬体重・出走取消・騎手変更と、天気・馬場を keibalab から取って出す。
-     * 朝の取り込みより後の変更を反映するため、出走表を開くたびに取りに行く。枠順確定前は何もしない
+     * 当日の馬体重・出走取消・騎手変更と、天気・馬場を出す（PC のバッチが発走前に入れたもの）。
+     * 朝の取り込みより後の変更を反映するため、出走表を開くたびに読み直す。枠順確定前は何もしない
      */
     private void loadRaceCard(List<SupabaseManager.RaceEntry> entries) {
         // 終わった開催は取りに行かない（取り込み済みの馬番で足りる）
@@ -330,9 +330,9 @@ public class EntryDetailFragment extends Fragment {
         if (horseCards.isEmpty() || entries.get(0).getKaisaibi().compareTo(today) < 0) return;
         SupabaseManager.RaceEntry first = entries.get(0);
         ODDS_EXECUTOR.execute(() -> {
-            KeibalabRaceCard.Card card;
+            LiveRaceCard.Card card;
             try {
-                card = KeibalabRaceCard.fetchBlocking(first.getKaisaibi(), first.getKaisaijo(), first.getRaceNo());
+                card = LiveRaceCard.fetchBlocking(first.getKaisaibi(), first.getKaisaijo(), first.getRaceNo());
             } catch (Exception e) {
                 Log.w("EntryDetailFragment", "当日の出馬表の取得に失敗", e);
                 return;
@@ -345,19 +345,19 @@ public class EntryDetailFragment extends Fragment {
         });
     }
 
-    private void showRaceCard(List<SupabaseManager.RaceEntry> entries, KeibalabRaceCard.Card card) {
+    private void showRaceCard(List<SupabaseManager.RaceEntry> entries, LiveRaceCard.Card card) {
         String condition = card.conditionLabel();
         if (!condition.isEmpty()) binding.textEntriesLead.append("\n" + condition);
         int scratchedCount = 0;
-        Map<String, KeibalabRaceCard.Horse> byName = new HashMap<>();
-        for (KeibalabRaceCard.Horse h : card.horses.values()) {
+        Map<String, LiveRaceCard.Horse> byName = new HashMap<>();
+        for (LiveRaceCard.Horse h : card.horses.values()) {
             if (h.name != null) byName.put(FavoriteHorseNames.normalize(h.name), h);
         }
         boolean drawnNow = false;
         for (SupabaseManager.RaceEntry entry : entries) {
             String key = FavoriteHorseNames.normalize(entry.getHorseName());
             View view = horseCards.get(key);
-            KeibalabRaceCard.Horse horse = byName.get(key);
+            LiveRaceCard.Horse horse = byName.get(key);
             if (view == null || horse == null) continue;
             // 取り込み時は枠順確定前で馬番が無かった馬にも、当日の出馬表の馬番と枠の色を付ける
             if (entry.getHorseNumber() == null && !horse.number.isEmpty()) {
@@ -502,7 +502,7 @@ public class EntryDetailFragment extends Fragment {
         android.widget.Spinner type = new android.widget.Spinner(requireContext());
         // 表示は言語に合わせ、記録は日本語の券種名で残す（払い戻しとの照合に使うため）
         List<String> typeLabels = new ArrayList<>();
-        for (String t : KeibalabPayouts.TYPES) typeLabels.add(Lang.betType(t));
+        for (String t : LivePayouts.TYPES) typeLabels.add(Lang.betType(t));
         type.setAdapter(new android.widget.ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_spinner_dropdown_item, typeLabels));
         form.addView(type);
@@ -523,7 +523,7 @@ public class EntryDetailFragment extends Fragment {
                 .setNegativeButton(Lang.t("キャンセル", "Cancel"), null)
                 .create();
         dialog.setOnShowListener(d -> dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String t = KeibalabPayouts.TYPES.get(type.getSelectedItemPosition());
+            String t = LivePayouts.TYPES.get(type.getSelectedItemPosition());
             String n = numbers.getText().toString().trim();
             int yen;
             try {
@@ -638,7 +638,7 @@ public class EntryDetailFragment extends Fragment {
     }
 
     /**
-     * 今日のレースで発走から時間がたっていれば、keibalab から結果を取って各馬に着順を出す。
+     * 今日のレースで発走から時間がたっていれば、結果（PC のバッチが発走の数分後に入れたもの）を読んで各馬に着順を出す。
      * 印を付けていれば、◎の着順も画面の上に出す（答え合わせ）
      */
     private void loadTodayResult(SupabaseManager.RaceEntry race) {
@@ -647,11 +647,11 @@ public class EntryDetailFragment extends Fragment {
         if (!race.getKaisaibi().equals(org.threeten.bp.LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")))) return;
         ODDS_EXECUTOR.execute(() -> {
             List<SupabaseManager.RaceResult> rows;
-            List<KeibalabPayouts.Payout> fetched;
+            List<LivePayouts.Payout> fetched;
             try {
-                rows = KeibalabResults.fetchRaceBlocking(race.getKaisaibi(), race.getKaisaijo(), race.getRaceNo());
+                rows = LiveResults.fetchRaceBlocking(race.getKaisaibi(), race.getKaisaijo(), race.getRaceNo());
                 fetched = rows.isEmpty() ? new ArrayList<>()
-                        : KeibalabPayouts.fetchBlocking(race.getKaisaibi(), race.getKaisaijo(), race.getRaceNo());
+                        : LivePayouts.fetchBlocking(race.getKaisaibi(), race.getKaisaijo(), race.getRaceNo());
             } catch (Exception e) {
                 Log.w("EntryDetailFragment", "結果の取得に失敗", e);
                 return;
@@ -688,20 +688,20 @@ public class EntryDetailFragment extends Fragment {
     }
 
     /**
-     * 今の単勝・複勝オッズを keibalab から取って各馬に出す。
+     * 今の単勝・複勝オッズ（PC のバッチが入れたもの）を読んで各馬に出す。
      * 取れなければ、取り込み済みの単勝オッズ（当日のバッチで更新）を出す。枠順確定前は何もしない
      */
     private void loadOdds(List<SupabaseManager.RaceEntry> entries) {
         if (oddsViews.isEmpty()) return;
         SupabaseManager.RaceEntry first = entries.get(0);
         ODDS_EXECUTOR.execute(() -> {
-            Map<String, KeibalabOdds.HorseOdds> live = Collections.emptyMap();
+            Map<String, LiveOdds.HorseOdds> live = Collections.emptyMap();
             try {
-                live = KeibalabOdds.fetchOddsTableBlocking(first.getKaisaibi(), first.getKaisaijo(), first.getRaceNo());
+                live = LiveOdds.fetchOddsTableBlocking(first.getKaisaibi(), first.getKaisaijo(), first.getRaceNo());
             } catch (Exception e) {
                 Log.w("EntryDetailFragment", "オッズの取得に失敗（取り込み済みのオッズを出す）", e);
             }
-            Map<String, KeibalabOdds.HorseOdds> odds = live;
+            Map<String, LiveOdds.HorseOdds> odds = live;
             String time = LocalTime.now().format(DateTimeFormatter.ofPattern("H:mm"));
             if (getActivity() == null) return;
             getActivity().runOnUiThread(() -> {
@@ -711,17 +711,17 @@ public class EntryDetailFragment extends Fragment {
         });
     }
 
-    private void showOdds(List<SupabaseManager.RaceEntry> entries, Map<String, KeibalabOdds.HorseOdds> live, String liveTime) {
+    private void showOdds(List<SupabaseManager.RaceEntry> entries, Map<String, LiveOdds.HorseOdds> live, String liveTime) {
         String shownTime = null;
         for (SupabaseManager.RaceEntry entry : entries) {
             if (entry.getHorseNumber() == null) continue;
             String number = entry.getHorseNumber().trim();
             TextView view = oddsViews.get(number);
             if (view == null) continue;
-            KeibalabOdds.HorseOdds odds = live.get(number.replaceFirst("^0+(?=\\d)", ""));
+            LiveOdds.HorseOdds odds = live.get(number.replaceFirst("^0+(?=\\d)", ""));
             String time = liveTime;
             if (odds == null && entry.getWinOdds() != null) {
-                odds = new KeibalabOdds.HorseOdds(entry.getWinOdds(), null, null, parseIntOrNull(entry.getPopular()));
+                odds = new LiveOdds.HorseOdds(entry.getWinOdds(), null, null, parseIntOrNull(entry.getPopular()));
                 time = storedTime(entry.getOddsUpdatedAt());
             }
             String label = odds != null ? odds.label() : "";

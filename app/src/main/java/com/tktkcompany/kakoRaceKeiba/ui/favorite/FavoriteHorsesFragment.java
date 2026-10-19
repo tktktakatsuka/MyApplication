@@ -27,7 +27,7 @@ import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.db.FavoriteResultFetcher;
 import com.tktkcompany.kakoRaceKeiba.db.FirebaseManager;
 import com.tktkcompany.kakoRaceKeiba.db.HorseResult;
-import com.tktkcompany.kakoRaceKeiba.db.KeibalabResults;
+import com.tktkcompany.kakoRaceKeiba.db.LiveResults;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.notification.RaceStartNotices;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.EntriesFragment;
@@ -225,8 +225,8 @@ public class FavoriteHorsesFragment extends Fragment {
     }
 
     /**
-     * 今日走り終えたお気に入り馬の着順を keibalab から取る（夜の取り込みを待たずに出すため）。
-     * 同じレースに何頭いても1回だけ取りに行く
+     * 今日走り終えたお気に入り馬の着順を読む（PC のバッチが発走の数分後に入れたもの）。
+     * 同じレースに何頭いても1回だけ読む
      */
     private void loadLiveResults(List<String> horseKeys, List<SupabaseManager.RaceEntry> finished) {
         if (finished.isEmpty() || executor.isShutdown()) return;
@@ -239,7 +239,7 @@ public class FavoriteHorsesFragment extends Fragment {
                 if (!fetched.add(race.getKaisaibi() + race.getKaisaijo() + race.getRaceNo())) continue;
                 List<SupabaseManager.RaceResult> rows;
                 try {
-                    rows = KeibalabResults.fetchRaceBlocking(race.getKaisaibi(), race.getKaisaijo(), race.getRaceNo());
+                    rows = LiveResults.fetchRaceBlocking(race.getKaisaibi(), race.getKaisaijo(), race.getRaceNo());
                 } catch (Exception e) {
                     Log.w("FavoriteHorses", "速報の取得に失敗", e);
                     continue;

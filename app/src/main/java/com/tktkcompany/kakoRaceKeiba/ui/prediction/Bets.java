@@ -12,7 +12,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.tktkcompany.kakoRaceKeiba.db.KeibalabPayouts;
+import com.tktkcompany.kakoRaceKeiba.db.LivePayouts;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +34,7 @@ public final class Bets {
         public final String course;
         public final int raceNo;
         @Nullable public final String title;
-        /** 「単勝」〜「3連単」（{@link KeibalabPayouts#TYPES}） */
+        /** 「単勝」〜「3連単」（{@link LivePayouts#TYPES}） */
         public final String type;
         /** 「5」「5-10」「10-5-9」 */
         public final String numbers;
@@ -106,7 +106,7 @@ public final class Bets {
      * 払い戻しの表から、そのレースのまだ結果の無い買い目の払戻を計算して保存する。
      * 戻り値は払戻を入れたあとの買い目（画面にすぐ反映するため）
      */
-    public static List<Bet> settle(List<Bet> bets, List<KeibalabPayouts.Payout> payouts) {
+    public static List<Bet> settle(List<Bet> bets, List<LivePayouts.Payout> payouts) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         List<Bet> settled = new ArrayList<>();
         for (Bet b : bets) {
@@ -114,7 +114,7 @@ public final class Bets {
                 settled.add(b);
                 continue;
             }
-            int yen = KeibalabPayouts.payoutFor(payouts, b.type, b.numbers) * (b.amount / 100);
+            int yen = LivePayouts.payoutFor(payouts, b.type, b.numbers) * (b.amount / 100);
             if (user != null) ref(user.getUid()).child(b.date).child(b.id).child("payout").setValue(yen);
             settled.add(new Bet(b.id, b.date, b.course, b.raceNo, b.title, b.type, b.numbers, b.amount, yen));
         }

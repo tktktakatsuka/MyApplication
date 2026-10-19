@@ -39,7 +39,7 @@ android {
         applicationId = "com.tktkcompany.kakoRaceKeiba"
         minSdk = 28
         targetSdk = 36
-        versionCode = 384
+        versionCode = 385
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "SUPABASE_URL", "\"${localProperties.getProperty('SUPABASE_URL', '')}\""
@@ -129,7 +129,6 @@ dependencies {
     implementation libs.converter.gson
     implementation libs.logging.interceptor
     implementation libs.threetenabp
-    implementation libs.jsoup
     implementation libs.mpandroidchart
     implementation libs.annotation
 

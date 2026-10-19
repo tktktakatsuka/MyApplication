@@ -8,7 +8,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.tktkcompany.kakoRaceKeiba.db.KeibalabPayouts;
+import com.tktkcompany.kakoRaceKeiba.db.LivePayouts;
 import com.tktkcompany.kakoRaceKeiba.util.Lang;
 
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ public final class PayoutTable {
         }
     }
 
-    public static View create(Context context, List<KeibalabPayouts.Payout> payouts) {
+    public static View create(Context context, List<LivePayouts.Payout> payouts) {
         float density = context.getResources().getDisplayMetrics().density;
         LinearLayout table = new LinearLayout(context);
         table.setOrientation(LinearLayout.VERTICAL);
@@ -73,15 +73,15 @@ public final class PayoutTable {
         });
 
         // 券種ごとにまとめる（表示順は TYPES のとおり）
-        Map<String, List<KeibalabPayouts.Payout>> byType = new LinkedHashMap<>();
-        for (String type : KeibalabPayouts.TYPES) byType.put(type, new ArrayList<>());
-        for (KeibalabPayouts.Payout p : payouts) {
-            List<KeibalabPayouts.Payout> list = byType.get(p.type);
+        Map<String, List<LivePayouts.Payout>> byType = new LinkedHashMap<>();
+        for (String type : LivePayouts.TYPES) byType.put(type, new ArrayList<>());
+        for (LivePayouts.Payout p : payouts) {
+            List<LivePayouts.Payout> list = byType.get(p.type);
             if (list != null) list.add(p);
         }
 
         boolean striped = false;
-        for (Map.Entry<String, List<KeibalabPayouts.Payout>> e : byType.entrySet()) {
+        for (Map.Entry<String, List<LivePayouts.Payout>> e : byType.entrySet()) {
             if (e.getValue().isEmpty()) continue;
             LinearLayout group = new LinearLayout(context);
             group.setOrientation(LinearLayout.HORIZONTAL);
@@ -110,7 +110,7 @@ public final class PayoutTable {
             LinearLayout lines = new LinearLayout(context);
             lines.setOrientation(LinearLayout.VERTICAL);
             lines.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-            for (KeibalabPayouts.Payout p : e.getValue()) {
+            for (LivePayouts.Payout p : e.getValue()) {
                 LinearLayout row = new LinearLayout(context);
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 row.setPadding((int) (12 * density), (int) (2 * density), 0, (int) (2 * density));

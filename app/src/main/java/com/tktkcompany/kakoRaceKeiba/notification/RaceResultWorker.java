@@ -20,7 +20,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.tktkcompany.kakoRaceKeiba.MainActivity;
 import com.tktkcompany.kakoRaceKeiba.db.FavoriteResultFetcher;
-import com.tktkcompany.kakoRaceKeiba.db.KeibalabResults;
+import com.tktkcompany.kakoRaceKeiba.db.LiveResults;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
 import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
@@ -109,7 +109,7 @@ public class RaceResultWorker extends Worker {
             }
             if (favorites.isEmpty()) return Result.success();
 
-            List<SupabaseManager.RaceResult> rows = KeibalabResults.fetchRaceBlocking(date, course, raceNo);
+            List<SupabaseManager.RaceResult> rows = LiveResults.fetchRaceBlocking(date, course, raceNo);
             if (rows.isEmpty()) return stillWaiting();
 
             List<LiveResultNotices.Finish> finishes = new ArrayList<>();
