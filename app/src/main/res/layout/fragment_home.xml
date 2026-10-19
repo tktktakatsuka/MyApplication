@@ -111,6 +111,59 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginVertical="24dp" />
 
+            <!-- あなたのお気に入り馬（横に並べたカード。中身はコードで作る）。お気に入りがいる人だけ -->
+            <LinearLayout
+                android:id="@+id/layout_my_horses"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="12dp"
+                    android:paddingTop="8dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/my_horses"
+                        android:textColor="#1B5E20"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/text_my_horses_all"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="6dp"
+                        android:text="@string/see_all"
+                        android:textColor="#2E7D32"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clipToPadding="false"
+                    android:paddingHorizontal="8dp"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:id="@+id/my_horses_container"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:paddingVertical="6dp" />
+                </HorizontalScrollView>
+            </LinearLayout>
+
             <!-- お気に入りの馬がまだいない人に、最初の1頭の登録を勧める -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_onboarding"

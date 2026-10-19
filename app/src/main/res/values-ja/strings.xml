@@ -34,6 +34,9 @@
     <string name="nav_entries">出走表</string>
     <string name="nav_results">結果</string>
     <string name="nav_memos">メモ・予想</string>
+    <string name="nav_favorites">お気に入り</string>
+    <string name="my_horses">★ あなたのお気に入り馬</string>
+    <string name="see_all">すべて見る ›</string>
     <string name="label_favorites">お気に入り馬</string>
     <string name="label_predictions">予想・買い目の答え合わせ</string>
     <string name="label_entry_detail">出走馬の近走成績</string>

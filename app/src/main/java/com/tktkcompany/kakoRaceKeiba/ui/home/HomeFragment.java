@@ -91,6 +91,11 @@ public class HomeFragment extends Fragment {
                 Navigation.findNavController(v).navigate(R.id.navigation_horseSearch));
         binding.cardEntries.setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.action_navigation_home_to_navigation_entries));
+        // 下の「お気に入り」タブに切り替える（タブの選択も合わせるため、画面遷移ではなくタブを選ぶ）
+        binding.textMyHorsesAll.setOnClickListener(v -> {
+            com.google.android.material.bottomnavigation.BottomNavigationView nav = requireActivity().findViewById(R.id.nav_view);
+            if (nav != null) nav.setSelectedItemId(R.id.navigation_favorites);
+        });
         todayCard = new TodayCard(this, binding.cardToday, binding.todayContainer);
         loadUpcomingEntries();
 
@@ -179,22 +184,34 @@ public class HomeFragment extends Fragment {
             binding.layoutUserInfo.setVisibility(View.GONE);
             binding.layoutLogin.setVisibility(View.VISIBLE);
         }
-        // 匿名でも入れていればお気に入り・予想は使える（匿名で入れなかったときだけ隠す）
-        binding.layoutQuickButtons.setVisibility(user != null ? View.VISIBLE : View.GONE);
+        // お気に入りは下のタブと「あなたのお気に入り馬」から、予想はメモ・予想のタブから開くので、ボタンは出さない
+        binding.layoutQuickButtons.setVisibility(View.GONE);
         placeAuthCard(user != null);
-        refreshOnboarding(user);
+        refreshFavorites(user);
     }
 
-    /** お気に入りの馬がまだ1頭もいなければ、「好きな馬を登録しよう」のカードを出す */
-    private void refreshOnboarding(@androidx.annotation.Nullable FirebaseUser user) {
+    /**
+     * お気に入りの馬がいれば一番上に「あなたのお気に入り馬」を並べ、
+     * 1頭もいなければ「好きな馬を登録しよう」のカードを出す
+     */
+    private void refreshFavorites(@androidx.annotation.Nullable FirebaseUser user) {
         if (user == null) {
             binding.cardOnboarding.setVisibility(View.GONE);
+            binding.layoutMyHorses.setVisibility(View.GONE);
             return;
         }
         FavoriteHorseNames.load(favorites -> {
-            if (binding != null) binding.cardOnboarding.setVisibility(favorites.isEmpty() ? View.VISIBLE : View.GONE);
+            if (binding == null) return;
+            binding.cardOnboarding.setVisibility(favorites.isEmpty() ? View.VISIBLE : View.GONE);
+            binding.layoutMyHorses.setVisibility(favorites.isEmpty() ? View.GONE : View.VISIBLE);
+            if (!favorites.isEmpty()) {
+                if (favoritesStrip == null) favoritesStrip = new FavoritesStrip(binding.myHorsesContainer);
+                favoritesStrip.show(favorites);
+            }
         });
     }
+
+    private FavoritesStrip favoritesStrip;
 
     /**
      * お気に入りなどが使えるとき（Google か匿名で入っている）は、ログインのカードを一番下（広告の上）に回し、

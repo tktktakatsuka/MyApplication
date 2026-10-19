@@ -34,6 +34,9 @@
     <string name="nav_entries">Race cards</string>
     <string name="nav_results">Results</string>
     <string name="nav_memos">Notes &amp; picks</string>
+    <string name="nav_favorites">Favorites</string>
+    <string name="my_horses">★ Your favorite horses</string>
+    <string name="see_all">See all ›</string>
     <string name="label_favorites">Favorite horses</string>
     <string name="label_predictions">My picks &amp; bets</string>
     <string name="label_entry_detail">Runners\' recent form</string>
