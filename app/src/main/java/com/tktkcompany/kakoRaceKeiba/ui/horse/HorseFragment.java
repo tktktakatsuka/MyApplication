@@ -243,16 +243,16 @@ public class HorseFragment extends Fragment {
         bindFavoriteButton(favorite);
         favorite.setOnClickListener(v -> {
             if (FirebaseAuth.getInstance().getCurrentUser() == null) {
-                Toast.makeText(context, Lang.t("お気に入りを保存できませんでした。通信状態を確かめてください",
-                        "Couldn't save the favorite. Check your connection"), Toast.LENGTH_SHORT).show();
+                FavoriteHorseNames.showCannotSave(context);
                 return;
             }
             boolean added = FavoriteHorseNames.toggle(favorites, name);
             // 見出しの「★ お気に入り」も変わるので描き直す
             render();
             if (added) {
-                Toast.makeText(context, Lang.t("出走が決まったら、発走前と結果をお知らせします", "We'll notify you of entries, post time and results"),
-                        Toast.LENGTH_LONG).show();
+                FavoriteHorseNames.showAdded(context, name);
+                // 出走予定があれば発走前の通知をすぐ予約する
+                com.tktkcompany.kakoRaceKeiba.notification.FavoriteResultWorker.runOnce(context);
             }
         });
         buttons.addView(favorite, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));

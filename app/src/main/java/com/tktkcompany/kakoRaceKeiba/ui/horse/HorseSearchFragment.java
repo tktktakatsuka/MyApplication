@@ -200,14 +200,18 @@ public class HorseSearchFragment extends Fragment {
         star.setOnClickListener(v -> {
             // 匿名でも入れていない（通信できなかったなど）と保存先が無い
             if (com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() == null) {
-                Toast.makeText(context, Lang.t("お気に入りを保存できませんでした。通信状態を確かめてください",
-                        "Couldn't save the favorite. Check your connection"), Toast.LENGTH_SHORT).show();
+                FavoriteHorseNames.showCannotSave(context);
                 return;
             }
             boolean added = FavoriteHorseNames.toggle(favorites, hit.name);
             bindStar(star, hit.name);
-            Toast.makeText(context, added ? Lang.t(hit.name + "をお気に入りに登録しました", "Added " + hit.name)
-                    : Lang.t(hit.name + "をお気に入りから外しました", "Removed " + hit.name), Toast.LENGTH_SHORT).show();
+            if (added) {
+                FavoriteHorseNames.showAdded(context, hit.name);
+                // 出走予定があれば発走前の通知をすぐ予約する
+                com.tktkcompany.kakoRaceKeiba.notification.FavoriteResultWorker.runOnce(context);
+            } else {
+                Toast.makeText(context, Lang.t(hit.name + "をお気に入りから外しました", "Removed " + hit.name), Toast.LENGTH_SHORT).show();
+            }
         });
         inner.addView(star);
 

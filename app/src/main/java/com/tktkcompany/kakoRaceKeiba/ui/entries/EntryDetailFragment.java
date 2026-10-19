@@ -776,15 +776,18 @@ public class EntryDetailFragment extends Fragment {
         paint.run();
         star.setOnClickListener(v -> {
             if (FirebaseAuth.getInstance().getCurrentUser() == null) {
-                Toast.makeText(getContext(), Lang.t("お気に入り機能を利用するにはログインが必要です", "Sign in to use favorites"), Toast.LENGTH_SHORT).show();
+                FavoriteHorseNames.showCannotSave(requireContext());
                 return;
             }
             boolean added = FavoriteHorseNames.toggle(favorites, horseName);
             paint.run();
-            // このレースの発走前の通知をすぐ予約する（定期チェックを待つと間に合わないことがある）
-            if (added) FavoriteResultWorker.runOnce(requireContext());
-            Toast.makeText(getContext(), added ? Lang.t(horseName + "をお気に入りに追加しました", "Added " + horseName + " to favorites")
-                    : Lang.t(horseName + "をお気に入りから削除しました", "Removed " + horseName + " from favorites"), Toast.LENGTH_SHORT).show();
+            if (added) {
+                // このレースの発走前の通知をすぐ予約する（定期チェックを待つと間に合わないことがある）
+                FavoriteResultWorker.runOnce(requireContext());
+                FavoriteHorseNames.showAdded(requireContext(), horseName);
+            } else {
+                Toast.makeText(getContext(), Lang.t(horseName + "をお気に入りから外しました", "Removed " + horseName + " from favorites"), Toast.LENGTH_SHORT).show();
+            }
         });
     }
 

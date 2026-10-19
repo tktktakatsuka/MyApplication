@@ -432,7 +432,7 @@ public class RaceResultsFragment extends Fragment {
     private void toggleFavorite(TableRow row, TextView textView, String horseName) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
-            Toast.makeText(getContext(), Lang.t("お気に入り機能を利用するにはログインが必要です", "Sign in to use favorites"), Toast.LENGTH_SHORT).show();
+            FavoriteHorseNames.showCannotSave(requireContext());
             return;
         }
 
@@ -446,7 +446,9 @@ public class RaceResultsFragment extends Fragment {
             textView.setText("★");
             textView.setTextColor(Color.parseColor("#FFD700"));
             row.setBackgroundColor(Color.parseColor("#33FFD700"));
-            Toast.makeText(getContext(), Lang.t(safeName + "をお気に入りに追加しました", "Added " + safeName + " to favorites"), Toast.LENGTH_SHORT).show();
+            FavoriteHorseNames.showAdded(requireContext(), safeName);
+            // 出走予定があれば発走前の通知をすぐ予約する
+            com.tktkcompany.kakoRaceKeiba.notification.FavoriteResultWorker.runOnce(requireContext());
         } else {
             FirebaseManager.removeFavoriteHorse(uid, horseName);
             SupabaseManager.removeFavorite(uid, horseName);
