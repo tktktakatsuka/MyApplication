@@ -82,4 +82,19 @@
         android:label="@string/label_entry_detail"
         tools:layout="@layout/fragment_entries" />
 
+    <fragment
+        android:id="@+id/navigation_horse"
+        android:name="com.tktkcompany.kakoRaceKeiba.ui.horse.HorseFragment"
+        android:label="{horse}">
+        <argument
+            android:name="horse"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_horseSearch"
+        android:name="com.tktkcompany.kakoRaceKeiba.ui.horse.HorseSearchFragment"
+        android:label="@string/label_horse_search" />
+
 </navigation>

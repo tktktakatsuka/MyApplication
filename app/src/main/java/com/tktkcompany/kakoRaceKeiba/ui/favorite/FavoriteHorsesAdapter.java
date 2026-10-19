@@ -189,8 +189,11 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     }
 
     private void bindHorse(ViewHolder holder, String name) {
-        holder.textView.setText(displayName(name));
+        holder.textView.setText(displayName(name) + " ›");
         holder.deleteButton.setOnClickListener(v -> listener.onRemoveClick(name));
+        // 馬名（カードの空いたところ）を押すと馬カルテを開く
+        holder.card.setOnClickListener(v -> androidx.navigation.Navigation.findNavController(v)
+                .navigate(R.id.navigation_horse, com.tktkcompany.kakoRaceKeiba.ui.horse.HorseFragment.args(name)));
 
         SupabaseManager.RaceEntry next = nextEntries.get(FavoriteHorseNames.normalize(name));
         holder.card.setCardBackgroundColor(next != null ? 0xFFFFF8E1 : 0xFFFFFFFF);

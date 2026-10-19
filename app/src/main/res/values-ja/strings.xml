@@ -10,7 +10,7 @@
     <string name="open_trends">📊 レース傾向 ›</string>
     <string name="no_favorites">お気に入りに登録された馬はいません</string>
     <string name="login_google">Googleでログイン</string>
-    <string name="login_benefit">ログインすると、お気に入り馬の登録・レース結果の通知・メモの保存ができます</string>
+    <string name="login_benefit">お気に入り馬・メモ・予想はログインなしで使えます。Google でログインすると、機種変更しても引き継げます</string>
     <string name="signed_in">ログイン中</string>
     <string name="logout">ログアウト</string>
     <string name="today_meeting">今日の開催</string>
@@ -38,4 +38,8 @@
     <string name="label_predictions">予想・買い目の答え合わせ</string>
     <string name="label_entry_detail">出走馬の近走成績</string>
     <string name="last_main_races">前回の開催のメインレース</string>
+    <string name="label_horse_search">馬を探す</string>
+    <string name="find_horse">＋ 馬を探して登録</string>
+    <string name="onboarding_title">好きな馬を登録しよう</string>
+    <string name="onboarding_body">お気に入りの馬を登録すると、出走が決まったとき・発走30分前・レース結果をお知らせします。ログインなしで使えます</string>
 </resources>

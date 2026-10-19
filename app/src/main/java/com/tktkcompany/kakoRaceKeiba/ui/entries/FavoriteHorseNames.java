@@ -69,7 +69,8 @@ public final class FavoriteHorseNames {
     public static String normalize(String horseName) {
         if (horseName == null) return "";
         String name = horseName.trim().replaceFirst("^[\\(（\\[［][^\\)）\\]］]{1,2}[\\)）\\]］]\\s*", "");
-        return FirebaseManager.sanitizeKey(name);
+        // FirebaseManager.sanitizeKey と同じ（あちらは読み込むと Firebase に接続するので、ここでは使わない）
+        return name.trim().replaceAll("[.\\$#\\[\\]/]", "");
     }
 
     /** 例: 「★出走予定: 10/18(土) 東京11R 富士S（芝1600m）5番 ›」 */

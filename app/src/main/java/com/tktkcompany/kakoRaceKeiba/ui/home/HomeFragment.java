@@ -1,6 +1,7 @@
 package com.tktkcompany.kakoRaceKeiba.ui.home;
 
 import com.tktkcompany.kakoRaceKeiba.ads.AdFree;
+import com.tktkcompany.kakoRaceKeiba.auth.GuestAccount;
 import com.tktkcompany.kakoRaceKeiba.util.Lang;
 
 
@@ -86,6 +87,8 @@ public class HomeFragment extends Fragment {
 
         binding.btnPredictions.setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.navigation_predictions));
+        binding.btnOnboardingFind.setOnClickListener(v ->
+                Navigation.findNavController(v).navigate(R.id.navigation_horseSearch));
         binding.cardEntries.setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.action_navigation_home_to_navigation_entries));
         todayCard = new TodayCard(this, binding.cardToday, binding.todayContainer);
@@ -160,27 +163,42 @@ public class HomeFragment extends Fragment {
 // (MainActivityから呼び出されるようにpublicにする)
     public void updateUI(FirebaseUser user) {
         if (binding == null) return; // 画面が破棄された後は何もしない
+        // ログインに失敗したときなどは null で呼ばれるので、今のアカウント（匿名かもしれない）で表示する
+        if (user == null) user = FirebaseAuth.getInstance().getCurrentUser();
 
         updateUpcomingHint(user);
 
-        if (user != null) {
-            // ログイン中
+        if (GuestAccount.isGoogle(user)) {
+            // Google でログイン中
             binding.layoutUserInfo.setVisibility(View.VISIBLE);
-            binding.textUserName.setText(Lang.t(user.getDisplayName() + " さんとしてログイン中", "Signed in as " + user.getDisplayName()));
+            String name = GuestAccount.displayName(user);
+            binding.textUserName.setText(Lang.t(name + " さんとしてログイン中", "Signed in as " + name));
             binding.layoutLogin.setVisibility(View.GONE);
-            binding.layoutQuickButtons.setVisibility(View.VISIBLE);
         } else {
-            // 未ログイン
+            // ログインしていない（匿名で使っている）。お気に入りなどは使えるので、引き継ぎのためのログインを勧める
             binding.layoutUserInfo.setVisibility(View.GONE);
             binding.layoutLogin.setVisibility(View.VISIBLE);
-            binding.layoutQuickButtons.setVisibility(View.GONE);
         }
+        // 匿名でも入れていればお気に入り・予想は使える（匿名で入れなかったときだけ隠す）
+        binding.layoutQuickButtons.setVisibility(user != null ? View.VISIBLE : View.GONE);
         placeAuthCard(user != null);
+        refreshOnboarding(user);
+    }
+
+    /** お気に入りの馬がまだ1頭もいなければ、「好きな馬を登録しよう」のカードを出す */
+    private void refreshOnboarding(@androidx.annotation.Nullable FirebaseUser user) {
+        if (user == null) {
+            binding.cardOnboarding.setVisibility(View.GONE);
+            return;
+        }
+        FavoriteHorseNames.load(favorites -> {
+            if (binding != null) binding.cardOnboarding.setVisibility(favorites.isEmpty() ? View.VISIBLE : View.GONE);
+        });
     }
 
     /**
-     * ログイン中はログインのカードを一番下（広告の上）に回し、今日の開催を一番上に出す。
-     * 未ログインのときは、ログインを促すため一番上に置く
+     * お気に入りなどが使えるとき（Google か匿名で入っている）は、ログインのカードを一番下（広告の上）に回し、
+     * 今日の開催を一番上に出す。どちらでも入れていないときは、ログインを促すため一番上に置く
      */
     private void placeAuthCard(boolean signedIn) {
         ViewGroup parent = (ViewGroup) binding.cardUserAuth.getParent();

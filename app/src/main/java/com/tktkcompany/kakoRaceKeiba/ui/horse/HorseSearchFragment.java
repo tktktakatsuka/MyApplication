@@ -1,0 +1,242 @@
+package com.tktkcompany.kakoRaceKeiba.ui.horse;
+
+import android.content.Context;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.Editable;
+import android.text.InputType;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
+
+import com.google.android.material.card.MaterialCardView;
+import com.tktkcompany.kakoRaceKeiba.R;
+import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
+import com.tktkcompany.kakoRaceKeiba.ui.entries.FavoriteHorseNames;
+import com.tktkcompany.kakoRaceKeiba.util.Lang;
+import com.tktkcompany.kakoRaceKeiba.util.WeekendDays;
+
+import org.threeten.bp.LocalDate;
+import org.threeten.bp.format.DateTimeFormatter;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+/** 馬を名前で探して、お気に入りに登録する画面。行を押すとその馬のカルテを開く */
+public class HorseSearchFragment extends Fragment {
+
+    // 打ち終わるまで待ってから探す（1文字ごとに問い合わせないため）
+    private static final long DEBOUNCE_MS = 400;
+
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final Handler main = new Handler(Looper.getMainLooper());
+    private Runnable pending;
+    private int generation;
+
+    private EditText input;
+    private LinearLayout list;
+    private TextView status;
+    private ProgressBar progress;
+    private Set<String> favorites = new HashSet<>();
+    private List<HorseSearch.Hit> lastHits;
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        Context context = requireContext();
+        LinearLayout root = new LinearLayout(context);
+        root.setOrientation(LinearLayout.VERTICAL);
+        int pad = HorseViews.dp(context, 12);
+        root.setPadding(pad, pad, pad, 0);
+        root.setBackgroundColor(0xFFF5F5F5);
+
+        MaterialCardView box = HorseViews.card(context, 0xFFFFFFFF);
+        input = new EditText(context);
+        input.setHint(Lang.t("馬名の一部を入力（例: ドウデュース）", "Part of a horse name"));
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setSingleLine(true);
+        input.setTextSize(17);
+        input.setBackground(null);
+        HorseViews.inner(box).setPadding(pad, HorseViews.dp(context, 4), pad, HorseViews.dp(context, 4));
+        HorseViews.inner(box).addView(input);
+        root.addView(box);
+
+        status = HorseViews.text(context, Lang.t("2文字以上入れると探します。☆を押すとお気に入りに登録できます",
+                "Type at least 2 letters. Tap ☆ to add a favorite"), 13, HorseViews.GRAY, false);
+        status.setPadding(HorseViews.dp(context, 4), HorseViews.dp(context, 4), 0, HorseViews.dp(context, 4));
+        root.addView(status);
+
+        progress = new ProgressBar(context);
+        progress.setVisibility(View.GONE);
+        LinearLayout.LayoutParams pp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        pp.gravity = Gravity.CENTER_HORIZONTAL;
+        progress.setLayoutParams(pp);
+        root.addView(progress);
+
+        ScrollView scroll = new ScrollView(context);
+        list = new LinearLayout(context);
+        list.setOrientation(LinearLayout.VERTICAL);
+        list.setPadding(0, 0, 0, HorseViews.dp(context, 16));
+        scroll.addView(list);
+        root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+
+        input.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { }
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (pending != null) main.removeCallbacks(pending);
+                String query = s.toString();
+                pending = () -> search(query);
+                main.postDelayed(pending, DEBOUNCE_MS);
+            }
+        });
+
+        FavoriteHorseNames.load(loaded -> {
+            favorites = new HashSet<>(loaded);
+            if (lastHits != null) render(lastHits);
+        });
+        return root;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        // 開いたらすぐ入力できるように
+        input.requestFocus();
+        main.postDelayed(() -> {
+            if (!isAdded()) return;
+            InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+        }, 200);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (pending != null) main.removeCallbacks(pending);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        executor.shutdownNow();
+    }
+
+    private void search(String raw) {
+        String query = HorseSearch.toKatakana(raw);
+        int gen = ++generation;
+        if (query.length() < 2) {
+            list.removeAllViews();
+            lastHits = null;
+            progress.setVisibility(View.GONE);
+            return;
+        }
+        progress.setVisibility(View.VISIBLE);
+        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        executor.execute(() -> {
+            List<HorseSearch.Hit> hits = null;
+            try {
+                hits = HorseSearch.merge(query, SupabaseManager.searchHorseResultsBlocking(query),
+                        SupabaseManager.searchHorseEntriesBlocking(query, today));
+            } catch (Exception e) {
+                Log.w("HorseSearch", "検索に失敗", e);
+            }
+            List<HorseSearch.Hit> result = hits;
+            main.post(() -> {
+                if (!isAdded() || gen != generation) return;
+                progress.setVisibility(View.GONE);
+                if (result == null) {
+                    status.setText(Lang.t("探せませんでした。通信状態を確かめてください", "Search failed. Check your connection"));
+                    return;
+                }
+                lastHits = result;
+                status.setText(result.isEmpty()
+                        ? Lang.t("「" + query + "」を含む馬は見つかりませんでした（2025年10月以降に走った馬・出走予定の馬から探します）",
+                        "No horse found for \"" + query + "\"")
+                        : Lang.t(result.size() + "頭見つかりました。☆でお気に入りに登録、行を押すと馬カルテを開きます",
+                        result.size() + " horses. Tap ☆ to add, tap a row to open"));
+                render(result);
+            });
+        });
+    }
+
+    private void render(List<HorseSearch.Hit> hits) {
+        Context context = getContext();
+        if (context == null) return;
+        list.removeAllViews();
+        for (HorseSearch.Hit hit : hits) list.addView(row(context, hit));
+    }
+
+    private View row(Context context, HorseSearch.Hit hit) {
+        MaterialCardView card = HorseViews.card(context, hit.next != null ? 0xFFFFF8E1 : 0xFFFFFFFF);
+        LinearLayout inner = HorseViews.inner(card);
+        inner.setOrientation(LinearLayout.HORIZONTAL);
+        inner.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView star = HorseViews.text(context, "", 28, 0xFFFFB300, false);
+        star.setPadding(0, 0, HorseViews.dp(context, 12), 0);
+        bindStar(star, hit.name);
+        star.setOnClickListener(v -> {
+            // 匿名でも入れていない（通信できなかったなど）と保存先が無い
+            if (com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() == null) {
+                Toast.makeText(context, Lang.t("お気に入りを保存できませんでした。通信状態を確かめてください",
+                        "Couldn't save the favorite. Check your connection"), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            boolean added = FavoriteHorseNames.toggle(favorites, hit.name);
+            bindStar(star, hit.name);
+            Toast.makeText(context, added ? Lang.t(hit.name + "をお気に入りに登録しました", "Added " + hit.name)
+                    : Lang.t(hit.name + "をお気に入りから外しました", "Removed " + hit.name), Toast.LENGTH_SHORT).show();
+        });
+        inner.addView(star);
+
+        LinearLayout texts = new LinearLayout(context);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        texts.addView(HorseViews.text(context, hit.name, 17, HorseViews.TEXT, true));
+        if (hit.next != null) {
+            texts.addView(HorseViews.text(context, Lang.t("次走 ", "Next ") + raceLabel(hit.next.getKaisaibi(), hit.next.getKaisaijo(),
+                    hit.next.getRaceNo(), hit.next.getRaceTitle()), 13, HorseViews.GREEN, true));
+        }
+        if (hit.last != null) {
+            texts.addView(HorseViews.text(context, Lang.t("前走 ", "Last ") + raceLabel(hit.last.getKaisaibi(), hit.last.getKaisaijo(),
+                    hit.last.getRaceNo(), hit.last.getRaceTitle()) + " " + Lang.rank(hit.last.getRank()), 13, HorseViews.GRAY, false));
+        }
+        inner.addView(texts, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        inner.addView(HorseViews.text(context, "›", 22, 0xFFBDBDBD, false));
+
+        card.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.navigation_horse, HorseFragment.args(hit.name)));
+        return card;
+    }
+
+    private void bindStar(TextView star, String name) {
+        boolean on = favorites.contains(FavoriteHorseNames.normalize(name));
+        star.setText(on ? "★" : "☆");
+        star.setTextColor(on ? 0xFFFFB300 : 0xFFBDBDBD);
+        star.setContentDescription(on ? Lang.t("お気に入りから外す", "Remove favorite") : Lang.t("お気に入りに登録", "Add favorite"));
+    }
+
+    static String raceLabel(String date, String course, int raceNo, @Nullable String title) {
+        String label = WeekendDays.formatShort(date) + " " + Lang.race(course, raceNo);
+        return title != null && !title.isEmpty() ? label + " " + title : label;
+    }
+}

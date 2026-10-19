@@ -37,6 +37,7 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.tktkcompany.kakoRaceKeiba.ads.AdFree;
+import com.tktkcompany.kakoRaceKeiba.auth.GuestAccount;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -118,6 +119,7 @@ public class MainActivity extends AppCompatActivity {
         ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         refreshAdFree();
+        ensureGuest();
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.main, (v, windowInsets) -> {
             Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -314,6 +316,18 @@ public class MainActivity extends AppCompatActivity {
         updateHomeFragmentUI(null);
 
         Toast.makeText(this, Lang.t("ログアウトしました。", "Signed out."), Toast.LENGTH_SHORT).show();
+        // ログアウトしてもお気に入りなどは使えるよう、新しい匿名アカウントで入り直す
+        ensureGuest();
+    }
+
+    /** ログインしていなければ匿名で入る（お気に入り馬・メモ・予想をログインなしで使えるように） */
+    private void ensureGuest() {
+        GuestAccount.ensure((user, success) -> {
+            if (user == null) return;
+            new ViewModelProvider(this).get(SharedViewModel.class).setUid(user.getUid());
+            updateHomeFragmentUI(user);
+            refreshAdFree();
+        });
     }
 
     /** 広告なしのアカウントか確かめ直し、変わっていれば表示中のバナーにも反映する */
@@ -323,23 +337,21 @@ public class MainActivity extends AppCompatActivity {
 
     private void firebaseAuthWithGoogle(String idToken) {
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
-        mAuth.signInWithCredential(credential)
-                .addOnCompleteListener(this, task -> {
-                    FirebaseUser user = mAuth.getCurrentUser();
-                    // 認証完了後、HomeFragment に UI 更新を依頼
-                    updateHomeFragmentUI(user);
-
-                    if (task.isSuccessful()) {
-                        Log.d(TAG, "signInWithCredential:success");
-                        if (user != null) {
-                            Toast.makeText(this, Lang.t("ログイン成功: ", "Signed in: ") + user.getDisplayName(), Toast.LENGTH_SHORT).show();
-                            refreshAdFree();
-                        }
-                    } else {
-                        Log.w(TAG, "signInWithCredential:failure", task.getException());
-                        Toast.makeText(this, Lang.t("Firebaseでの認証に失敗しました。", "Firebase authentication failed."), Toast.LENGTH_SHORT).show();
-                    }
-                });
+        // ログインせずに使っていたお気に入り・メモ・予想は、Google アカウントに引き継ぐ
+        GuestAccount.signIn(credential, (user, success) -> {
+            if (isFinishing()) return;
+            // 認証完了後、HomeFragment に UI 更新を依頼
+            updateHomeFragmentUI(user);
+            if (success && user != null) {
+                Log.d(TAG, "signInWithCredential:success");
+                new ViewModelProvider(this).get(SharedViewModel.class).setUid(user.getUid());
+                Toast.makeText(this, Lang.t("ログイン成功: ", "Signed in: ") + GuestAccount.displayName(user), Toast.LENGTH_SHORT).show();
+                refreshAdFree();
+            } else {
+                Log.w(TAG, "signInWithCredential:failure");
+                Toast.makeText(this, Lang.t("Firebaseでの認証に失敗しました。", "Firebase authentication failed."), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void launchGoogleSignInFallback() {

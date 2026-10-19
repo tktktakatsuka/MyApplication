@@ -69,6 +69,8 @@ public class FavoriteHorsesFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new FavoriteHorsesAdapter(favoriteHorses, this::onRemoveClick, this::onResultClick, this::onEntryClick);
         recyclerView.setAdapter(adapter);
+        root.findViewById(R.id.btn_find_horse).setOnClickListener(v ->
+                androidx.navigation.Navigation.findNavController(v).navigate(R.id.navigation_horseSearch));
 
         loadFavorites();
 
@@ -93,7 +95,7 @@ public class FavoriteHorsesFragment extends Fragment {
     private void loadFavorites() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
-            noDataText.setText(Lang.t("ログインするとお気に入り機能を利用できます", "Sign in to use favorites"));
+            noDataText.setText(Lang.t("通信できないため、お気に入りを読み込めませんでした", "Couldn't load favorites. Check your connection"));
             noDataText.setVisibility(View.VISIBLE);
             return;
         }
@@ -118,7 +120,8 @@ public class FavoriteHorsesFragment extends Fragment {
                 progressBar.setVisibility(View.GONE);
                 if (favoriteHorses.isEmpty()) {
                     noDataText.setVisibility(View.VISIBLE);
-                    noDataText.setText(Lang.t("お気に入りに登録された馬はいません", "No favorite horses yet"));
+                    noDataText.setText(Lang.t("まだお気に入りの馬はいません。\n上のボタンから好きな馬を探して登録すると、出走が決まったとき・発走前・結果をお知らせします",
+                            "No favorites yet.\nFind a horse above to get entry, post-time and result notifications"));
                 } else {
                     noDataText.setVisibility(View.GONE);
                 }

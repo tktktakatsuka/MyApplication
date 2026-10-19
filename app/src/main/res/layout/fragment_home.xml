@@ -111,6 +111,53 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginVertical="24dp" />
 
+            <!-- お気に入りの馬がまだいない人に、最初の1頭の登録を勧める -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_onboarding"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="#FFF8E1"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="3dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/onboarding_title"
+                        android:textColor="#E65100"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="@string/onboarding_body"
+                        android:textColor="#4E342E"
+                        android:textSize="14sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_onboarding_find"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:backgroundTint="#FFB300"
+                        android:text="@string/find_horse"
+                        android:textColor="#3E2723"
+                        android:textSize="16sp"
+                        app:cornerRadius="12dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- 今日の開催（開催日だけ表示。次のレース・お気に入り馬・直前の結果。中身はコードで作る） -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_today"

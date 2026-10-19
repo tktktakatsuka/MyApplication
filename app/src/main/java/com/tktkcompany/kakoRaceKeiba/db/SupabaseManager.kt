@@ -426,6 +426,37 @@ object SupabaseManager {
     fun fetchPayoutsBlocking(date: String, course: String, raceNo: Int): List<RacePayout> =
         blocking { it.from("race_payouts").select { filter { raceFilter(date, course, raceNo) }; order("sort", Order.ASCENDING) }.decodeList<RacePayout>() }
 
+    /**
+     * 馬名に query を含む馬の結果（新しい順、最大300行）。馬を探す画面で、馬ごとの前走を出すのに使う。
+     * 必ずバックグラウンドスレッドから呼ぶこと
+     */
+    @JvmStatic
+    @Throws(Exception::class)
+    fun searchHorseResultsBlocking(query: String): List<RaceResult> = blocking {
+        it.from("race_results").select(Columns.list("horse_name", "kaisaibi", "kaisaijo", "race_no", "race_title", "rank")) {
+            filter { ilike("horse_name", "%${likeSafe(query)}%") }
+            order("kaisaibi", Order.DESCENDING)
+            limit(300)
+        }.decodeList<RaceResult>()
+    }
+
+    /** 馬名に query を含む、fromDate 以降の出走予定（デビュー前の馬も見つけられるように）。必ずバックグラウンドスレッドから呼ぶこと */
+    @JvmStatic
+    @Throws(Exception::class)
+    fun searchHorseEntriesBlocking(query: String, fromDate: String): List<RaceEntry> = blocking {
+        it.from("race_entries").select(Columns.list("horse_name", "kaisaibi", "kaisaijo", "race_no", "race_title", "race_info")) {
+            filter {
+                ilike("horse_name", "%${likeSafe(query)}%")
+                gte("kaisaibi", fromDate)
+            }
+            order("kaisaibi", Order.ASCENDING)
+            limit(100)
+        }.decodeList<RaceEntry>()
+    }
+
+    // ilike の「%」「_」は何にでも合ってしまうので外す
+    private fun likeSafe(query: String) = query.replace("%", "").replace("_", "").trim()
+
     private fun io.github.jan.supabase.postgrest.query.filter.PostgrestFilterBuilder.raceFilter(date: String, course: String, raceNo: Int) {
         eq("kaisaibi", date)
         eq("kaisaijo", course)

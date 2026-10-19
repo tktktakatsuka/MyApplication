@@ -178,6 +178,8 @@ public class FavoriteResultWorker extends Worker {
             if (favorite && scheduledRaces.add(e.getKaisaibi() + "|" + e.getKaisaijo() + "|" + e.getRaceNo())) {
                 RaceStartWorker.schedule(context, e);
                 RaceResultWorker.schedule(context, e);
+                // 開催日の朝に、その日に走るお気に入り馬をまとめて知らせる
+                RaceDayDigestWorker.schedule(context, e.getKaisaibi());
             }
             EntryNotices.Item item = new EntryNotices.Item(e.getHorseName(), e.getKaisaibi(), e.getKaisaijo(),
                     e.getRaceNo(), e.getRaceTitle(), e.getRaceInfo(), favorite, memo);
