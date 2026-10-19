@@ -37,4 +37,5 @@
     <string name="label_favorites">お気に入り馬</string>
     <string name="label_predictions">予想・買い目の答え合わせ</string>
     <string name="label_entry_detail">出走馬の近走成績</string>
+    <string name="last_main_races">前回の開催のメインレース</string>
 </resources>

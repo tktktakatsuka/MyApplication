@@ -283,175 +283,24 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-            <!-- スロット1 -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="4dp">
-                <LinearLayout
+                <TextView
+                    android:id="@+id/text_last_results_header"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="#2E7D32"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-                    <TextView android:id="@+id/text_today_race_number" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@android:color/white" />
-                    <TextView android:id="@+id/text_today_race_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@android:color/white" android:textSize="20sp" android:textStyle="bold" />
-                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
-                        <TextView android:id="@+id/text_today_race_time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@android:color/white" />
-                        <TextView android:id="@+id/text_today_race_location" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:textColor="@android:color/white" />
-                    </LinearLayout>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- スロット1 ランキングセクション -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="8dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/race_results"
-                    android:textColor="@android:color/black"
+                    android:layout_marginHorizontal="12dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="4dp"
+                    android:text="@string/last_main_races"
+                    android:textColor="#1B5E20"
                     android:textSize="18sp"
                     android:textStyle="bold" />
-                <TextView
-                    android:id="@+id/text_popular_raceResult_more"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/see_details"
-                    android:textColor="#2E7D32"
-                    android:textSize="14sp" />
-            </LinearLayout>
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="4dp">
+                <!-- 競馬場ごとのメインレースのカード（G1 から順に、コードで足す） -->
                 <LinearLayout
+                    android:id="@+id/last_results_container"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-                    <!-- 1着 -->
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingVertical="8dp">
-                        <TextView android:layout_width="24dp" android:layout_height="wrap_content" android:text="1" android:textStyle="bold" />
-                        <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_marginHorizontal="8dp" android:src="@drawable/uma" />
-                        <TextView android:id="@+id/text_raceResult1_name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
-                        <TextView android:id="@+id/text_raceResult1_odds" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textStyle="bold" />
-                    </LinearLayout>
-                    <ProgressBar style="@style/Widget.AppCompat.ProgressBar.Horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:progress="100" android:progressTint="#4CAF50" android:scaleY="2" android:layout_marginBottom="8dp" />
-                    <!-- 2着 -->
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingVertical="8dp">
-                        <TextView android:layout_width="24dp" android:layout_height="wrap_content" android:text="2" android:textStyle="bold" />
-                        <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_marginHorizontal="8dp" android:src="@drawable/uma" />
-                        <TextView android:id="@+id/text_raceResult2_name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
-                        <TextView android:id="@+id/text_raceResult2_odds" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textStyle="bold" />
-                    </LinearLayout>
-                    <ProgressBar style="@style/Widget.AppCompat.ProgressBar.Horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:progress="100" android:progressTint="#4CAF50" android:scaleY="2" android:layout_marginBottom="8dp" />
-                    <!-- 3着 -->
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingVertical="8dp">
-                        <TextView android:layout_width="24dp" android:layout_height="wrap_content" android:text="3" android:textStyle="bold" />
-                        <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_marginHorizontal="8dp" android:src="@drawable/uma" />
-                        <TextView android:id="@+id/text_raceResult3_name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
-                        <TextView android:id="@+id/text_raceResult3_odds" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textStyle="bold" />
-                    </LinearLayout>
-                    <ProgressBar style="@style/Widget.AppCompat.ProgressBar.Horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:progress="100" android:progressTint="#4CAF50" android:scaleY="2" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- スロット2 -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="4dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="#1B5E20"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-                    <TextView android:id="@+id/text2_today_race_number" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@android:color/white" />
-                    <TextView android:id="@+id/text2_today_race_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@android:color/white" android:textSize="20sp" android:textStyle="bold" />
-                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
-                        <TextView android:id="@+id/text2_today_race_time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@android:color/white" />
-                        <TextView android:id="@+id/text2_today_race_location" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:textColor="@android:color/white" />
-                    </LinearLayout>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- スロット2 ランキングセクション -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="8dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/race_results"
-                    android:textColor="@android:color/black"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-                <TextView
-                    android:id="@+id/text2_popular_raceResult_more"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/see_details"
-                    android:textColor="#2E7D32"
-                    android:textSize="14sp" />
-            </LinearLayout>
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="4dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-                    <!-- 1着 -->
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingVertical="8dp">
-                        <TextView android:layout_width="24dp" android:layout_height="wrap_content" android:text="1" android:textStyle="bold" />
-                        <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_marginHorizontal="8dp" android:src="@drawable/uma" />
-                        <TextView android:id="@+id/text2_raceResult1_name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
-                        <TextView android:id="@+id/text2_raceResult1_odds" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textStyle="bold" />
-                    </LinearLayout>
-                    <ProgressBar style="@style/Widget.AppCompat.ProgressBar.Horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:progress="100" android:progressTint="#4CAF50" android:scaleY="2" android:layout_marginBottom="8dp" />
-                    <!-- 2着 -->
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingVertical="8dp">
-                        <TextView android:layout_width="24dp" android:layout_height="wrap_content" android:text="2" android:textStyle="bold" />
-                        <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_marginHorizontal="8dp" android:src="@drawable/uma" />
-                        <TextView android:id="@+id/text2_raceResult2_name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
-                        <TextView android:id="@+id/text2_raceResult2_odds" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textStyle="bold" />
-                    </LinearLayout>
-                    <ProgressBar style="@style/Widget.AppCompat.ProgressBar.Horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:progress="100" android:progressTint="#4CAF50" android:scaleY="2" android:layout_marginBottom="8dp" />
-                    <!-- 3着 -->
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingVertical="8dp">
-                        <TextView android:layout_width="24dp" android:layout_height="wrap_content" android:text="3" android:textStyle="bold" />
-                        <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_marginHorizontal="8dp" android:src="@drawable/uma" />
-                        <TextView android:id="@+id/text2_raceResult3_name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" />
-                        <TextView android:id="@+id/text2_raceResult3_odds" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textStyle="bold" />
-                    </LinearLayout>
-                    <ProgressBar style="@style/Widget.AppCompat.ProgressBar.Horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:progress="100" android:progressTint="#4CAF50" android:scaleY="2" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                    android:orientation="vertical" />
 
             </LinearLayout>
 

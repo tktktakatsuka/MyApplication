@@ -7,6 +7,7 @@ import android.os.Bundle;
 
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.widget.LinearLayout;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -124,43 +125,7 @@ public class HomeFragment extends Fragment {
             updateUpcomingCard(joNames);
             if (joNames == null || joNames.isEmpty()) return;
 
-            int limit = Math.min(joNames.size(), 2);
-            for (int i = 0; i < limit; i++) {
-                final int index = i;
-                String joName = joNames.get(i);
-                // 各競馬場の最新のメインレース(11R)の結果を表示する
-                SupabaseManager.fetchLatestMainRace(joName, new SupabaseManager.SupabaseCallback<List<SupabaseManager.RaceResult>>() {
-                    @Override
-                    public void onSuccess(List<SupabaseManager.RaceResult> results) {
-                        if (!isAdded() || binding == null) return;
-                        // 取り込みが遅れて最新の開催日の結果がまだ入っていなければ、keibalab から直接取る
-                        String latestDay = latestPastRaceDay();
-                        String stored = results.isEmpty() ? "" : results.get(0).getKaisaibi();
-                        if (latestDay != null && stored.compareTo(latestDay) < 0) {
-                            LIVE_EXECUTOR.execute(() -> {
-                                List<SupabaseManager.RaceResult> live = null;
-                                try {
-                                    live = KeibalabResults.fetchRaceBlocking(latestDay, joName, 11);
-                                } catch (Exception e) {
-                                    Log.w("HomeFragment", "メインレースの結果の取得に失敗", e);
-                                }
-                                List<SupabaseManager.RaceResult> shown = live != null && !live.isEmpty() ? live : results;
-                                if (getActivity() == null) return;
-                                getActivity().runOnUiThread(() -> {
-                                    if (isAdded() && binding != null) showMainRace(index, shown, root);
-                                });
-                            });
-                            return;
-                        }
-                        showMainRace(index, results, root);
-                    }
-
-                    @Override
-                    public void onFailure(@NonNull String message) {
-                        Log.e("HomeFragment", "Supabase load failed: " + message);
-                    }
-                });
-            }
+            loadMainRaces(joNames);
         });
 
         return root;
@@ -309,20 +274,75 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    private static final java.util.concurrent.ExecutorService LIVE_EXECUTOR = java.util.concurrent.Executors.newSingleThreadExecutor();
-
-    /** メインレースの1〜3着をカードに出す（index は上下どちらのカードか） */
-    private void showMainRace(int index, List<SupabaseManager.RaceResult> results, View root) {
-        for (SupabaseManager.RaceResult result : results) {
-            if (index == 0) {
-                raceResultSet(result.getRank(), result.getRaceTitle(), result.getKaisaijo(), result.getHassouTime(),
-                        result.getKaisaibi(), result.getWinOdds(), result.getHorseName(), root);
-            } else if (index == 1) {
-                raceResultSet2(result.getRank(), result.getRaceTitle(), result.getKaisaijo(), result.getHassouTime(),
-                        result.getKaisaibi(), result.getWinOdds(), result.getHorseName(), root);
-            }
+    /** 開催していた競馬場すべてのメインレース(11R)の結果を集め、G1 から順にカードで出す */
+    private void loadMainRaces(List<String> joNames) {
+        List<List<SupabaseManager.RaceResult>> collected = new ArrayList<>();
+        for (int i = 0; i < joNames.size(); i++) collected.add(new ArrayList<>());
+        int[] remaining = {joNames.size()};
+        for (int i = 0; i < joNames.size(); i++) {
+            final int index = i;
+            loadMainRace(joNames.get(i), results -> {
+                collected.set(index, results);
+                if (--remaining[0] == 0 && isAdded() && binding != null) showMainRaces(collected);
+            });
         }
     }
+
+    private interface MainRaceListener {
+        void onLoaded(List<SupabaseManager.RaceResult> results);
+    }
+
+    /** 1場分のメインレースの結果。取り込みが遅れて最新の開催日の結果がまだ無ければ、keibalab から直接取る */
+    private void loadMainRace(String joName, MainRaceListener listener) {
+        SupabaseManager.fetchLatestMainRace(joName, new SupabaseManager.SupabaseCallback<List<SupabaseManager.RaceResult>>() {
+            @Override
+            public void onSuccess(List<SupabaseManager.RaceResult> results) {
+                String latestDay = latestPastRaceDay();
+                String stored = results.isEmpty() ? "" : results.get(0).getKaisaibi();
+                if (latestDay == null || stored.compareTo(latestDay) >= 0) {
+                    listener.onLoaded(results);
+                    return;
+                }
+                LIVE_EXECUTOR.execute(() -> {
+                    List<SupabaseManager.RaceResult> live = null;
+                    try {
+                        live = KeibalabResults.fetchRaceBlocking(latestDay, joName, 11);
+                    } catch (Exception e) {
+                        Log.w("HomeFragment", "メインレースの結果の取得に失敗", e);
+                    }
+                    List<SupabaseManager.RaceResult> shown = live != null && !live.isEmpty() ? live : results;
+                    mainHandler.post(() -> listener.onLoaded(shown));
+                });
+            }
+
+            @Override
+            public void onFailure(@NonNull String message) {
+                Log.e("HomeFragment", "Supabase load failed: " + message);
+                listener.onLoaded(new ArrayList<>());
+            }
+        });
+    }
+
+    private void showMainRaces(List<List<SupabaseManager.RaceResult>> collected) {
+        LinearLayout container = binding.lastResultsContainer;
+        container.removeAllViews();
+        List<List<SupabaseManager.RaceResult>> races = MainRaces.sort(collected);
+        if (races.isEmpty()) {
+            binding.textLastResultsHeader.setVisibility(View.GONE);
+            return;
+        }
+        binding.textLastResultsHeader.setVisibility(View.VISIBLE);
+        binding.textLastResultsHeader.setText(Lang.t(
+                WeekendDays.formatShort(races.get(0).get(0).getKaisaibi()) + "のメインレース",
+                "Main races · " + WeekendDays.formatShort(races.get(0).get(0).getKaisaibi())));
+        LayoutInflater inflater = LayoutInflater.from(container.getContext());
+        for (List<SupabaseManager.RaceResult> race : races) {
+            container.addView(MainRaceCard.create(inflater, container, race));
+        }
+    }
+
+    private static final java.util.concurrent.ExecutorService LIVE_EXECUTOR = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private final android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
 
     /**
      * いちばん最近の、もう終わった開催日（土日・祝日の月曜）。
@@ -415,81 +435,6 @@ public class HomeFragment extends Fragment {
         bannerAdView.loadAd(adRequest);
     }
 
-    private Bundle setKeyjoNameString(String date, String jo) {
-        // 渡したい値を用意する
-        // Bundleを作成して値を詰める
-        Bundle bundle = new Bundle();
-        bundle.putString("key", date);
-        bundle.putString("jo", jo);
-        return bundle;
-    }
-
-    private void raceResultSet(String tyaku, String raceTitle, String kaisaijo, String hassouTime, String raceDateStr, String winOdds, String horseName, View root) {
-
-        if ("1".equals(tyaku)) {
-            //レースタイトル,時刻、場名を設定する
-            binding.textTodayRaceName.setText(raceTitle);
-            binding.textTodayRaceLocation.setText(kaisaijo);
-            binding.textTodayRaceTime.setText(hassouTime);
-            binding.textTodayRaceNumber.setText(WeekendDays.formatShort(raceDateStr) + " " + Lang.t(kaisaijo + "のレース結果", Lang.course(kaisaijo) + " results"));
-            binding.textPopularRaceResultMore.setText(Lang.t(kaisaijo + "のレース結果をもっとみる", "More " + Lang.course(kaisaijo) + " results"));
-            binding.textRaceResult1Odds.setText(winOdds);
-            //レースの着順を設定する。
-            binding.textRaceResult1Name.setText(horseName);
-            // ▼ ここで「もっと見る」にクリックリスナーを設定する
-            TextView moreTextView = root.findViewById(R.id.text_popular_raceResult_more);
-            moreTextView.setOnClickListener(v -> {
-                // 例: 直近の「日付」と「競馬場」を渡して同じ画面に遷移
-                String date = raceDateStr; // ← 実際には任意の date に置き換える
-                String joName = kaisaijo;   // ← 実際には任意の joName に置き換える
-                Bundle bundle = setKeyjoNameString(date, joName);
-                NavController navController = Navigation.findNavController(v);
-                navController.navigate(R.id.navigation_raceResults, bundle);
-            });
-
-        } else if ("2".equals(tyaku)) {
-            //レースの着順を設定する。
-            binding.textRaceResult2Name.setText(horseName);
-            binding.textRaceResult2Odds.setText(winOdds);
-        } else if ("3".equals(tyaku)) {
-            //レースの着順を設定する。
-            binding.textRaceResult3Name.setText(horseName);
-            binding.textRaceResult3Odds.setText(winOdds);
-        }
-    }
-
-    private void raceResultSet2(String tyaku, String raceTitle, String kaisaijo, String hassouTime, String raceDateStr, String winOdds, String horseName, View root) {
-        if ("1".equals(tyaku)) {
-            //レースタイトル,時刻、場名を設定する
-            binding.text2TodayRaceName.setText(raceTitle);
-            binding.text2TodayRaceLocation.setText(kaisaijo);
-            binding.text2TodayRaceTime.setText(hassouTime);
-            binding.text2TodayRaceNumber.setText(WeekendDays.formatShort(raceDateStr) + " " + Lang.t(kaisaijo + "のレース結果", Lang.course(kaisaijo) + " results"));
-            binding.text2PopularRaceResultMore.setText(Lang.t(kaisaijo + "のレース結果をもっとみる", "More " + Lang.course(kaisaijo) + " results"));
-            binding.text2RaceResult1Odds.setText(winOdds);
-            //レースの着順を設定する。
-            binding.text2RaceResult1Name.setText(horseName);
-            // ▼ ここで「もっと見る」にクリックリスナーを設定する
-            TextView moreTextView = root.findViewById(R.id.text2_popular_raceResult_more);
-            moreTextView.setOnClickListener(v -> {
-                // 例: 直近の「日付」と「競馬場」を渡して同じ画面に遷移
-                String date = raceDateStr; // ← 実際には任意の date に置き換える
-                String joName = kaisaijo;   // ← 実際には任意の joName に置き換える
-                Bundle bundle = setKeyjoNameString(date, joName);
-                NavController navController = Navigation.findNavController(v);
-                navController.navigate(R.id.navigation_raceResults, bundle);
-            });
-
-        } else if ("2".equals(tyaku)) {
-            //レースの着順を設定する。
-            binding.text2RaceResult2Name.setText(horseName);
-            binding.text2RaceResult2Odds.setText(winOdds);
-        } else if ("3".equals(tyaku)) {
-            //レースの着順を設定する。
-            binding.text2RaceResult3Name.setText(horseName);
-            binding.text2RaceResult3Odds.setText(winOdds);
-        }
-    }
 
 
 }

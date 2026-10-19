@@ -37,4 +37,5 @@
     <string name="label_favorites">Favorite horses</string>
     <string name="label_predictions">My picks &amp; bets</string>
     <string name="label_entry_detail">Runners\' recent form</string>
+    <string name="last_main_races">Main races of the last meeting</string>
 </resources>
