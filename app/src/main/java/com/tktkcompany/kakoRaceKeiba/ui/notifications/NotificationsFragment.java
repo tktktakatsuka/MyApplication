@@ -1,5 +1,6 @@
 package com.tktkcompany.kakoRaceKeiba.ui.notifications;
 
+import com.tktkcompany.kakoRaceKeiba.ads.AdFree;
 import com.tktkcompany.kakoRaceKeiba.util.Lang;
 
 import android.graphics.Color;
@@ -418,7 +419,7 @@ public class NotificationsFragment extends Fragment {
         binding.adView.setAdListener(new AdListener() {
             @Override public void onAdFailedToLoad(@NonNull LoadAdError adError) { Log.e("Ads", adError.getMessage()); }
         });
-        binding.adView.loadAd(adRequest);
+        AdFree.loadBanner(binding.adView);
     }
 
     @Override

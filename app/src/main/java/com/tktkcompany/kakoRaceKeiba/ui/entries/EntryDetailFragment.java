@@ -1,5 +1,6 @@
 package com.tktkcompany.kakoRaceKeiba.ui.entries;
 
+import com.tktkcompany.kakoRaceKeiba.ads.AdFree;
 import com.tktkcompany.kakoRaceKeiba.util.Lang;
 
 import android.graphics.Typeface;
@@ -571,6 +572,11 @@ public class EntryDetailFragment extends Fragment {
     private View createRewardView(List<SupabaseManager.RaceEntry> entries) {
         float density = getResources().getDisplayMetrics().density;
         TextView view = new TextView(requireContext());
+        // 広告なしのアカウントには、広告のボタンも「10走を表示中」も出さない
+        if (AdFree.isOn(requireContext())) {
+            view.setVisibility(View.GONE);
+            return view;
+        }
         int pad = (int) (12 * density);
         view.setPadding(pad, pad, pad, pad);
         view.setTextSize(14);

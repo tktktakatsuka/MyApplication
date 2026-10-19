@@ -1,5 +1,6 @@
 package com.tktkcompany.kakoRaceKeiba.ui.raceResult;
 
+import com.tktkcompany.kakoRaceKeiba.ads.AdFree;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -475,7 +476,7 @@ public class RaceResultsFragment extends Fragment {
         binding.adView.setAdListener(new AdListener() {
             @Override public void onAdFailedToLoad(@NonNull LoadAdError adError) { Log.e("Ads", adError.getMessage()); }
         });
-        binding.adView.loadAd(adRequest);
+        AdFree.loadBanner(binding.adView);
     }
 
     @Override

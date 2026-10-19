@@ -36,6 +36,7 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
+import com.tktkcompany.kakoRaceKeiba.ads.AdFree;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -116,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
 
         ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        refreshAdFree();
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.main, (v, windowInsets) -> {
             Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -302,6 +304,7 @@ public class MainActivity extends AppCompatActivity {
     public void signOut() {
         // Firebase からログアウト
         mAuth.signOut();
+        refreshAdFree();
 
         // ViewModel の UID をクリア
         SharedViewModel sharedViewModel = new ViewModelProvider(this).get(SharedViewModel.class);
@@ -311,6 +314,11 @@ public class MainActivity extends AppCompatActivity {
         updateHomeFragmentUI(null);
 
         Toast.makeText(this, Lang.t("ログアウトしました。", "Signed out."), Toast.LENGTH_SHORT).show();
+    }
+
+    /** 広告なしのアカウントか確かめ直し、変わっていれば表示中のバナーにも反映する */
+    private void refreshAdFree() {
+        AdFree.refresh(this, () -> AdFree.applyTo(getWindow().getDecorView()));
     }
 
     private void firebaseAuthWithGoogle(String idToken) {
@@ -325,6 +333,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.d(TAG, "signInWithCredential:success");
                         if (user != null) {
                             Toast.makeText(this, Lang.t("ログイン成功: ", "Signed in: ") + user.getDisplayName(), Toast.LENGTH_SHORT).show();
+                            refreshAdFree();
                         }
                     } else {
                         Log.w(TAG, "signInWithCredential:failure", task.getException());

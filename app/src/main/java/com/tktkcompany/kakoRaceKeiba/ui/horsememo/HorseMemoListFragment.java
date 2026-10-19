@@ -1,5 +1,6 @@
 package com.tktkcompany.kakoRaceKeiba.ui.horsememo;
 
+import com.tktkcompany.kakoRaceKeiba.ads.AdFree;
 import com.tktkcompany.kakoRaceKeiba.util.Lang;
 
 import android.os.Bundle;
@@ -57,7 +58,7 @@ public class HorseMemoListFragment extends Fragment {
         emptyText = root.findViewById(R.id.text_horse_memos_empty);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(adapter);
-        ((AdView) root.findViewById(R.id.adView)).loadAd(new AdRequest.Builder().build());
+        AdFree.loadBanner(root.findViewById(R.id.adView));
         root.findViewById(R.id.card_open_predictions).setOnClickListener(v ->
                 androidx.navigation.Navigation.findNavController(v).navigate(R.id.navigation_predictions));
         return root;

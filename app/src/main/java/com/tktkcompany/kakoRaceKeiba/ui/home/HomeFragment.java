@@ -1,5 +1,6 @@
 package com.tktkcompany.kakoRaceKeiba.ui.home;
 
+import com.tktkcompany.kakoRaceKeiba.ads.AdFree;
 import com.tktkcompany.kakoRaceKeiba.util.Lang;
 
 
@@ -400,7 +401,7 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        bannerAdView.loadAd(adRequest);
+        AdFree.loadBanner(bannerAdView);
     }
 
 

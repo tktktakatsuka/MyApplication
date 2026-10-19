@@ -48,8 +48,9 @@ public final class RecentRunsReward {
     @Nullable private RewardedAd ad;
     private boolean loading;
 
-    /** 今日すでに広告を見ていれば true */
+    /** 今日すでに広告を見ていれば（広告なしのアカウントならいつでも） true */
     public static boolean isUnlocked(Context context) {
+        if (AdFree.isOn(context)) return true;
         String date = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_UNLOCKED_DATE, null);
         return today().equals(date);
     }

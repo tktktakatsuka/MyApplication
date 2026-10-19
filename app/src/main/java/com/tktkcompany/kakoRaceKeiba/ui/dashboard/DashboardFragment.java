@@ -1,5 +1,6 @@
 package com.tktkcompany.kakoRaceKeiba.ui.dashboard;
 
+import com.tktkcompany.kakoRaceKeiba.ads.AdFree;
 import com.tktkcompany.kakoRaceKeiba.util.Lang;
 
 import android.os.Bundle;
@@ -230,8 +231,6 @@ public class DashboardFragment extends Fragment {
     }
 
     public void loadBannerAd() {
-        AdView adView = binding.adView;
-        AdRequest adRequest = new AdRequest.Builder().build();
-        adView.loadAd(adRequest);
+        AdFree.loadBanner(binding.adView);
     }
 }
