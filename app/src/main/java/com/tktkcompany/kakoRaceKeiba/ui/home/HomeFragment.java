@@ -26,6 +26,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.tktkcompany.kakoRaceKeiba.MainActivity;
 import com.tktkcompany.kakoRaceKeiba.R;
 import com.tktkcompany.kakoRaceKeiba.databinding.FragmentHomeBinding;
+import com.tktkcompany.kakoRaceKeiba.db.KeibalabResults;
 import com.tktkcompany.kakoRaceKeiba.db.SupabaseManager;
 import com.tktkcompany.kakoRaceKeiba.notification.FavoriteResultWorker;
 import com.tktkcompany.kakoRaceKeiba.notification.GradedRaceWorker;
@@ -132,15 +133,26 @@ public class HomeFragment extends Fragment {
                     @Override
                     public void onSuccess(List<SupabaseManager.RaceResult> results) {
                         if (!isAdded() || binding == null) return;
-                        for (SupabaseManager.RaceResult result : results) {
-                            if (index == 0) {
-                                raceResultSet(result.getRank(), result.getRaceTitle(), result.getKaisaijo(), result.getHassouTime(),
-                                        result.getKaisaibi(), result.getWinOdds(), result.getHorseName(), root);
-                            } else if (index == 1) {
-                                raceResultSet2(result.getRank(), result.getRaceTitle(), result.getKaisaijo(), result.getHassouTime(),
-                                        result.getKaisaibi(), result.getWinOdds(), result.getHorseName(), root);
-                            }
+                        // 取り込みが遅れて最新の開催日の結果がまだ入っていなければ、keibalab から直接取る
+                        String latestDay = latestPastRaceDay();
+                        String stored = results.isEmpty() ? "" : results.get(0).getKaisaibi();
+                        if (latestDay != null && stored.compareTo(latestDay) < 0) {
+                            LIVE_EXECUTOR.execute(() -> {
+                                List<SupabaseManager.RaceResult> live = null;
+                                try {
+                                    live = KeibalabResults.fetchRaceBlocking(latestDay, joName, 11);
+                                } catch (Exception e) {
+                                    Log.w("HomeFragment", "メインレースの結果の取得に失敗", e);
+                                }
+                                List<SupabaseManager.RaceResult> shown = live != null && !live.isEmpty() ? live : results;
+                                if (getActivity() == null) return;
+                                getActivity().runOnUiThread(() -> {
+                                    if (isAdded() && binding != null) showMainRace(index, shown, root);
+                                });
+                            });
+                            return;
                         }
+                        showMainRace(index, results, root);
                     }
 
                     @Override
@@ -295,6 +307,34 @@ public class HomeFragment extends Fragment {
                 }
             }
         });
+    }
+
+    private static final java.util.concurrent.ExecutorService LIVE_EXECUTOR = java.util.concurrent.Executors.newSingleThreadExecutor();
+
+    /** メインレースの1〜3着をカードに出す（index は上下どちらのカードか） */
+    private void showMainRace(int index, List<SupabaseManager.RaceResult> results, View root) {
+        for (SupabaseManager.RaceResult result : results) {
+            if (index == 0) {
+                raceResultSet(result.getRank(), result.getRaceTitle(), result.getKaisaijo(), result.getHassouTime(),
+                        result.getKaisaibi(), result.getWinOdds(), result.getHorseName(), root);
+            } else if (index == 1) {
+                raceResultSet2(result.getRank(), result.getRaceTitle(), result.getKaisaijo(), result.getHassouTime(),
+                        result.getKaisaibi(), result.getWinOdds(), result.getHorseName(), root);
+            }
+        }
+    }
+
+    /**
+     * いちばん最近の、もう終わった開催日（土日・祝日の月曜）。
+     * 今日が開催日でも、メインレースが終わる 16 時までは前の開催日を返す
+     */
+    static String latestPastRaceDay() {
+        org.threeten.bp.LocalDateTime now = org.threeten.bp.LocalDateTime.now();
+        LocalDate day = now.getHour() >= 16 ? now.toLocalDate() : now.toLocalDate().minusDays(1);
+        for (int i = 0; i < 14; i++, day = day.minusDays(1)) {
+            if (WeekendDays.isRaceDayCandidate(day)) return day.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        }
+        return null;
     }
 
     /** 競馬場名の一覧を表示の言語にする */
