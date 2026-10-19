@@ -175,19 +175,71 @@ public class HorseFragment extends Fragment {
 
     private View header(Context context) {
         MaterialCardView card = HorseViews.card(context, 0xFFFFFFFF);
+        card.setCardElevation(HorseViews.dp(context, 6));
+        card.setRadius(HorseViews.dp(context, 20));
+        // 深い緑のグラデーションに、右下へ大きな馬の絵をうっすら重ねる
+        android.widget.FrameLayout frame = new android.widget.FrameLayout(context);
+        frame.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[]{0xFF0B3D20, 0xFF1B5E20, 0xFF2E7D32}));
+        android.widget.ImageView watermark = new android.widget.ImageView(context);
+        watermark.setImageResource(R.drawable.uma);
+        watermark.setAlpha(0.13f);
+        int mark = HorseViews.dp(context, 170);
+        android.widget.FrameLayout.LayoutParams wp = new android.widget.FrameLayout.LayoutParams(mark, mark, Gravity.END | Gravity.BOTTOM);
+        wp.setMargins(0, 0, -HorseViews.dp(context, 24), -HorseViews.dp(context, 24));
+        frame.addView(watermark, wp);
         LinearLayout inner = HorseViews.inner(card);
-        GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[]{0xFF1B5E20, 0xFF43A047});
-        inner.setBackground(bg);
-        int pad = HorseViews.dp(context, 18);
+        card.removeView(inner);
+        frame.addView(inner);
+        card.addView(frame);
+        int pad = HorseViews.dp(context, 20);
         inner.setPadding(pad, pad, pad, pad);
-        inner.addView(HorseViews.text(context, name, 26, 0xFFFFFFFF, true));
-        String summary = HorseRecord.of(results).summary();
-        if (!summary.isEmpty()) inner.addView(HorseViews.text(context, summary, 14, 0xE6FFFFFF, false));
+
+        // 馬のアイコンと名前
+        LinearLayout title = new LinearLayout(context);
+        title.setOrientation(LinearLayout.HORIZONTAL);
+        title.setGravity(Gravity.CENTER_VERTICAL);
+        title.addView(HorseViews.avatar(context, 52));
+        LinearLayout names = new LinearLayout(context);
+        names.setOrientation(LinearLayout.VERTICAL);
+        names.setPadding(HorseViews.dp(context, 14), 0, 0, 0);
+        names.addView(HorseViews.text(context, favorites.contains(name) ? Lang.t("★ お気に入り", "★ Favorite") : Lang.t("馬カルテ", "Horse profile"),
+                12, 0xFFFFD54F, true));
+        names.addView(HorseViews.text(context, name, 26, 0xFFFFFFFF, true));
+        title.addView(names);
+        inner.addView(title);
+
+        // 成績の数字を4つ並べる
+        HorseRecord record = HorseRecord.of(results);
+        if (record.starts > 0) {
+            LinearLayout stats = new LinearLayout(context);
+            stats.setOrientation(LinearLayout.HORIZONTAL);
+            stats.setPadding(0, HorseViews.dp(context, 16), 0, 0);
+            stats.addView(statTile(context, String.valueOf(record.starts), Lang.t("出走", "Starts")), tileParams(context, false));
+            stats.addView(statTile(context, String.valueOf(record.wins), Lang.t("勝利", "Wins")), tileParams(context, true));
+            stats.addView(statTile(context, HorseRecord.percent(record.top2, record.starts) + "%", Lang.t("連対率", "Top 2")), tileParams(context, true));
+            stats.addView(statTile(context, HorseRecord.percent(record.top3, record.starts) + "%", Lang.t("複勝率", "Top 3")), tileParams(context, true));
+            inner.addView(stats);
+
+            // 近5走の着順（左が新しい）
+            LinearLayout form = new LinearLayout(context);
+            form.setOrientation(LinearLayout.HORIZONTAL);
+            form.setGravity(Gravity.CENTER_VERTICAL);
+            form.setPadding(0, HorseViews.dp(context, 14), 0, 0);
+            form.addView(HorseViews.text(context, Lang.t("近走  ", "Form  "), 12, 0xCCFFFFFF, true));
+            for (int i = 0; i < Math.min(5, results.size()); i++) {
+                TextView badge = HorseViews.rankBadge(context, results.get(i).getRank(), 30);
+                ((LinearLayout.LayoutParams) badge.getLayoutParams()).setMarginEnd(HorseViews.dp(context, 6));
+                form.addView(badge);
+            }
+            inner.addView(form);
+        }
 
         LinearLayout buttons = new LinearLayout(context);
         buttons.setOrientation(LinearLayout.HORIZONTAL);
-        buttons.setPadding(0, HorseViews.dp(context, 12), 0, 0);
+        buttons.setPadding(0, HorseViews.dp(context, 16), 0, 0);
         MaterialButton favorite = new MaterialButton(context);
+        favorite.setCornerRadius(HorseViews.dp(context, 24));
+        favorite.setTextSize(15);
         bindFavoriteButton(favorite);
         favorite.setOnClickListener(v -> {
             if (FirebaseAuth.getInstance().getCurrentUser() == null) {
@@ -196,7 +248,8 @@ public class HorseFragment extends Fragment {
                 return;
             }
             boolean added = FavoriteHorseNames.toggle(favorites, name);
-            bindFavoriteButton(favorite);
+            // 見出しの「★ お気に入り」も変わるので描き直す
+            render();
             if (added) {
                 Toast.makeText(context, Lang.t("出走が決まったら、発走前と結果をお知らせします", "We'll notify you of entries, post time and results"),
                         Toast.LENGTH_LONG).show();
@@ -209,9 +262,37 @@ public class HorseFragment extends Fragment {
 
     private void bindFavoriteButton(MaterialButton button) {
         boolean on = favorites.contains(name);
-        button.setText(on ? Lang.t("★ お気に入り登録中", "★ Favorite") : Lang.t("☆ お気に入りに登録", "☆ Add to favorites"));
-        button.setBackgroundColor(on ? 0xFFFFFFFF : 0xFFFFB300);
-        button.setTextColor(on ? 0xFF1B5E20 : 0xFF3E2723);
+        button.setText(on ? Lang.t("★ お気に入り登録中", "★ Following") : Lang.t("☆ お気に入りに登録して通知を受け取る", "☆ Follow and get notified"));
+        button.setBackgroundTintList(android.content.res.ColorStateList.valueOf(on ? 0x33FFFFFF : 0xFFFFC107));
+        button.setTextColor(on ? 0xFFFFFFFF : 0xFF3E2723);
+        button.setStrokeColor(android.content.res.ColorStateList.valueOf(0x99FFFFFF));
+        button.setStrokeWidth(on ? HorseViews.dp(button.getContext(), 1) : 0);
+    }
+
+    /** 見出しの中の数字1つ（半透明の白い角丸に、大きな数字と小さなラベル） */
+    private View statTile(Context context, String value, String label) {
+        LinearLayout tile = new LinearLayout(context);
+        tile.setOrientation(LinearLayout.VERTICAL);
+        tile.setGravity(Gravity.CENTER);
+        int pad = HorseViews.dp(context, 8);
+        tile.setPadding(0, pad, 0, pad);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(HorseViews.dp(context, 12));
+        bg.setColor(0x26FFFFFF);
+        tile.setBackground(bg);
+        TextView v = HorseViews.text(context, value, 22, 0xFFFFFFFF, true);
+        v.setGravity(Gravity.CENTER);
+        TextView l = HorseViews.text(context, label, 11, 0xCCFFFFFF, false);
+        l.setGravity(Gravity.CENTER);
+        tile.addView(v);
+        tile.addView(l);
+        return tile;
+    }
+
+    private LinearLayout.LayoutParams tileParams(Context context, boolean gap) {
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
+        if (gap) p.setMarginStart(HorseViews.dp(context, 8));
+        return p;
     }
 
     private View nextCard(Context context) {
@@ -267,14 +348,15 @@ public class HorseFragment extends Fragment {
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(0, HorseViews.dp(context, 8), 0, HorseViews.dp(context, 8));
 
-        TextView rank = HorseViews.text(context, Lang.rank(r.getRank()), 18, HorseViews.rankColor(r.getRank()), true);
-        rank.setMinWidth(HorseViews.dp(context, 56));
-        row.addView(rank);
+        row.addView(HorseViews.rankBadge(context, r.getRank(), 40));
 
         LinearLayout texts = new LinearLayout(context);
         texts.setOrientation(LinearLayout.VERTICAL);
-        texts.addView(HorseViews.text(context, HorseSearchFragment.raceLabel(r.getKaisaibi(), r.getKaisaijo(), r.getRaceNo(), r.getRaceTitle()),
-                14, HorseViews.TEXT, true));
+        texts.setPadding(HorseViews.dp(context, 14), 0, 0, 0);
+        String title = r.getRaceTitle() != null ? r.getRaceTitle().trim().replaceFirst("^サラ系", "") : "";
+        texts.addView(HorseViews.text(context, title.isEmpty() ? Lang.race(r.getKaisaijo(), r.getRaceNo()) : title, 15, HorseViews.TEXT, true));
+        texts.addView(HorseViews.text(context, WeekendDays.formatShort(r.getKaisaibi()) + "　" + Lang.race(r.getKaisaijo(), r.getRaceNo()),
+                12, HorseViews.GREEN, false));
         StringBuilder sub = new StringBuilder();
         if (r.getPopular() != null) sub.append(Lang.popularity(r.getPopular()));
         if (r.getJockey() != null) sub.append(sub.length() > 0 ? "・" : "").append(r.getJockey());

@@ -89,6 +89,19 @@ public class WeekendDays {
         }
     }
 
+    /** 一覧など狭いところ向けの短い日付。「10/18(日)」「Oct 18 (Sun)」 */
+    public static String formatCompact(String dateStr) {
+        if (dateStr == null || dateStr.length() != 8) return dateStr;
+        try {
+            LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
+            String dow = getDayOfWeek(dateStr);
+            return Lang.ja() ? date.getMonthValue() + "/" + date.getDayOfMonth() + dow.trim()
+                    : date.format(DateTimeFormatter.ofPattern("MMM d", java.util.Locale.ENGLISH)) + dow;
+        } catch (DateTimeParseException e) {
+            return dateStr;
+        }
+    }
+
     public static String getDayOfWeek(String dateStr) {
         try {
             // 8桁の日付フォーマットを定義

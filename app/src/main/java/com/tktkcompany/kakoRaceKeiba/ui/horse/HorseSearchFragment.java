@@ -148,6 +148,7 @@ public class HorseSearchFragment extends Fragment {
         if (query.length() < 2) {
             list.removeAllViews();
             lastHits = null;
+            status.setText(Lang.t("2文字以上入れると探します。☆を押すとお気に入りに登録できます", "Type at least 2 letters. Tap ☆ to add a favorite"));
             progress.setVisibility(View.GONE);
             return;
         }
@@ -236,7 +237,8 @@ public class HorseSearchFragment extends Fragment {
     }
 
     static String raceLabel(String date, String course, int raceNo, @Nullable String title) {
-        String label = WeekendDays.formatShort(date) + " " + Lang.race(course, raceNo);
-        return title != null && !title.isEmpty() ? label + " " + title : label;
+        String label = WeekendDays.formatCompact(date) + " " + Lang.race(course, raceNo);
+        String t = title != null ? title.trim().replaceFirst("^サラ系", "") : "";
+        return t.isEmpty() ? label : label + " " + t;
     }
 }

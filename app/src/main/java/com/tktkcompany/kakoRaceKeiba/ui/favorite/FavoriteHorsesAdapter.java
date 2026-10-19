@@ -231,7 +231,7 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     /** 「▶ 2026年10月18日(日) 京都11R 15:40 秋華賞（芝2000m）2番 ›」 */
     private static CharSequence entryLabel(SupabaseManager.RaceEntry e) {
         SpannableStringBuilder sb = new SpannableStringBuilder("▶ ");
-        sb.append(WeekendDays.formatShort(e.getKaisaibi())).append(' ')
+        sb.append(WeekendDays.formatCompact(e.getKaisaibi())).append(' ')
                 .append(Lang.race(e.getKaisaijo(), e.getRaceNo()));
         Matcher m = START_TIME.matcher(e.getRaceInfo() != null ? e.getRaceInfo() : "");
         if (m.find()) sb.append(' ').append(String.valueOf(Integer.parseInt(m.group(1)))).append(':').append(m.group(2));
@@ -249,7 +249,7 @@ public class FavoriteHorsesAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     /** 「前走 2026年10月04日(日) 京都7R 8着（6人気）›」。着順は1〜3着なら色を付ける */
     private static CharSequence resultLabel(String prefix, HorseResult r) {
         SpannableStringBuilder sb = new SpannableStringBuilder(prefix);
-        sb.append(' ').append(nz(WeekendDays.formatShort(r.kaisaibi))).append(' ')
+        sb.append(' ').append(nz(WeekendDays.formatCompact(r.kaisaibi))).append(' ')
                 .append(Lang.ja() ? nz(r.kaisaijo) + nz(r.raceNo) + "R " : Lang.course(r.kaisaijo) + " R" + nz(r.raceNo) + " ");
         String rank = nz(r.tyaku);
         int from = sb.length();

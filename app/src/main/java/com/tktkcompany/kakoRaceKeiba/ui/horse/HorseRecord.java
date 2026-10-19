@@ -52,6 +52,11 @@ public final class HorseRecord {
         return new HorseRecord(starts, wins, top2, top3);
     }
 
+    /** 割合（%）。出走が無ければ 0 */
+    public static long percent(int count, int starts) {
+        return starts == 0 ? 0 : Math.round(count * 100.0 / starts);
+    }
+
     /** 「12戦3勝（2着2回・3着1回）　複勝率50%」。出走が無ければ空文字 */
     public String summary() {
         if (starts == 0) return "";

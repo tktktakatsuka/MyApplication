@@ -5,17 +5,29 @@
     android:id="@+id/card_favorite"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginVertical="3dp"
-    app:cardCornerRadius="10dp"
-    app:cardElevation="1dp">
+    android:layout_marginVertical="5dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:strokeWidth="0dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingVertical="10dp"
+        android:paddingVertical="12dp"
         android:paddingStart="14dp"
         android:paddingEnd="4dp">
+
+        <!-- 馬のアイコン -->
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/bg_avatar"
+            android:contentDescription="@null"
+            android:padding="8dp"
+            android:src="@drawable/uma" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -27,8 +39,8 @@
                 android:id="@+id/text_horse_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#222222"
-                android:textSize="16sp"
+                android:textColor="#1B1B1B"
+                android:textSize="18sp"
                 android:textStyle="bold" />
 
             <!-- 出走予定（出馬表に名前がある時だけ表示。タップでそのレースの出走表へ） -->
