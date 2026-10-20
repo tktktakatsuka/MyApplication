@@ -454,6 +454,26 @@ object SupabaseManager {
         }.decodeList<RaceEntry>()
     }
 
+    /** みんなのお気に入りの1頭（何人が登録しているか）。favorite_ranking ビューから読む */
+    @Serializable
+    data class FavoriteRank(
+        @SerialName("horse_name") val horseName: String,
+        @SerialName("fans") val fans: Int
+    )
+
+    /**
+     * お気に入りに登録している人の多い馬（多い順）。ビューがまだ無ければ例外になる。
+     * 必ずバックグラウンドスレッドから呼ぶこと
+     */
+    @JvmStatic
+    @Throws(Exception::class)
+    fun fetchFavoriteRankingBlocking(limit: Int): List<FavoriteRank> = blocking {
+        it.from("favorite_ranking").select {
+            order("fans", Order.DESCENDING)
+            limit(limit.toLong())
+        }.decodeList<FavoriteRank>()
+    }
+
     // ilike の「%」「_」は何にでも合ってしまうので外す
     private fun likeSafe(query: String) = query.replace("%", "").replace("_", "").trim()
 

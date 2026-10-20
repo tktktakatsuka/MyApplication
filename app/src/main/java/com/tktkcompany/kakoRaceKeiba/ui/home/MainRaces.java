@@ -13,9 +13,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /** ホームの「前回の開催のメインレース」の並べ方と表示の文字 */
-final class MainRaces {
+public final class MainRaces {
 
-    static final int G1 = 1, G2 = 2, G3 = 3, LISTED = 4, OTHER = 5;
+    public static final int G1 = 1, G2 = 2, G3 = 3, LISTED = 4, OTHER = 5;
 
     private static final Pattern GRADE = Pattern.compile("\\(\\s*(?:G|Jpn)\\s*(III|II|I|3|2|1)\\s*\\)");
     private static final Pattern LISTED_MARK = Pattern.compile("\\(\\s*L\\s*\\)");
@@ -27,7 +27,7 @@ final class MainRaces {
     }
 
     /** レース名の「(ＧⅠ)」「(G2)」「(L)」から格を読む */
-    static int grade(@Nullable String title) {
+    public static int grade(@Nullable String title) {
         if (title == null) return OTHER;
         String t = Normalizer.normalize(title, Normalizer.Form.NFKC);
         Matcher m = GRADE.matcher(t);
@@ -47,7 +47,7 @@ final class MainRaces {
     }
 
     @Nullable
-    static String gradeLabel(int grade) {
+    public static String gradeLabel(int grade) {
         switch (grade) {
             case G1:
                 return "G1";
@@ -63,7 +63,7 @@ final class MainRaces {
     }
 
     /** 「秋華賞 (ＧⅠ)」→「秋華賞」。格はラベルで出すので名前からは外す */
-    static String plainTitle(@Nullable String title) {
+    public static String plainTitle(@Nullable String title) {
         if (title == null) return "";
         String t = Normalizer.normalize(title, Normalizer.Form.NFKC);
         t = GRADE.matcher(t).replaceAll("");
