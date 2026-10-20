@@ -153,6 +153,12 @@ public class HorseFragment extends Fragment {
         if (next != null) content.addView(nextCard(context));
         content.addView(memoCard(context));
 
+        List<HorseAptitude.Group> aptitude = HorseAptitude.of(results, next);
+        if (!aptitude.isEmpty()) {
+            content.addView(HorseViews.section(context, Lang.t("条件別の成績", "Results by condition")));
+            content.addView(aptitudeCard(context, aptitude));
+        }
+
         List<HorseRecord.MarkedRace> marked = HorseRecord.marked(name, predictions, results);
         if (!marked.isEmpty()) {
             content.addView(HorseViews.section(context, Lang.t("自分が付けた印", "Your picks")));
@@ -307,6 +313,80 @@ public class HorseFragment extends Fragment {
         inner.addView(HorseViews.text(context, Lang.t("出走表を見る ›", "Open the race card ›"), 14, HorseViews.GREEN, true));
         card.setOnClickListener(v -> FavoriteHorseNames.openEntry(v, next));
         return card;
+    }
+
+    /**
+     * 条件別の成績。各行に複勝率のバーを付け、次走と同じ条件の行は「次走」の印と薄い黄色で目立たせる
+     */
+    private View aptitudeCard(Context context, List<HorseAptitude.Group> groups) {
+        MaterialCardView card = HorseViews.card(context, 0xFFFFFFFF);
+        LinearLayout inner = HorseViews.inner(card);
+        boolean first = true;
+        for (HorseAptitude.Group group : groups) {
+            TextView title = HorseViews.text(context, group.title, 12, HorseViews.GRAY, true);
+            title.setPadding(0, first ? 0 : HorseViews.dp(context, 12), 0, HorseViews.dp(context, 4));
+            inner.addView(title);
+            first = false;
+            for (HorseAptitude.Row row : group.rows) inner.addView(aptitudeRow(context, row));
+        }
+        if (next != null) {
+            TextView note = HorseViews.text(context, Lang.t("★次走 … 次のレースと同じ条件", "★Next … same condition as the next race"),
+                    11, 0xFFE65100, false);
+            note.setPadding(0, HorseViews.dp(context, 10), 0, 0);
+            inner.addView(note);
+        }
+        return card;
+    }
+
+    private View aptitudeRow(Context context, HorseAptitude.Row row) {
+        LinearLayout line = new LinearLayout(context);
+        line.setOrientation(LinearLayout.HORIZONTAL);
+        line.setGravity(Gravity.CENTER_VERTICAL);
+        int pad = HorseViews.dp(context, 6);
+        line.setPadding(pad, pad, pad, pad);
+        if (row.matchesNext) {
+            GradientDrawable bg = new GradientDrawable();
+            bg.setCornerRadius(HorseViews.dp(context, 8));
+            bg.setColor(0xFFFFF8E1);
+            line.setBackground(bg);
+        }
+
+        LinearLayout labels = new LinearLayout(context);
+        labels.setOrientation(LinearLayout.VERTICAL);
+        TextView label = HorseViews.text(context, (row.matchesNext ? "★" : "") + row.label, 14,
+                row.matchesNext ? 0xFFE65100 : HorseViews.TEXT, true);
+        labels.addView(label);
+        labels.addView(HorseViews.text(context, row.record(), 11, HorseViews.GRAY, false));
+        line.addView(labels, new LinearLayout.LayoutParams(HorseViews.dp(context, 110), ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        // 複勝率のバー（緑。50%以上は濃い緑）
+        android.widget.FrameLayout bar = new android.widget.FrameLayout(context);
+        GradientDrawable track = new GradientDrawable();
+        track.setCornerRadius(HorseViews.dp(context, 5));
+        track.setColor(0xFFEEEEEE);
+        bar.setBackground(track);
+        View fill = new View(context);
+        GradientDrawable fillBg = new GradientDrawable();
+        fillBg.setCornerRadius(HorseViews.dp(context, 5));
+        fillBg.setColor(row.top3Rate() >= 50 ? 0xFF2E7D32 : 0xFF81C784);
+        fill.setBackground(fillBg);
+        bar.addView(fill, new android.widget.FrameLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT));
+        LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(0, HorseViews.dp(context, 10), 1);
+        bp.setMarginEnd(HorseViews.dp(context, 10));
+        line.addView(bar, bp);
+        long rate = row.top3Rate();
+        bar.post(() -> {
+            ViewGroup.LayoutParams p = fill.getLayoutParams();
+            p.width = (int) (bar.getWidth() * rate / 100);
+            fill.setLayoutParams(p);
+        });
+
+        TextView percent = HorseViews.text(context, Lang.t("複勝率 ", "Top3 ") + rate + "%", 13,
+                rate >= 50 ? HorseViews.GREEN : HorseViews.TEXT, true);
+        percent.setMinWidth(HorseViews.dp(context, 92));
+        percent.setGravity(Gravity.END);
+        line.addView(percent);
+        return line;
     }
 
     private View memoCard(Context context) {
